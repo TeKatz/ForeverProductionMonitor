@@ -1,6 +1,0 @@
-{
-  "size": 1,
-  "order": 250,
-  "icon": "forever_production_monitor:slot/production_tablet",
-  "validators": ["curios:tag"]
-}

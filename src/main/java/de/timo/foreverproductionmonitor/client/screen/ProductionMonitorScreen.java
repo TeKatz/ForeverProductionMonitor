@@ -293,29 +293,12 @@ extends Screen {
     }
 
     public void acceptStatistics(MonitorNetwork.StatisticsSnapshot statisticsSnapshot) {
-        MonitorNetwork.StatisticsPage statisticsPage;
-        switch (this.viewMode) {
-            default: {
-                throw new IncompatibleClassChangeError();
-            }
-            case STORAGE: {
-                MonitorNetwork.StatisticsPage statisticsPage2 = MonitorNetwork.StatisticsPage.STORAGE;
-                break;
-            }
-            case COMPONENTS: {
-                MonitorNetwork.StatisticsPage statisticsPage2 = MonitorNetwork.StatisticsPage.COMPONENTS;
-                break;
-            }
-            case DEVICES: {
-                MonitorNetwork.StatisticsPage statisticsPage2 = MonitorNetwork.StatisticsPage.DEVICES;
-                break;
-            }
-            case PRODUCTION: 
-            case DASHBOARD: 
-            case MAP: {
-                MonitorNetwork.StatisticsPage statisticsPage2 = statisticsPage = null;
-            }
-        }
+        MonitorNetwork.StatisticsPage statisticsPage = switch (this.viewMode) {
+            case STORAGE -> MonitorNetwork.StatisticsPage.STORAGE;
+            case COMPONENTS -> MonitorNetwork.StatisticsPage.COMPONENTS;
+            case DEVICES -> MonitorNetwork.StatisticsPage.DEVICES;
+            case PRODUCTION, DASHBOARD, MAP -> null;
+        };
         if (this.viewMode != ViewMode.PRODUCTION && statisticsSnapshot.statisticsPage() == statisticsPage && statisticsSnapshot.dimension().equals((Object)this.link.dimension()) && statisticsSnapshot.pos().equals((Object)this.link.pos())) {
             this.statisticsSnapshot = statisticsSnapshot;
             this.requestedPage = statisticsSnapshot.page();
@@ -341,8 +324,7 @@ extends Screen {
 
     private void updateButtons() {
         if (this.previousButton != null) {
-            int n;
-            int n2 = this.viewMode == ViewMode.DASHBOARD ? this.requestedPage : (this.viewMode == ViewMode.PRODUCTION && this.snapshot != null ? this.snapshot.page() : (n = this.statisticsSnapshot == null ? 0 : this.statisticsSnapshot.page()));
+            int n = this.viewMode == ViewMode.DASHBOARD ? this.requestedPage : (this.viewMode == ViewMode.PRODUCTION && this.snapshot != null ? this.snapshot.page() : (this.statisticsSnapshot == null ? 0 : this.statisticsSnapshot.page()));
             int n3 = this.viewMode == ViewMode.DASHBOARD ? this.dashboardPages() : (this.viewMode == ViewMode.PRODUCTION && this.snapshot != null ? this.snapshot.pages() : (this.statisticsSnapshot == null ? 1 : this.statisticsSnapshot.pages()));
             this.previousButton.active = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.MAP && n > 0;
             this.nextButton.active = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.MAP && n + 1 < n3;
@@ -1066,4 +1048,3 @@ extends Screen {
         }
     }
 }
-

@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "forever_production_monitor:item/production_tablet"
-  }
-}
