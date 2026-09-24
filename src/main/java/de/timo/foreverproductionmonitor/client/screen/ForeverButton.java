@@ -38,7 +38,7 @@ extends Button {
         int n4;
         boolean bl = this.isHoveredOrFocused();
         if (!this.active) {
-            v0 = -12960184;
+            n4 = -12960184;
         } else {
             switch (this.style) {
                 default: {
@@ -46,38 +46,38 @@ extends Button {
                 }
                 case GOLD: {
                     if (bl) {
-                        v0 = -11654;
+                        n4 = -11654;
                         break;
                     }
-                    v0 = -3041982;
+                    n4 = -3041982;
                     break;
                 }
                 case VIOLET: {
                     if (bl) {
-                        v0 = -3298561;
+                        n4 = -3298561;
                         break;
                     }
-                    v0 = -7575364;
+                    n4 = -7575364;
                     break;
                 }
                 case SECONDARY: {
                     if (bl) {
-                        v0 = -6576714;
+                        n4 = -6576714;
                         break;
                     }
-                    v0 = -10919568;
+                    n4 = -10919568;
                     break;
                 }
                 case THEMED: {
                     if (bl) {
-                        v0 = InterfaceTheme.current().accentA();
+                        n4 = InterfaceTheme.current().accentA();
                         break;
                     }
-                    v0 = InterfaceTheme.current().border();
+                    n4 = InterfaceTheme.current().border();
                     break;
                 }
                 case THEMED_ACTIVE: {
-                    v0 = n4 = bl ? InterfaceTheme.current().accentB() : InterfaceTheme.current().accentA();
+                    n4 = bl ? InterfaceTheme.current().accentB() : InterfaceTheme.current().accentA();
                 }
             }
         }

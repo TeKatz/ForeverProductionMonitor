@@ -63,7 +63,7 @@ public final class ModContent {
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, (BlockEntityType)PRODUCTION_MONITOR_BLOCK_ENTITY.get(), (blockEntity, side) -> blockEntity);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, PRODUCTION_MONITOR_BLOCK_ENTITY.get(), (blockEntity, side) -> blockEntity);
     }
 
     public static void addCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
@@ -75,4 +75,3 @@ public final class ModContent {
         }
     }
 }
-

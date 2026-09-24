@@ -104,12 +104,12 @@ extends Screen {
         int n2 = this.panelWidth - 36;
         int n3 = 4;
         int n4 = (n2 - n3 * 4) / 5;
-        this.dashboardTab = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18));
-        this.productionTab = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18));
-        this.storageTab = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18));
-        this.devicesTab = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
-        this.mapTab = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
-        this.settingsButton = (GearButton)this.addRenderableWidget((GuiEventListener)new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
+        this.dashboardTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18));
+        this.productionTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18));
+        this.storageTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18));
+        this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
+        this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
+        this.settingsButton = (GearButton)this.addRenderableWidget(new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
         int n5 = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
         this.search = new EditBox(this.font, this.left + 18, this.top + 62, n5, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.search"));
         this.search.setHint((Component)Component.translatable((String)"screen.forever_production_monitor.search"));
@@ -123,7 +123,7 @@ extends Screen {
             }
         });
         this.search.setValue(string2);
-        this.addRenderableWidget((GuiEventListener)this.search);
+        this.addRenderableWidget(this.search);
         if (this.networkMapView == null) {
             this.networkMapView = new NetworkMapView(this.minecraft, this.font);
         }
@@ -131,13 +131,13 @@ extends Screen {
         if (this.networkMapSnapshot != null) {
             this.networkMapView.accept(this.networkMapSnapshot);
         }
-        this.storageCapacityButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.capacity"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n, this.top + 62, n4, 20));
-        this.nbtItemsButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.nbt_items"), button -> this.switchView(ViewMode.COMPONENTS), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 62, n4, 20));
+        this.storageCapacityButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.capacity"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n, this.top + 62, n4, 20));
+        this.nbtItemsButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.nbt_items"), button -> this.switchView(ViewMode.COMPONENTS), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 62, n4, 20));
         int n6 = this.left + this.panelWidth - 132;
         int n7 = this.left + this.panelWidth - 52;
         this.sortX = this.left + 18 + n5 + 12;
         this.sortWidth = Math.max(90, n6 - 12 - this.sortX);
-        this.sortButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create(this.sortLabel(), button -> {
+        this.sortButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.sortLabel(), button -> {
             if (this.viewMode == ViewMode.DEVICES) {
                 this.deviceSort = this.deviceSort.next();
             } else {
@@ -147,19 +147,19 @@ extends Screen {
             this.sortButton.setMessage(this.sortLabel());
             this.requestNow();
         }, ForeverButton.Style.VIOLET, this.sortX, this.top + 62, this.sortWidth, 20));
-        this.filterButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create(this.filterLabel(), button -> {
+        this.filterButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.filterLabel(), button -> {
             this.deviceFilter = this.deviceFilter.next();
             this.requestedPage = 0;
             this.filterButton.setMessage(this.filterLabel());
             this.requestNow();
         }, ForeverButton.Style.SECONDARY, this.sortX, this.top + 62, this.sortWidth, 20));
-        this.previousButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.literal((String)"\u2039"), button -> {
+        this.previousButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.literal((String)"\u2039"), button -> {
             if (this.requestedPage > 0) {
                 --this.requestedPage;
                 this.requestNow();
             }
         }, ForeverButton.Style.SECONDARY, n6, this.top + 62, 34, 20));
-        this.nextButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.literal((String)"\u203a"), button -> {
+        this.nextButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.literal((String)"\u203a"), button -> {
             if (this.requestedPage + 1 < this.currentPages()) {
                 ++this.requestedPage;
                 this.requestNow();
@@ -440,7 +440,7 @@ extends Screen {
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.stored"), n9, n4 + 6, palette.text());
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.average"), n8, n4 + 6, palette.accentA());
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.alarm"), n8 + 18, n4 + 6, palette.accentB(), false);
-        List list = this.dashboardSnapshot == null ? List.of() : this.dashboardSnapshot.entries();
+        List<MonitorNetwork.DashboardEntry> list = this.dashboardSnapshot == null ? List.of() : this.dashboardSnapshot.entries();
         int n10 = this.dashboardCapacity();
         int n11 = Math.min(list.size(), this.requestedPage * n10);
         int n12 = Math.min(list.size(), n11 + n10);
@@ -458,7 +458,7 @@ extends Screen {
             int n16 = dashboardEntry2.alarmState() == ProductionMonitorBlockEntity.AlarmState.ACTIVE ? -39826 : (dashboardEntry2.alarmState() == ProductionMonitorBlockEntity.AlarmState.PENDING ? -14740 : -9972847);
             guiGraphics.fill(n5 + 1, n14, n5 + 4, n14 + 27, n16);
             AEKeyRendering.drawInGui((Minecraft)this.minecraft, (GuiGraphics)guiGraphics, (int)(n5 + 7), (int)(n14 + 5), (AEKey)dashboardEntry2.key());
-            MutableComponent mutableComponent = dashboardEntry2.kind() == MonitorNetwork.EntryKind.ENERGY ? Component.translatable((String)"screen.forever_production_monitor.energy") : AEKeyRendering.getDisplayName((AEKey)dashboardEntry2.key());
+            Component mutableComponent = dashboardEntry2.kind() == MonitorNetwork.EntryKind.ENERGY ? Component.translatable((String)"screen.forever_production_monitor.energy") : AEKeyRendering.getDisplayName((AEKey)dashboardEntry2.key());
             guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mutableComponent.getString(), n9 - n5 - 80), n5 + 29, n14 + 5, palette.text(), false);
             guiGraphics.drawString(this.font, dashboardEntry2.key().getId().toString(), n5 + 29, n14 + 16, palette.muted(), false);
             this.drawRight(guiGraphics, (Component)Component.literal((String)(dashboardEntry2.infinite() ? "Infinite" : ProductionMonitorScreen.formatStored(dashboardEntry2.stored(), dashboardEntry2.kind()))), n9, n14 + 9, dashboardEntry2.infinite() ? palette.accentB() : palette.text());
@@ -539,9 +539,9 @@ extends Screen {
         if (this.snapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.loading"), this.left + this.panelWidth / 2, n6 + (n12 - n6) / 2, -14740);
         } else {
-            entry = Component.translatable((String)("screen.forever_production_monitor.status." + this.snapshot.status().name().toLowerCase()));
+            Component statusText = Component.translatable((String)("screen.forever_production_monitor.status." + this.snapshot.status().name().toLowerCase()));
             n3 = this.snapshot.status() == MonitorNetwork.Status.ONLINE ? -9972847 : (this.snapshot.status() == MonitorNetwork.Status.WARMING_UP ? -14740 : -35716);
-            this.drawRight(guiGraphics, (Component)entry, n8, n4 + 7, n3);
+            this.drawRight(guiGraphics, statusText, n8, n4 + 7, n3);
             guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(this.snapshot.page() + 1 + " / " + this.snapshot.pages())), this.left + this.panelWidth - 75, this.top + 68, palette.text());
             guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.entries", (Object[])new Object[]{this.snapshot.totalEntries()}), this.left + 18, this.top + 87, palette.muted(), false);
         }
@@ -591,7 +591,7 @@ extends Screen {
         int n8 = n5 + n7 * 78 / 100;
         int n9 = n4 + 18 + this.visibleRows * 17;
         MonitorNetwork.StatisticsSnapshot statisticsSnapshot = this.statisticsSnapshot != null && this.statisticsSnapshot.statisticsPage() == MonitorNetwork.StatisticsPage.COMPONENTS ? this.statisticsSnapshot : null;
-        List<Object> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.componentGroups();
+        List<MonitorNetwork.ComponentGroup> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.componentGroups();
         guiGraphics.fill(n5, n4, n6, n9, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 18, palette.tableHeader());
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.components.item"), n5 + 24, n4 + 5, palette.text(), false);
@@ -616,7 +616,7 @@ extends Screen {
             MutableComponent mutableComponent = componentGroup.infinite() ? Component.translatable((String)"screen.forever_production_monitor.infinite") : Component.literal((String)ProductionMonitorScreen.formatAmount(componentGroup.totalAmount()));
             this.drawRight(guiGraphics, (Component)mutableComponent, n6 - 8, n10 + 4, componentGroup.infinite() ? palette.accentB() : -3485478);
             if (!bl) continue;
-            ArrayList<MutableComponent> arrayList = new ArrayList<MutableComponent>(AEKeyRendering.getTooltip((AEKey)componentGroup.representativeKey()));
+            ArrayList<Component> arrayList = new ArrayList<Component>(AEKeyRendering.getTooltip((AEKey)componentGroup.representativeKey()));
             arrayList.add(Component.empty());
             arrayList.add(Component.translatable((String)"screen.forever_production_monitor.components.tooltip.variants", (Object[])new Object[]{componentGroup.variants()}).withColor(12490482));
             arrayList.add(Component.translatable((String)"screen.forever_production_monitor.components.tooltip.grouped").withColor(9410470));
@@ -652,7 +652,7 @@ extends Screen {
         int n13 = n12 - 6;
         int n14 = n4 + 18 + this.visibleRows * 17;
         MonitorNetwork.StatisticsSnapshot statisticsSnapshot = this.statisticsSnapshot != null && this.statisticsSnapshot.statisticsPage() == MonitorNetwork.StatisticsPage.DEVICES ? this.statisticsSnapshot : null;
-        List<Object> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.deviceGroups();
+        List<MonitorNetwork.DeviceGroup> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.deviceGroups();
         guiGraphics.fill(n5, n4, n6, n14, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 18, palette.tableHeader());
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.device"), n5 + 24, n4 + 5, palette.text(), false);
@@ -691,7 +691,7 @@ extends Screen {
                 continue;
             }
             if (!bl2) continue;
-            ArrayList<MutableComponent> arrayList = new ArrayList<MutableComponent>(AEKeyRendering.getTooltip((AEKey)deviceGroup.visual()));
+            ArrayList<Component> arrayList = new ArrayList<Component>(AEKeyRendering.getTooltip((AEKey)deviceGroup.visual()));
             arrayList.add(Component.empty());
             arrayList.add(Component.translatable((String)"screen.forever_production_monitor.devices.tooltip.count", (Object[])new Object[]{deviceGroup.count()}).withColor(13291738));
             arrayList.add(Component.translatable((String)"screen.forever_production_monitor.devices.tooltip.channels", (Object[])new Object[]{deviceGroup.assignedChannels()}).withColor(7915752));
@@ -901,10 +901,10 @@ extends Screen {
             n4 = n5 - 18;
             n3 = n6 + 18;
             n2 = (int)((d2 - (double)n3) / 17.0);
-            object = this.statisticsSnapshot.deviceGroups();
-            if (d >= (double)n4 && d < (double)(n4 + 13) && n2 >= 0 && n2 < object.size()) {
+            List<MonitorNetwork.DeviceGroup> deviceGroups = this.statisticsSnapshot.deviceGroups();
+            if (d >= (double)n4 && d < (double)(n4 + 13) && n2 >= 0 && n2 < deviceGroups.size()) {
                 int n7 = n3 + n2 * 17;
-                MonitorNetwork.DeviceGroup deviceGroup = (MonitorNetwork.DeviceGroup)object.get(n2);
+                MonitorNetwork.DeviceGroup deviceGroup = deviceGroups.get(n2);
                 if (d2 >= (double)(n7 + 2) && d2 < (double)(n7 + 15) && deviceGroup.locatableDevices() > 0) {
                     String string = String.valueOf(deviceGroup.visual().getId()) + "\u0000" + deviceGroup.name();
                     int n8 = this.locatorIndexes.getOrDefault(string, 0) % deviceGroup.locatableDevices();

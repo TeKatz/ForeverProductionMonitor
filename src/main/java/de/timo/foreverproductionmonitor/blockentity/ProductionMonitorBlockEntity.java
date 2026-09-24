@@ -321,84 +321,79 @@ extends AENetworkedBlockEntity {
                 throw new IncompatibleClassChangeError();
             }
             case AMOUNT_BELOW: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 < ProductionMonitorBlockEntity.saturatingAdd(alarmRule.threshold, alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 < alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case AMOUNT_ABOVE: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 > Math.max(0L, alarmRule.threshold - alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 > alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case RATE_BELOW: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 < ProductionMonitorBlockEntity.saturatingAdd(alarmRule.threshold, alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 < alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case RATE_ABOVE: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 > alarmRule.threshold - alarmRule.hysteresis) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 > alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case STALLED: {
-                boolean bl2;
                 if (dashboardValues.secondsSinceChange >= (long)Math.max(1, alarmRule.delaySeconds)) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case NONE: {
-                boolean bl2 = bl = false;
+                bl = false;
             }
         }
         if (!bl) {
@@ -715,13 +710,12 @@ extends AENetworkedBlockEntity {
     }
 
     private static void addKnownMultiblock(Level level, BlockPos blockPos, ResourceLocation resourceLocation, Map<MapElementKey, MutableMapNode> map, Set<BlockPos> set) {
-        String string;
         if (set.contains(blockPos)) {
             return;
         }
         ResourceLocation resourceLocation2 = BuiltInRegistries.BLOCK.getKey(level.getBlockState(blockPos).getBlock());
         String string2 = (String.valueOf(resourceLocation) + " " + String.valueOf(resourceLocation2)).toLowerCase(Locale.ROOT);
-        String string3 = string2.contains("quantum") || string2.contains("data_entangler") ? "quantum" : (string = string2.contains("assembler_matrix") ? "assembler_matrix" : null);
+        String string = string2.contains("quantum") || string2.contains("data_entangler") ? "quantum" : (string2.contains("assembler_matrix") ? "assembler_matrix" : null);
         if (string == null) {
             return;
         }

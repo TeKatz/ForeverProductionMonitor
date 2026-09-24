@@ -41,48 +41,48 @@ extends Screen {
         int n3 = this.isCustomFrame() ? 30 : 0;
         int n4 = this.panelTop(n3);
         int n5 = (n - 46) / 2;
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.enabledLabel(), button -> {
-            ClientConfig.VALUES.hudEnabled.set((Object)((Boolean)ClientConfig.VALUES.hudEnabled.get() == false ? 1 : 0));
+        this.addRenderableWidget(Button.builder((Component)this.enabledLabel(), button -> {
+            ClientConfig.VALUES.hudEnabled.set(!ClientConfig.VALUES.hudEnabled.get());
             button.setMessage(this.enabledLabel());
             ForeverProductionMonitorClient.refreshHudNow();
         }).bounds(n2 + 18, n4 + 16, n5, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.anchorLabel(), button -> {
+        this.addRenderableWidget(Button.builder((Component)this.anchorLabel(), button -> {
             ClientConfig.HudAnchor[] hudAnchorArray = ClientConfig.HudAnchor.values();
             ClientConfig.HudAnchor hudAnchor = hudAnchorArray[(((ClientConfig.HudAnchor)((Object)((Object)ClientConfig.VALUES.hudAnchor.get()))).ordinal() + 1) % hudAnchorArray.length];
-            ClientConfig.VALUES.hudAnchor.set((Object)hudAnchor);
+            ClientConfig.VALUES.hudAnchor.set(hudAnchor);
             button.setMessage(this.anchorLabel());
         }).bounds(n2 + 28 + n5, n4 + 16, n5, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.modeLabel(), button -> {
+        this.addRenderableWidget(Button.builder((Component)this.modeLabel(), button -> {
             MonitorNetwork.HudMode hudMode = ((MonitorNetwork.HudMode)((Object)((Object)ClientConfig.VALUES.hudMode.get()))).next();
-            ClientConfig.VALUES.hudMode.set((Object)hudMode);
+            ClientConfig.VALUES.hudMode.set(hudMode);
             button.setMessage(this.modeLabel());
             ForeverProductionMonitorClient.refreshHudNow();
         }).bounds(n2 + 18, n4 + 46, n - 36, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.frameLabel(), button -> {
-            ClientConfig.VALUES.hudFrameStyle.set((Object)((ClientConfig.HudFrameStyle)((Object)((Object)ClientConfig.VALUES.hudFrameStyle.get()))).next());
+        this.addRenderableWidget(Button.builder((Component)this.frameLabel(), button -> {
+            ClientConfig.VALUES.hudFrameStyle.set(((ClientConfig.HudFrameStyle)((Object)((Object)ClientConfig.VALUES.hudFrameStyle.get()))).next());
             this.rebuildWidgets();
         }).bounds(n2 + 18, n4 + 76, n5, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.rateUnitLabel(), button -> {
-            ClientConfig.VALUES.rateUnit.set((Object)((ClientConfig.RateUnit)((Object)((Object)ClientConfig.VALUES.rateUnit.get()))).next());
+        this.addRenderableWidget(Button.builder((Component)this.rateUnitLabel(), button -> {
+            ClientConfig.VALUES.rateUnit.set(((ClientConfig.RateUnit)((Object)((Object)ClientConfig.VALUES.rateUnit.get()))).next());
             button.setMessage(this.rateUnitLabel());
         }).bounds(n2 + 28 + n5, n4 + 76, n5, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)this.refreshLabel(), button -> {
-            ClientConfig.VALUES.refreshInterval.set((Object)((ClientConfig.RefreshInterval)((Object)((Object)ClientConfig.VALUES.refreshInterval.get()))).next());
+        this.addRenderableWidget(Button.builder((Component)this.refreshLabel(), button -> {
+            ClientConfig.VALUES.refreshInterval.set(((ClientConfig.RefreshInterval)((Object)((Object)ClientConfig.VALUES.refreshInterval.get()))).next());
             button.setMessage(this.refreshLabel());
             ForeverProductionMonitorClient.refreshHudNow();
         }).bounds(n2 + 18, n4 + 106, n - 36, 20).build());
         if (this.isCustomFrame()) {
-            this.addRenderableWidget((GuiEventListener)new ConfigSlider(n2 + 18, n4 + 136, n - 36, "config.forever_production_monitor.custom_hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(), d -> ClientConfig.VALUES.hudCustomHue.set((Object)((int)Math.round(d))), false));
+            this.addRenderableWidget(new ConfigSlider(n2 + 18, n4 + 136, n - 36, "config.forever_production_monitor.custom_hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(), d -> ClientConfig.VALUES.hudCustomHue.set(((int)Math.round(d))), false));
         }
-        this.addRenderableWidget((GuiEventListener)new ConfigSlider(n2 + 18, n4 + 141 + n3, n - 36, "config.forever_production_monitor.scale", 0.5, 2.0, (Double)ClientConfig.VALUES.hudScale.get(), d -> ClientConfig.VALUES.hudScale.set((Object)d), true));
-        this.addRenderableWidget((GuiEventListener)new ConfigSlider(n2 + 18, n4 + 171 + n3, n - 36, "config.forever_production_monitor.opacity", 0.0, 1.0, (Double)ClientConfig.VALUES.hudOpacity.get(), d -> ClientConfig.VALUES.hudOpacity.set((Object)d), true));
-        this.addRenderableWidget((GuiEventListener)new ConfigSlider(n2 + 18, n4 + 201 + n3, n5, "config.forever_production_monitor.x_offset", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudXOffset.get()).intValue(), d -> ClientConfig.VALUES.hudXOffset.set((Object)((int)Math.round(d))), false));
-        this.addRenderableWidget((GuiEventListener)new ConfigSlider(n2 + 28 + n5, n4 + 201 + n3, n5, "config.forever_production_monitor.y_offset", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(), d -> ClientConfig.VALUES.hudYOffset.set((Object)((int)Math.round(d))), false));
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)Component.translatable((String)"config.forever_production_monitor.reset"), button -> {
+        this.addRenderableWidget(new ConfigSlider(n2 + 18, n4 + 141 + n3, n - 36, "config.forever_production_monitor.scale", 0.5, 2.0, (Double)ClientConfig.VALUES.hudScale.get(), d -> ClientConfig.VALUES.hudScale.set(d), true));
+        this.addRenderableWidget(new ConfigSlider(n2 + 18, n4 + 171 + n3, n - 36, "config.forever_production_monitor.opacity", 0.0, 1.0, (Double)ClientConfig.VALUES.hudOpacity.get(), d -> ClientConfig.VALUES.hudOpacity.set(d), true));
+        this.addRenderableWidget(new ConfigSlider(n2 + 18, n4 + 201 + n3, n5, "config.forever_production_monitor.x_offset", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudXOffset.get()).intValue(), d -> ClientConfig.VALUES.hudXOffset.set(((int)Math.round(d))), false));
+        this.addRenderableWidget(new ConfigSlider(n2 + 28 + n5, n4 + 201 + n3, n5, "config.forever_production_monitor.y_offset", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(), d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
+        this.addRenderableWidget(Button.builder((Component)Component.translatable((String)"config.forever_production_monitor.reset"), button -> {
             this.resetDefaults();
             this.rebuildWidgets();
         }).bounds(n2 + 18, n4 + 242 + n3, n5, 20).build());
-        this.addRenderableWidget((GuiEventListener)Button.builder((Component)Component.translatable((String)"gui.done"), button -> this.onClose()).bounds(n2 + 28 + n5, n4 + 242 + n3, n5, 20).build());
+        this.addRenderableWidget(Button.builder((Component)Component.translatable((String)"gui.done"), button -> this.onClose()).bounds(n2 + 28 + n5, n4 + 242 + n3, n5, 20).build());
     }
 
     private Component enabledLabel() {
@@ -121,17 +121,17 @@ extends Screen {
     }
 
     private void resetDefaults() {
-        ClientConfig.VALUES.hudEnabled.set((Object)((Boolean)ClientConfig.VALUES.hudEnabled.getDefault()));
-        ClientConfig.VALUES.hudAnchor.set((Object)((ClientConfig.HudAnchor)((Object)ClientConfig.VALUES.hudAnchor.getDefault())));
-        ClientConfig.VALUES.hudXOffset.set((Object)((Integer)ClientConfig.VALUES.hudXOffset.getDefault()));
-        ClientConfig.VALUES.hudYOffset.set((Object)((Integer)ClientConfig.VALUES.hudYOffset.getDefault()));
-        ClientConfig.VALUES.hudScale.set((Object)((Double)ClientConfig.VALUES.hudScale.getDefault()));
-        ClientConfig.VALUES.hudOpacity.set((Object)((Double)ClientConfig.VALUES.hudOpacity.getDefault()));
-        ClientConfig.VALUES.hudMode.set((Object)((MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.getDefault())));
-        ClientConfig.VALUES.hudFrameStyle.set((Object)((ClientConfig.HudFrameStyle)((Object)ClientConfig.VALUES.hudFrameStyle.getDefault())));
-        ClientConfig.VALUES.hudCustomHue.set((Object)((Integer)ClientConfig.VALUES.hudCustomHue.getDefault()));
-        ClientConfig.VALUES.rateUnit.set((Object)((ClientConfig.RateUnit)((Object)ClientConfig.VALUES.rateUnit.getDefault())));
-        ClientConfig.VALUES.refreshInterval.set((Object)((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.getDefault())));
+        ClientConfig.VALUES.hudEnabled.set(((Boolean)ClientConfig.VALUES.hudEnabled.getDefault()));
+        ClientConfig.VALUES.hudAnchor.set(((ClientConfig.HudAnchor)((Object)ClientConfig.VALUES.hudAnchor.getDefault())));
+        ClientConfig.VALUES.hudXOffset.set(((Integer)ClientConfig.VALUES.hudXOffset.getDefault()));
+        ClientConfig.VALUES.hudYOffset.set(((Integer)ClientConfig.VALUES.hudYOffset.getDefault()));
+        ClientConfig.VALUES.hudScale.set(((Double)ClientConfig.VALUES.hudScale.getDefault()));
+        ClientConfig.VALUES.hudOpacity.set(((Double)ClientConfig.VALUES.hudOpacity.getDefault()));
+        ClientConfig.VALUES.hudMode.set(((MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.getDefault())));
+        ClientConfig.VALUES.hudFrameStyle.set(((ClientConfig.HudFrameStyle)((Object)ClientConfig.VALUES.hudFrameStyle.getDefault())));
+        ClientConfig.VALUES.hudCustomHue.set(((Integer)ClientConfig.VALUES.hudCustomHue.getDefault()));
+        ClientConfig.VALUES.rateUnit.set(((ClientConfig.RateUnit)((Object)ClientConfig.VALUES.rateUnit.getDefault())));
+        ClientConfig.VALUES.refreshInterval.set(((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.getDefault())));
         ForeverProductionMonitorClient.refreshHudNow();
     }
 
@@ -196,4 +196,3 @@ extends Screen {
         }
     }
 }
-

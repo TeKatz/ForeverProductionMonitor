@@ -63,7 +63,7 @@ extends Screen {
         this.top = (this.height - this.panelHeight) / 2;
         int n = this.left + 30;
         int n2 = this.panelWidth - 60;
-        this.modeButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create(this.modeLabel(), button -> {
+        this.modeButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.modeLabel(), button -> {
             this.mode = ProductionMonitorBlockEntity.AlarmMode.values()[(this.mode.ordinal() + 1) % ProductionMonitorBlockEntity.AlarmMode.values().length];
             this.modeButton.setMessage(this.modeLabel());
             this.updateFields();
@@ -71,24 +71,24 @@ extends Screen {
         this.threshold = new EditBox(this.font, n, this.top + 137, n2, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.alarm_editor.threshold"));
         this.threshold.setMaxLength(20);
         this.threshold.setValue(Long.toString(this.entry.threshold()));
-        this.addRenderableWidget((GuiEventListener)this.threshold);
-        this.delayButton = (ForeverButton)this.addRenderableWidget((GuiEventListener)ForeverButton.create(this.delayLabel(), button -> {
-            int n;
-            for (n = 0; n < DELAYS.length && DELAYS[n] != this.delaySeconds; ++n) {
+        this.addRenderableWidget(this.threshold);
+        this.delayButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.delayLabel(), button -> {
+            int delayIndex;
+            for (delayIndex = 0; delayIndex < DELAYS.length && DELAYS[delayIndex] != this.delaySeconds; ++delayIndex) {
             }
-            this.delaySeconds = DELAYS[(n + 1) % DELAYS.length];
+            this.delaySeconds = DELAYS[(delayIndex + 1) % DELAYS.length];
             this.delayButton.setMessage(this.delayLabel());
         }, ForeverButton.Style.SECONDARY, n, this.top + 183, n2, 22));
         this.hysteresis = new EditBox(this.font, n, this.top + 229, n2, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.alarm_editor.hysteresis"));
         this.hysteresis.setMaxLength(20);
         this.hysteresis.setValue(Long.toString(this.entry.hysteresis()));
-        this.addRenderableWidget((GuiEventListener)this.hysteresis);
+        this.addRenderableWidget(this.hysteresis);
         int n3 = 5;
         int n4 = (n2 - n3 * 3) / 4;
-        this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.literal((String)"\u2191"), button -> this.move(MonitorNetwork.DashboardAction.MOVE_UP), ForeverButton.Style.SECONDARY, n, this.top + this.panelHeight - 48, n4, 22));
-        this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.literal((String)"\u2193"), button -> this.move(MonitorNetwork.DashboardAction.MOVE_DOWN), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + this.panelHeight - 48, n4, 22));
-        this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"gui.cancel"), button -> this.onClose(), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + this.panelHeight - 48, n4, 22));
-        this.addRenderableWidget((GuiEventListener)ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.alarm_editor.save"), button -> this.save(), ForeverButton.Style.GOLD, n + (n4 + n3) * 3, this.top + this.panelHeight - 48, n2 - (n4 + n3) * 3, 22));
+        this.addRenderableWidget(ForeverButton.create((Component)Component.literal((String)"\u2191"), button -> this.move(MonitorNetwork.DashboardAction.MOVE_UP), ForeverButton.Style.SECONDARY, n, this.top + this.panelHeight - 48, n4, 22));
+        this.addRenderableWidget(ForeverButton.create((Component)Component.literal((String)"\u2193"), button -> this.move(MonitorNetwork.DashboardAction.MOVE_DOWN), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + this.panelHeight - 48, n4, 22));
+        this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"gui.cancel"), button -> this.onClose(), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + this.panelHeight - 48, n4, 22));
+        this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.alarm_editor.save"), button -> this.save(), ForeverButton.Style.GOLD, n + (n4 + n3) * 3, this.top + this.panelHeight - 48, n2 - (n4 + n3) * 3, 22));
         this.updateFields();
     }
 
