@@ -493,7 +493,7 @@ public final class MonitorNetwork {
             l3 = MonitorNetwork.saturatingAdd(l3, l5 == Long.MIN_VALUE ? Long.MAX_VALUE : -l5);
         }
         String search = requestSnapshot.search().strip().toLowerCase(Locale.ROOT);
-        List<DisplayEntry> sortedEntries = displayEntries.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(entry -> MonitorNetwork.lambda$handleRequest$14(search, entry)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
+        List<DisplayEntry> sortedEntries = displayEntries.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(entry -> MonitorNetwork.matchesSearch(search, entry)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
         int n2 = Math.max(6, Math.min(18, requestSnapshot.pageSize()));
         int n3 = Math.max(1, (sortedEntries.size() + n2 - 1) / n2);
         int n4 = Math.max(0, Math.min(requestSnapshot.page(), n3 - 1));
@@ -606,7 +606,7 @@ public final class MonitorNetwork {
         return ResourceLocation.fromNamespaceAndPath((String)"forever_production_monitor", (String)string);
     }
 
-    private static /* synthetic */ boolean lambda$handleRequest$14(String string, DisplayEntry displayEntry) {
+    private static /* synthetic */ boolean matchesSearch(String string, DisplayEntry displayEntry) {
         return string.isEmpty() || MonitorNetwork.displayName(displayEntry).toLowerCase(Locale.ROOT).contains(string) || displayEntry.key().getId().toString().contains(string);
     }
 
