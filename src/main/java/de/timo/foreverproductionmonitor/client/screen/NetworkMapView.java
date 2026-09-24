@@ -533,26 +533,12 @@ final class NetworkMapView {
             case ToolbarGroup.DIAGNOSTIC -> -2053814;
             case ToolbarGroup.BOOKMARK -> -4682787;
         };
-        switch (toolbarGroup) {
-            default: {
-                throw new IncompatibleClassChangeError();
-            }
-            case FILTER: {
-                int n8 = -803393480;
-                break;
-            }
-            case CAMERA: {
-                int n8 = -802610376;
-                break;
-            }
-            case DIAGNOSTIC: {
-                int n8 = -801821408;
-                break;
-            }
-            case BOOKMARK: {
-                int n8 = n6 = -802216392;
-            }
-        }
+        n6 = switch (toolbarGroup) {
+            case FILTER -> -803393480;
+            case CAMERA -> -802610376;
+            case DIAGNOSTIC -> -801821408;
+            case BOOKMARK -> -802216392;
+        };
         guiGraphics.fill(n3, n4, n3 + n5, n4 + 16, bl ? NetworkMapView.withAlpha(n7, 98) : (bl2 ? NetworkMapView.withAlpha(n7, 56) : n6));
         guiGraphics.renderOutline(n3, n4, n5, 16, bl || bl2 ? n7 : NetworkMapView.withAlpha(n7, 144));
         guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), n5 - 4), n3 + n5 / 2, n4 + 4, bl || bl2 ? -1 : -2762272);
@@ -1205,4 +1191,3 @@ final class NetworkMapView {
         }
     }
 }
-
