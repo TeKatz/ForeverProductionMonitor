@@ -1,7 +1,17 @@
-# Forever Production Monitor – rekonstruierte Quellen
+# Forever Production Monitor – rekonstruierte 2.2.1-Baseline
 
-Diese Quellen wurden ausschließlich aus der stabilen `ForeverProductionMonitor-1.21.1-NeoForge-2.2.1.jar` rekonstruiert. Die Java-Dateien stammen aus der Dekompilierung; Ressourcen wurden aus dieser JAR übernommen.
+Dieses Projekt enthält die aus der stabilen Version 2.2.1 rekonstruierten Java-Quellen und ihre Ressourcen. Die Referenz-JAR gehört nicht zum Quellprojekt und wird nicht gepatcht. Diese Baseline enthält keine beabsichtigten Funktionsänderungen, neuen Features oder Optimierungen.
 
-**Status:** Rekonstruktion in Arbeit. Der Gradle-Build ist noch nicht erfolgreich durchgelaufen; die Baseline ist noch nicht gegen das Original verifiziert. Es wurden noch keine Optimierungen und keine beabsichtigten Funktionsänderungen vorgenommen. Die Gradle-Abhängigkeiten sind derzeit ein zu prüfender Ansatz. Diese Quellen bitte noch nicht als stabile Mod-Version veröffentlichen.
+## Build
 
-Zielplattform: Minecraft 1.21.1, NeoForge, Java 21; AE2 19.2.17 und Curios.
+Voraussetzung: Java 21 und Zugang zu den in `settings.gradle` und `build.gradle` angegebenen Gradle- und Maven-Repositories.
+
+```sh
+./gradlew clean build --no-daemon
+```
+
+Unter Windows: `gradlew.bat clean build --no-daemon`. Die Mod-JAR liegt anschließend in `build/libs/`. Der GitHub-Actions-Workflow führt denselben Build mit Java 21 aus und lädt die JAR als Artefakt hoch.
+
+Zielplattform: Minecraft 1.21.1, NeoForge 21.1.249, AE2 19.2.17 und Curios 9.5.1+1.21.1.
+
+Der [Baseline-Abgleich](BASELINE.md) beschreibt die geprüfte Übereinstimmung mit der stabilen 2.2.1 und die Grenzen dieses Nachweises.

@@ -120,10 +120,9 @@ extends AENetworkedBlockEntity {
     private void setMainNodeVisual() {
         IManagedGridNode iManagedGridNode = this.getMainNode();
         for (Method method : iManagedGridNode.getClass().getMethods()) {
-            ItemStack itemStack;
             if (!method.getName().equals("setVisualRepresentation") || method.getParameterCount() != 1) continue;
-            Class<Object> clazz = method.getParameterTypes()[0];
-            Object object = clazz.isAssignableFrom(ItemStack.class) ? new ItemStack((ItemLike)ModContent.PRODUCTION_MONITOR.get()) : (itemStack = clazz.isAssignableFrom(AEItemKey.class) ? AEItemKey.of((ItemLike)((ItemLike)ModContent.PRODUCTION_MONITOR.get())) : null);
+            Class<?> clazz = method.getParameterTypes()[0];
+            Object itemStack = clazz.isAssignableFrom(ItemStack.class) ? new ItemStack((ItemLike)ModContent.PRODUCTION_MONITOR.get()) : (clazz.isAssignableFrom(AEItemKey.class) ? AEItemKey.of((ItemLike)ModContent.PRODUCTION_MONITOR.get()) : null);
             if (itemStack == null) continue;
             try {
                 method.invoke(iManagedGridNode, itemStack);
@@ -182,9 +181,9 @@ extends AENetworkedBlockEntity {
             return;
         }
         long l3 = Math.max(1L, l - this.lastSampleTick);
-        object = new HashSet<AEKey>(this.records.keySet());
-        object.addAll(hashMap.keySet());
-        Iterator iterator = object.iterator();
+        Set<AEKey> keys = new HashSet<AEKey>(this.records.keySet());
+        keys.addAll(hashMap.keySet());
+        Iterator iterator = keys.iterator();
         while (iterator.hasNext()) {
             AEKey aEKey2 = (AEKey)iterator.next();
             long l4 = hashMap.getOrDefault(aEKey2, 0L);
@@ -322,84 +321,79 @@ extends AENetworkedBlockEntity {
                 throw new IncompatibleClassChangeError();
             }
             case AMOUNT_BELOW: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 < ProductionMonitorBlockEntity.saturatingAdd(alarmRule.threshold, alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 < alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case AMOUNT_ABOVE: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 > Math.max(0L, alarmRule.threshold - alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 > alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case RATE_BELOW: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 < ProductionMonitorBlockEntity.saturatingAdd(alarmRule.threshold, alarmRule.hysteresis)) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 < alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case RATE_ABOVE: {
-                boolean bl2;
                 if (dashboardPin.active) {
                     if (l2 > alarmRule.threshold - alarmRule.hysteresis) {
-                        bl2 = true;
+                        bl = true;
                         break;
                     }
-                    bl2 = false;
+                    bl = false;
                     break;
                 }
                 if (l2 > alarmRule.threshold) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case STALLED: {
-                boolean bl2;
                 if (dashboardValues.secondsSinceChange >= (long)Math.max(1, alarmRule.delaySeconds)) {
-                    bl2 = true;
+                    bl = true;
                     break;
                 }
-                bl2 = false;
+                bl = false;
                 break;
             }
             case NONE: {
-                boolean bl2 = bl = false;
+                bl = false;
             }
         }
         if (!bl) {
@@ -421,7 +415,7 @@ extends AENetworkedBlockEntity {
         return AlarmState.PENDING;
     }
 
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
+    public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.saveAdditional(compoundTag, provider);
         ListTag listTag = new ListTag();
         for (DashboardPin dashboardPin : this.dashboardPins) {
@@ -437,12 +431,12 @@ extends AENetworkedBlockEntity {
             compoundTag2.putLong("Threshold", dashboardPin.rule.threshold);
             compoundTag2.putInt("Delay", dashboardPin.rule.delaySeconds);
             compoundTag2.putLong("Hysteresis", dashboardPin.rule.hysteresis);
-            listTag.add((Object)compoundTag2);
+            listTag.add(compoundTag2);
         }
         compoundTag.put("DashboardPins", (Tag)listTag);
     }
 
-    protected void loadTag(CompoundTag compoundTag, HolderLookup.Provider provider) {
+    public void loadTag(CompoundTag compoundTag, HolderLookup.Provider provider) {
         this.dashboardPins.clear();
         ListTag listTag = compoundTag.getList("DashboardPins", 10);
         for (int i = 0; i < listTag.size() && this.dashboardPins.size() < 24; ++i) {
@@ -453,8 +447,9 @@ extends AENetworkedBlockEntity {
                 ResourceLocation resourceLocation = ResourceLocation.tryParse((String)compoundTag2.getString("Id"));
                 if (resourceLocation == null) continue;
                 AEItemKey aEItemKey = null;
-                if (compoundTag2.contains("Item", 10) && !(alarmMode = ItemStack.parseOptional((HolderLookup.Provider)provider, (CompoundTag)compoundTag2.getCompound("Item"))).isEmpty()) {
-                    aEItemKey = AEItemKey.of((ItemStack)alarmMode);
+                ItemStack itemStack = ItemStack.parseOptional(provider, compoundTag2.getCompound("Item"));
+                if (compoundTag2.contains("Item", 10) && !itemStack.isEmpty()) {
+                    aEItemKey = AEItemKey.of(itemStack);
                 }
                 alarmMode = AlarmMode.valueOf(compoundTag2.getString("Alarm"));
                 AlarmRule alarmRule = new AlarmRule(alarmMode, compoundTag2.getLong("Threshold"), compoundTag2.getInt("Delay"), compoundTag2.getLong("Hysteresis")).sanitized();
@@ -503,7 +498,7 @@ extends AENetworkedBlockEntity {
         int n2 = 0;
         int n3 = 0;
         int n4 = 0;
-        Set set = Collections.newSetFromMap(new IdentityHashMap());
+        Set<Object> set = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
         for (Class clazz : iGrid.getMachineClasses()) {
             if (StorageBusPart.class.isAssignableFrom(clazz)) {
                 n4 += iGrid.getActiveMachines(clazz).size();
@@ -561,19 +556,19 @@ extends AENetworkedBlockEntity {
             if (set.contains(iGridNode) || !iGridNode.hasFlag(GridFlags.REQUIRE_CHANNEL)) continue;
             IGridMultiblock iGridMultiblock2 = iGridMultiblock = iGridNode.hasFlag(GridFlags.MULTIBLOCK) ? (IGridMultiblock)iGridNode.getService(IGridMultiblock.class) : null;
             if (iGridMultiblock != null) {
-                object = new ArrayList<IGridNode>();
-                iGridMultiblock.getMultiblockNodes().forEachRemaining(arg_0 -> object.add(arg_0));
-                if (object.isEmpty()) {
+                List<IGridNode> nodes = new ArrayList<IGridNode>();
+                iGridMultiblock.getMultiblockNodes().forEachRemaining(nodes::add);
+                if (nodes.isEmpty()) {
                     set.add(iGridNode);
                     logicalDevice = ProductionMonitorBlockEntity.inspectDevice(List.of(iGridNode));
                 } else {
-                    object.removeIf(Objects::isNull);
-                    if (object.isEmpty()) {
+                    nodes.removeIf(Objects::isNull);
+                    if (nodes.isEmpty()) {
                         set.add(iGridNode);
                         logicalDevice = ProductionMonitorBlockEntity.inspectDevice(List.of(iGridNode));
                     } else {
-                        set.addAll(object);
-                        logicalDevice = ProductionMonitorBlockEntity.inspectDevice((List<IGridNode>)object);
+                        set.addAll(nodes);
+                        logicalDevice = ProductionMonitorBlockEntity.inspectDevice(nodes);
                     }
                 }
             } else {
@@ -611,12 +606,6 @@ extends AENetworkedBlockEntity {
     }
 
     public NetworkMapSnapshot networkMapSnapshot() {
-        AEItemKey aEItemKey;
-        BlockState blockState;
-        Object object;
-        Direction[] directionArray;
-        Iterator iterator;
-        Object object222;
         IGrid iGrid = this.getMainNode().isOnline() ? this.getMainNode().getGrid() : null;
         Level level = this.getLevel();
         if (iGrid == null || level == null) {
@@ -624,48 +613,48 @@ extends AENetworkedBlockEntity {
         }
         ArrayList<MapNodeSource> arrayList = new ArrayList<MapNodeSource>();
         HashSet<BlockPos> hashSet = new HashSet<BlockPos>();
-        for (Object object222 : iGrid.getNodes()) {
-            iterator = object222.getOwner();
-            Level object3 = ProductionMonitorBlockEntity.findLevel(iterator, 0);
-            if (object3 != null && object3 != level || (directionArray = ProductionMonitorBlockEntity.locationOf(object222, iterator)) == null) continue;
-            object = directionArray.pos();
-            hashSet.add((BlockPos)object);
-            arrayList.add(new MapNodeSource((IGridNode)object222, iterator, (DeviceLocation)directionArray));
+        for (IGridNode node : iGrid.getNodes()) {
+            Object owner = node.getOwner();
+            Level nodeLevel = ProductionMonitorBlockEntity.findLevel(owner, 0);
+            DeviceLocation location = ProductionMonitorBlockEntity.locationOf(node, owner);
+            if (nodeLevel != null && nodeLevel != level || location == null) continue;
+            hashSet.add(location.pos());
+            arrayList.add(new MapNodeSource(node, owner, location));
         }
-        LinkedHashMap linkedHashMap = new LinkedHashMap();
-        object222 = new HashSet();
+        LinkedHashMap<MapElementKey, MutableMapNode> linkedHashMap = new LinkedHashMap<>();
+        Set<BlockPos> knownBlocks = new HashSet<>();
         for (MapNodeSource mapNodeSource : arrayList) {
-            directionArray = mapNodeSource.node();
-            object = mapNodeSource.owner();
+            IGridNode node = mapNodeSource.node();
+            Object owner = mapNodeSource.owner();
             DeviceLocation deviceLocation = mapNodeSource.location();
             BlockPos blockPos = deviceLocation.pos();
-            blockState = level.getBlockState(blockPos);
-            aEItemKey = directionArray.getVisualRepresentation();
-            if (object instanceof ProductionMonitorBlockEntity) {
-                aEItemKey = AEItemKey.of((ItemLike)((ItemLike)ModContent.PRODUCTION_MONITOR.get()));
+            BlockState blockState = level.getBlockState(blockPos);
+            AEItemKey aEItemKey = node.getVisualRepresentation();
+            if (owner instanceof ProductionMonitorBlockEntity) {
+                aEItemKey = AEItemKey.of((ItemLike)ModContent.PRODUCTION_MONITOR.get());
             } else if (aEItemKey == null) {
-                aEItemKey = ProductionMonitorBlockEntity.visualFromOwner(object);
+                aEItemKey = ProductionMonitorBlockEntity.visualFromOwner(owner);
             }
-            ResourceLocation resourceLocation = aEItemKey == null ? BuiltInRegistries.ITEM.getKey((Object)blockState.getBlock().asItem()) : BuiltInRegistries.ITEM.getKey((Object)aEItemKey.getItem());
+            ResourceLocation resourceLocation = aEItemKey == null ? BuiltInRegistries.ITEM.getKey(blockState.getBlock().asItem()) : BuiltInRegistries.ITEM.getKey(aEItemKey.getItem());
             String string = aEItemKey == null ? blockState.getBlock().getName().getString() : aEItemKey.getDisplayName().getString();
-            MapNodeState mapNodeState = ProductionMonitorBlockEntity.mapNodeState((IGridNode)directionArray);
+            MapNodeState mapNodeState = ProductionMonitorBlockEntity.mapNodeState(node);
             MapRenderKind mapRenderKind = ProductionMonitorBlockEntity.isMultipartHost(blockState) || deviceLocation.side() != -1 ? MapRenderKind.PART : MapRenderKind.BLOCK;
             MapElementKey mapElementKey = new MapElementKey(blockPos.immutable(), mapRenderKind, mapRenderKind == MapRenderKind.PART ? deviceLocation.side() : -1, (ResourceLocation)(mapRenderKind == MapRenderKind.PART ? resourceLocation : null));
-            linkedHashMap.computeIfAbsent(mapElementKey, mapElementKey2 -> new MutableMapNode(blockPos, Block.getId((BlockState)blockState), resourceLocation, mapRenderKind, mapElementKey.side())).merge(resourceLocation, string, mapNodeState, directionArray.getUsedChannels(), directionArray.getIdlePowerUsage(), directionArray.hasFlag(GridFlags.REQUIRE_CHANNEL));
-            ProductionMonitorBlockEntity.addKnownMultiblock(level, blockPos, resourceLocation, linkedHashMap, (Set<BlockPos>)object222);
+            linkedHashMap.computeIfAbsent(mapElementKey, mapElementKey2 -> new MutableMapNode(blockPos, Block.getId(blockState), resourceLocation, mapRenderKind, mapElementKey.side())).merge(resourceLocation, string, mapNodeState, node.getUsedChannels(), node.getIdlePowerUsage(), node.hasFlag(GridFlags.REQUIRE_CHANNEL));
+            ProductionMonitorBlockEntity.addKnownMultiblock(level, blockPos, resourceLocation, linkedHashMap, knownBlocks);
         }
         for (BlockPos blockPos : hashSet) {
             for (Direction direction : Direction.values()) {
-                blockState = blockPos.relative(direction);
-                if (hashSet.contains(blockState)) continue;
-                aEItemKey = BuiltInRegistries.BLOCK.getKey((Object)level.getBlockState((BlockPos)blockState).getBlock());
-                ProductionMonitorBlockEntity.addKnownMultiblock(level, (BlockPos)blockState, (ResourceLocation)aEItemKey, linkedHashMap, (Set<BlockPos>)object222);
-                ProductionMonitorBlockEntity.addExternalMachine(level, (BlockPos)blockState, linkedHashMap);
+                BlockPos adjacentPos = blockPos.relative(direction);
+                if (hashSet.contains(adjacentPos)) continue;
+                ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(adjacentPos).getBlock());
+                ProductionMonitorBlockEntity.addKnownMultiblock(level, adjacentPos, blockId, linkedHashMap, knownBlocks);
+                ProductionMonitorBlockEntity.addExternalMachine(level, adjacentPos, linkedHashMap);
             }
         }
-        ProductionMonitorBlockEntity.discoverKnownMultiblocks(level, hashSet, linkedHashMap, (Set<BlockPos>)object222);
-        iterator = linkedHashMap.values().stream().map(MutableMapNode::finish).limit(4096L).toList();
-        return new NetworkMapSnapshot((List<NetworkMapNode>)((Object)iterator), linkedHashMap.size() > 4096);
+        ProductionMonitorBlockEntity.discoverKnownMultiblocks(level, hashSet, linkedHashMap, knownBlocks);
+        List<NetworkMapNode> nodes = linkedHashMap.values().stream().map(MutableMapNode::finish).limit(4096L).toList();
+        return new NetworkMapSnapshot(nodes, linkedHashMap.size() > 4096);
     }
 
     private static void discoverKnownMultiblocks(Level level, Set<BlockPos> set, Map<MapElementKey, MutableMapNode> map, Set<BlockPos> set2) {
@@ -678,7 +667,7 @@ extends AENetworkedBlockEntity {
                     long l = (long)i << 32 ^ (long)j & 0xFFFFFFFFL;
                     if (!hashSet.add(l) || !level.hasChunk(i, j)) continue;
                     for (BlockPos blockPos2 : level.getChunk(i, j).getBlockEntities().keySet()) {
-                        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey((Object)level.getBlockState(blockPos2).getBlock());
+                        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey(level.getBlockState(blockPos2).getBlock());
                         if (!resourceLocation.getNamespace().equals("advanced_ae") || !resourceLocation.getPath().startsWith("quantum_") && !resourceLocation.getPath().equals("data_entangler")) continue;
                         ProductionMonitorBlockEntity.addKnownMultiblock(level, blockPos2, resourceLocation, map, set2);
                     }
@@ -688,7 +677,7 @@ extends AENetworkedBlockEntity {
     }
 
     private static boolean isMultipartHost(BlockState blockState) {
-        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey((Object)blockState.getBlock());
+        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         String string = resourceLocation.getPath();
         return string.contains("cable_bus") || string.contains("multipart") || string.contains("part_host");
     }
@@ -698,12 +687,12 @@ extends AENetworkedBlockEntity {
         if (blockState.isAir() || ProductionMonitorBlockEntity.isMultipartHost(blockState) || level.getBlockEntity(blockPos) == null) {
             return;
         }
-        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey((Object)blockState.getBlock());
+        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         if (!ProductionMonitorBlockEntity.isRelevantExternalMachine(resourceLocation)) {
             return;
         }
-        ResourceLocation resourceLocation2 = BuiltInRegistries.ITEM.getKey((Object)blockState.getBlock().asItem());
-        if (resourceLocation2 == null || resourceLocation2.equals((Object)BuiltInRegistries.ITEM.getKey((Object)Items.AIR))) {
+        ResourceLocation resourceLocation2 = BuiltInRegistries.ITEM.getKey(blockState.getBlock().asItem());
+        if (resourceLocation2 == null || resourceLocation2.equals((Object)BuiltInRegistries.ITEM.getKey(Items.AIR))) {
             resourceLocation2 = resourceLocation;
         }
         MapElementKey mapElementKey2 = new MapElementKey(blockPos.immutable(), MapRenderKind.BLOCK, -1, null);
@@ -721,13 +710,12 @@ extends AENetworkedBlockEntity {
     }
 
     private static void addKnownMultiblock(Level level, BlockPos blockPos, ResourceLocation resourceLocation, Map<MapElementKey, MutableMapNode> map, Set<BlockPos> set) {
-        String string;
         if (set.contains(blockPos)) {
             return;
         }
-        ResourceLocation resourceLocation2 = BuiltInRegistries.BLOCK.getKey((Object)level.getBlockState(blockPos).getBlock());
+        ResourceLocation resourceLocation2 = BuiltInRegistries.BLOCK.getKey(level.getBlockState(blockPos).getBlock());
         String string2 = (String.valueOf(resourceLocation) + " " + String.valueOf(resourceLocation2)).toLowerCase(Locale.ROOT);
-        String string3 = string2.contains("quantum") || string2.contains("data_entangler") ? "quantum" : (string = string2.contains("assembler_matrix") ? "assembler_matrix" : null);
+        String string = string2.contains("quantum") || string2.contains("data_entangler") ? "quantum" : (string2.contains("assembler_matrix") ? "assembler_matrix" : null);
         if (string == null) {
             return;
         }
@@ -736,10 +724,10 @@ extends AENetworkedBlockEntity {
                 for (int k = -8; k <= 8; ++k) {
                     BlockPos blockPos2 = blockPos.offset(i, j, k);
                     BlockState blockState = level.getBlockState(blockPos2);
-                    ResourceLocation resourceLocation3 = BuiltInRegistries.BLOCK.getKey((Object)blockState.getBlock());
+                    ResourceLocation resourceLocation3 = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
                     if (!ProductionMonitorBlockEntity.isKnownMultiblockMember(resourceLocation3, string)) continue;
                     set.add(blockPos2.immutable());
-                    ResourceLocation resourceLocation4 = BuiltInRegistries.ITEM.getKey((Object)blockState.getBlock().asItem());
+                    ResourceLocation resourceLocation4 = BuiltInRegistries.ITEM.getKey(blockState.getBlock().asItem());
                     MapElementKey mapElementKey2 = new MapElementKey(blockPos2.immutable(), MapRenderKind.BLOCK, -1, null);
                     map.computeIfAbsent(mapElementKey2, mapElementKey -> new MutableMapNode(blockPos2, Block.getId((BlockState)blockState), resourceLocation4, MapRenderKind.BLOCK, -1)).merge(resourceLocation4, blockState.getBlock().getName().getString(), MapNodeState.CONNECTED, 0, 0.0, false);
                 }
@@ -771,8 +759,7 @@ extends AENetworkedBlockEntity {
     private static LogicalDevice inspectDevice(List<IGridNode> list) {
         boolean bl;
         boolean bl2;
-        Object object;
-        Object object22;
+        AEItemKey visual;
         AEItemKey aEItemKey = null;
         int n = Integer.MIN_VALUE;
         String string = "Unknown Channel Device";
@@ -784,51 +771,51 @@ extends AENetworkedBlockEntity {
         boolean bl6 = false;
         boolean bl7 = list.size() > 1;
         ArrayList<DeviceLocation> arrayList = new ArrayList<DeviceLocation>();
-        for (Object object22 : list) {
+        for (IGridNode node : list) {
             int n3;
-            Object object3 = object22.getOwner();
-            object = object22.getVisualRepresentation();
+            Object object3 = node.getOwner();
+            visual = node.getVisualRepresentation();
             if (object3 instanceof ProductionMonitorBlockEntity) {
-                object = AEItemKey.of((ItemLike)((ItemLike)ModContent.PRODUCTION_MONITOR.get()));
-            } else if (object == null) {
-                object = ProductionMonitorBlockEntity.visualFromOwner(object3);
+                visual = AEItemKey.of((ItemLike)ModContent.PRODUCTION_MONITOR.get());
+            } else if (visual == null) {
+                visual = ProductionMonitorBlockEntity.visualFromOwner(object3);
             }
-            if (object != null) {
-                n3 = ProductionMonitorBlockEntity.visualScore(object);
+            if (visual != null) {
+                n3 = ProductionMonitorBlockEntity.visualScore(visual);
                 if (aEItemKey == null || n3 > n) {
-                    aEItemKey = object;
+                    aEItemKey = visual;
                     n = n3;
                 }
             }
             if (object3 != null) {
                 string = ProductionMonitorBlockEntity.humanizeClassName(object3.getClass().getSimpleName());
             }
-            d += Math.max(0.0, object22.getIdlePowerUsage());
-            if (object22.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
+            d += Math.max(0.0, node.getIdlePowerUsage());
+            if (node.hasFlag(GridFlags.REQUIRE_CHANNEL)) {
                 DeviceLocation deviceLocation;
                 bl6 = true;
-                n3 = object22.isPowered() ? 1 : 0;
-                boolean bl8 = object22.hasGridBooted();
-                boolean bl9 = object22.meetsChannelRequirements();
+                n3 = node.isPowered() ? 1 : 0;
+                boolean bl8 = node.hasGridBooted();
+                boolean bl9 = node.meetsChannelRequirements();
                 n2 &= n3;
                 bl3 &= bl8;
                 bl4 &= bl9;
-                bl5 |= object22.getUsedChannels() > 0;
-                if (!(n3 == 0 || !bl8 || bl9 && object22.getUsedChannels() > 0 || (deviceLocation = ProductionMonitorBlockEntity.locationOf(object22, object3)) == null || arrayList.contains(deviceLocation))) {
+                bl5 |= node.getUsedChannels() > 0;
+                if (!(n3 == 0 || !bl8 || bl9 && node.getUsedChannels() > 0 || (deviceLocation = ProductionMonitorBlockEntity.locationOf(node, object3)) == null || arrayList.contains(deviceLocation))) {
                     arrayList.add(deviceLocation);
                 }
             }
-            bl7 |= object22.hasFlag(GridFlags.MULTIBLOCK);
+            bl7 |= node.hasFlag(GridFlags.MULTIBLOCK);
         }
         boolean bl10 = bl2 = aEItemKey == null;
         if (bl2) {
             aEItemKey = ProductionMonitorBlockEntity.fallbackVisual(string);
         }
-        object22 = bl2 ? string : aEItemKey.getDisplayName().getString();
-        object22 = ProductionMonitorBlockEntity.friendlyMultiblockName((String)object22, string, bl7);
+        String name = bl2 ? string : aEItemKey.getDisplayName().getString();
+        name = ProductionMonitorBlockEntity.friendlyMultiblockName(name, string, bl7);
         boolean bl11 = bl = bl6 && n2 != 0 && bl3 && bl4;
-        object = bl ? DeviceState.ACTIVE : (n2 == 0 ? DeviceState.UNPOWERED : (!bl4 ? DeviceState.MISSING_CHANNEL : DeviceState.BOOTING));
-        return new LogicalDevice(aEItemKey, (String)object22, (DeviceState)((Object)object), bl5 ? 1 : 0, d, arrayList);
+        DeviceState state = bl ? DeviceState.ACTIVE : (n2 == 0 ? DeviceState.UNPOWERED : (!bl4 ? DeviceState.MISSING_CHANNEL : DeviceState.BOOTING));
+        return new LogicalDevice(aEItemKey, name, state, bl5 ? 1 : 0, d, arrayList);
     }
 
     private static int visualScore(AEItemKey aEItemKey) {
@@ -859,7 +846,7 @@ extends AENetworkedBlockEntity {
     private static AEItemKey fallbackVisual(String string) {
         String string2 = string.replaceAll("[^A-Za-z0-9]", "").toLowerCase(Locale.ROOT);
         for (Item item : BuiltInRegistries.ITEM) {
-            String string3 = BuiltInRegistries.ITEM.getKey((Object)item).getPath().replaceAll("[^A-Za-z0-9]", "").toLowerCase(Locale.ROOT);
+            String string3 = BuiltInRegistries.ITEM.getKey(item).getPath().replaceAll("[^A-Za-z0-9]", "").toLowerCase(Locale.ROOT);
             if (string2.isEmpty() || !string3.equals(string2) && !string3.contains(string2) && (string3.length() < 6 || !string2.contains(string3))) continue;
             return AEItemKey.of((ItemLike)item);
         }
@@ -880,15 +867,14 @@ extends AENetworkedBlockEntity {
     }
 
     private static AEItemKey visualFromValue(Object object) {
-        Object object2;
-        if (object instanceof ItemStack && !(object2 = (ItemStack)object).isEmpty()) {
-            return AEItemKey.of((ItemStack)object2);
+        if (object instanceof ItemStack itemStack && !itemStack.isEmpty()) {
+            return AEItemKey.of(itemStack);
         }
         if (object instanceof Item) {
-            object2 = (Item)object;
-            return AEItemKey.of((ItemLike)object2);
+            return AEItemKey.of((ItemLike)object);
         }
-        if (object != null && (object2 = ProductionMonitorBlockEntity.invokeNoArg(object, "asItem")) instanceof Item) {
+        Object object2 = object == null ? null : ProductionMonitorBlockEntity.invokeNoArg(object, "asItem");
+        if (object2 instanceof Item) {
             Item item = (Item)object2;
             return AEItemKey.of((ItemLike)item);
         }
@@ -928,9 +914,9 @@ extends AENetworkedBlockEntity {
             return blockPos;
         }
         for (String string : List.of("getHost", "getBlockEntity", "getPartHost")) {
-            object2 = ProductionMonitorBlockEntity.findBlockPos(ProductionMonitorBlockEntity.invokeNoArg(object, string), n + 1);
-            if (object2 == null) continue;
-            return object2;
+            BlockPos found = ProductionMonitorBlockEntity.findBlockPos(ProductionMonitorBlockEntity.invokeNoArg(object, string), n + 1);
+            if (found == null) continue;
+            return found;
         }
         return null;
     }
@@ -951,9 +937,9 @@ extends AENetworkedBlockEntity {
             return level;
         }
         for (String string : List.of("getHost", "getBlockEntity", "getPartHost")) {
-            object2 = ProductionMonitorBlockEntity.findLevel(ProductionMonitorBlockEntity.invokeNoArg(object, string), n + 1);
-            if (object2 == null) continue;
-            return object2;
+            Level found = ProductionMonitorBlockEntity.findLevel(ProductionMonitorBlockEntity.invokeNoArg(object, string), n + 1);
+            if (found == null) continue;
+            return found;
         }
         return null;
     }
@@ -1117,7 +1103,7 @@ extends AENetworkedBlockEntity {
         public static final DeviceSnapshot EMPTY = new DeviceSnapshot(List.of(), 0, 0, 0, 0, 0, 0, 0, 0, 0.0);
 
         public DeviceSnapshot {
-            list = List.copyOf(list);
+            groups = List.copyOf(groups);
         }
     }
 
@@ -1281,7 +1267,7 @@ extends AENetworkedBlockEntity {
 
     public record DeviceGroupSnapshot(AEItemKey visual, String name, int count, int active, int missingChannel, int unpowered, int booting, int assignedChannels, double idlePower, List<DeviceLocation> missingLocations) {
         public DeviceGroupSnapshot {
-            list = List.copyOf(list);
+            missingLocations = List.copyOf(missingLocations);
         }
     }
 
@@ -1290,7 +1276,7 @@ extends AENetworkedBlockEntity {
         public static final NetworkMapSnapshot EMPTY = new NetworkMapSnapshot(List.of(), false);
 
         public NetworkMapSnapshot {
-            list = List.copyOf(list);
+            nodes = List.copyOf(nodes);
         }
     }
 
@@ -1386,4 +1372,3 @@ extends AENetworkedBlockEntity {
     public record NetworkMapNode(BlockPos pos, int blockStateId, ResourceLocation visualId, String name, MapNodeState state, int channels, double idlePower, boolean device, MapRenderKind renderKind, int side) {
     }
 }
-

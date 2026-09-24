@@ -256,8 +256,7 @@ final class NetworkMapView {
 
     private void renderScene(GuiGraphics guiGraphics, int n) {
         int n2;
-        MonitorNetwork.MapNode mapNode22;
-        double d = this.scale();
+                double d = this.scale();
         double d2 = (double)(this.left + n) * 0.5 + this.panX;
         double d3 = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY;
         guiGraphics.flush();
@@ -287,10 +286,10 @@ final class NetworkMapView {
         }
         bufferSource.endBatch();
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.debugQuads());
-        mapNode22 = bufferSource.getBuffer(RenderType.lines());
+        VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
         for (MonitorNetwork.MapNode object2 : list) {
             if (!this.shouldRender(object2) || object2.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART) continue;
-            this.renderPartGeometry(poseStack, vertexConsumer, (VertexConsumer)mapNode22, object2, hashSet);
+            this.renderPartGeometry(poseStack, vertexConsumer, lineConsumer, object2, hashSet);
         }
         bufferSource.endBatch(RenderType.debugQuads());
         bufferSource.endBatch(RenderType.lines());
@@ -328,7 +327,7 @@ final class NetworkMapView {
     }
 
     private static boolean isQuantumComputerBlock(BlockState blockState, MonitorNetwork.MapNode mapNode) {
-        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey((Object)blockState.getBlock());
+        ResourceLocation resourceLocation = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         return NetworkMapView.isQuantumComputerId(resourceLocation.getNamespace(), resourceLocation.getPath()) || NetworkMapView.isQuantumComputerId(mapNode.visualId().getNamespace(), mapNode.visualId().getPath());
     }
 
@@ -534,26 +533,12 @@ final class NetworkMapView {
             case ToolbarGroup.DIAGNOSTIC -> -2053814;
             case ToolbarGroup.BOOKMARK -> -4682787;
         };
-        switch (toolbarGroup) {
-            default: {
-                throw new IncompatibleClassChangeError();
-            }
-            case FILTER: {
-                int n8 = -803393480;
-                break;
-            }
-            case CAMERA: {
-                int n8 = -802610376;
-                break;
-            }
-            case DIAGNOSTIC: {
-                int n8 = -801821408;
-                break;
-            }
-            case BOOKMARK: {
-                int n8 = n6 = -802216392;
-            }
-        }
+        n6 = switch (toolbarGroup) {
+            case FILTER -> -803393480;
+            case CAMERA -> -802610376;
+            case DIAGNOSTIC -> -801821408;
+            case BOOKMARK -> -802216392;
+        };
         guiGraphics.fill(n3, n4, n3 + n5, n4 + 16, bl ? NetworkMapView.withAlpha(n7, 98) : (bl2 ? NetworkMapView.withAlpha(n7, 56) : n6));
         guiGraphics.renderOutline(n3, n4, n5, 16, bl || bl2 ? n7 : NetworkMapView.withAlpha(n7, 144));
         guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), n5 - 4), n3 + n5 / 2, n4 + 4, bl || bl2 ? -1 : -2762272);
@@ -1064,13 +1049,13 @@ final class NetworkMapView {
         for (MonitorNetwork.MapNode object2 : networkMapPayload.nodes()) {
             hashMap.put(NodeKey.of(object2), object2);
         }
-        HashMap hashMap2 = new HashMap();
+        HashMap<NodeKey, MonitorNetwork.MapNode> hashMap2 = new HashMap<>();
         for (MonitorNetwork.MapNode mapNode : networkMapPayload2.nodes()) {
             hashMap2.put(NodeKey.of(mapNode), mapNode);
         }
-        ArrayDeque arrayDeque = EVENT_LOGS.computeIfAbsent(String.valueOf(networkMapPayload2.dimension()) + "@" + networkMapPayload2.pos().asLong(), string -> new ArrayDeque());
+        ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(String.valueOf(networkMapPayload2.dimension()) + "@" + networkMapPayload2.pos().asLong(), string -> new ArrayDeque());
         long l = System.currentTimeMillis();
-        for (Map.Entry entry : hashMap2.entrySet()) {
+        for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
             MonitorNetwork.MapNode mapNode2 = (MonitorNetwork.MapNode)entry.getValue();
             if (mapNode == null && mapNode2.device()) {
@@ -1081,7 +1066,7 @@ final class NetworkMapView {
             EventType eventType = mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_LOST : (mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_LOST : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_RESTORED : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_RESTORED : EventType.STATE_CHANGED)));
             NetworkMapView.addEvent(arrayDeque, new MapEvent(l, mapNode2.name(), eventType));
         }
-        for (Map.Entry entry : hashMap.entrySet()) {
+        for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap.entrySet()) {
             if (hashMap2.containsKey(entry.getKey()) || !((MonitorNetwork.MapNode)entry.getValue()).device()) continue;
             NetworkMapView.addEvent(arrayDeque, new MapEvent(l, ((MonitorNetwork.MapNode)entry.getValue()).name(), EventType.REMOVED));
         }
@@ -1206,4 +1191,3 @@ final class NetworkMapView {
         }
     }
 }
-

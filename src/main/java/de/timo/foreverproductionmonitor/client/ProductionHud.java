@@ -117,7 +117,7 @@ public final class ProductionHud {
                     AEKeyRendering.drawInGui((Minecraft)minecraft, (GuiGraphics)guiGraphics, (int)(n8 + 3), (int)n13, (AEKey)entry.key());
                 }
                 String string = ProductionHud.displayValue(hudMode, entry);
-                int n14 = entry.alarmActive() ? -38028 : (n12 = entry.infinite() ? -4286734 : ProductionHud.rateColor(entry.averagePerMinute()));
+                n12 = entry.alarmActive() ? -38028 : (entry.infinite() ? -4286734 : ProductionHud.rateColor(entry.averagePerMinute()));
                 if (hudMode == MonitorNetwork.HudMode.STORED || hudMode == MonitorNetwork.HudMode.ENERGY) {
                     n12 = entry.kind() == MonitorNetwork.EntryKind.FLUID ? -8861464 : (entry.kind() == MonitorNetwork.EntryKind.ENERGY ? -14740 : -3485478);
                 }
@@ -367,7 +367,7 @@ public final class ProductionHud {
         float f9 = f3 * (1.0f - f2);
         float f10 = f3 * (1.0f - f8 * f2);
         float f11 = f3 * (1.0f - (1.0f - f8) * f2);
-        return Math.round(f5 * 255.0f) << 16 | Math.round(f4 * 255.0f) << 8 | Math.round((switch (n % 6) {
+        float blue = switch (n % 6) {
             case 0 -> {
                 f5 = f3;
                 f4 = f11;
@@ -398,7 +398,8 @@ public final class ProductionHud {
                 f4 = f9;
                 yield f10;
             }
-        }) * 255.0f);
+        };
+        return Math.round(f5 * 255.0f) << 16 | Math.round(f4 * 255.0f) << 8 | Math.round(blue * 255.0f);
     }
 
     private static List<MonitorNetwork.Entry> previewEntries(MonitorNetwork.HudMode hudMode) {
@@ -469,4 +470,3 @@ public final class ProductionHud {
     private record FrameColors(int outer, int border, int panel, int header, int rowEven, int rowOdd, int accentA, int accentB, int titleText) {
     }
 }
-

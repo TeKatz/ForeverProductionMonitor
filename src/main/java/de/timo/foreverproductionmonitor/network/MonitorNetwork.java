@@ -104,7 +104,7 @@ public final class MonitorNetwork {
     }
 
     public static void requestLocate(ProductionTabletItem.MonitorLink monitorLink, DeviceGroup deviceGroup, int n) {
-        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey((Object)deviceGroup.visual().getItem());
+        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey(deviceGroup.visual().getItem());
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestLocateDevice(monitorLink.dimension(), monitorLink.pos(), resourceLocation, deviceGroup.name(), Math.max(0, n)), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
@@ -144,7 +144,7 @@ public final class MonitorNetwork {
             PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new DashboardSnapshot(requestDashboard.dimension(), requestDashboard.pos(), object == null ? Status.MONITOR_MISSING : Status.NETWORK_OFFLINE, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
         }
-        ServerLevel serverLevel = (ServerLevel)object.getLevel();
+        ServerLevel serverLevel = (ServerLevel)((ProductionMonitorBlockEntity)object).getLevel();
         List<DashboardEntry> list = ((ProductionMonitorBlockEntity)((Object)object)).dashboardSnapshot(serverLevel.getGameTime()).stream().map(dashboardEntrySnapshot -> new DashboardEntry(MonitorNetwork.fromDashboardKind(dashboardEntrySnapshot.kind()), dashboardEntrySnapshot.key(), dashboardEntrySnapshot.amount(), dashboardEntrySnapshot.currentPerMinute(), dashboardEntrySnapshot.averagePerMinute(), dashboardEntrySnapshot.secondsSinceChange(), dashboardEntrySnapshot.infinite(), dashboardEntrySnapshot.rule().mode(), dashboardEntrySnapshot.rule().threshold(), dashboardEntrySnapshot.rule().delaySeconds(), dashboardEntrySnapshot.rule().hysteresis(), dashboardEntrySnapshot.state())).toList();
         Status status = ((ProductionMonitorBlockEntity)((Object)object)).isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new DashboardSnapshot(requestDashboard.dimension(), requestDashboard.pos(), status, list), (CustomPacketPayload[])new CustomPacketPayload[0]);
@@ -229,12 +229,12 @@ public final class MonitorNetwork {
         if (!(player instanceof ServerPlayer) || !MonitorNetwork.hasMatchingTablet(serverPlayer = (ServerPlayer)player, requestLocateDevice.dimension(), requestLocateDevice.monitorPos())) {
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestLocateDevice.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestLocateDevice.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (!(serverLevel != null && serverLevel.hasChunkAt(requestLocateDevice.monitorPos()) && (object = serverLevel.getBlockEntity(requestLocateDevice.monitorPos())) instanceof ProductionMonitorBlockEntity && (productionMonitorBlockEntity = (ProductionMonitorBlockEntity)((Object)object)).isMonitorOnline())) {
             return;
         }
-        object = productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()).groups().stream().filter(deviceGroupSnapshot -> deviceGroupSnapshot.name().equals(requestLocateDevice.name())).filter(deviceGroupSnapshot -> BuiltInRegistries.ITEM.getKey((Object)deviceGroupSnapshot.visual().getItem()).equals((Object)requestLocateDevice.visualId())).findFirst().orElse(null);
+        object = productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()).groups().stream().filter(deviceGroupSnapshot -> deviceGroupSnapshot.name().equals(requestLocateDevice.name())).filter(deviceGroupSnapshot -> BuiltInRegistries.ITEM.getKey(deviceGroupSnapshot.visual().getItem()).equals((Object)requestLocateDevice.visualId())).findFirst().orElse(null);
         if (object == null || ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().isEmpty()) {
             PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)LocateDeviceResult.unavailable(requestLocateDevice.dimension(), requestLocateDevice.name()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
@@ -254,8 +254,8 @@ public final class MonitorNetwork {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.INVALID_LINK);
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestStatistics.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestStatistics.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (serverLevel == null || !serverLevel.hasChunkAt(requestStatistics.pos())) {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.CHUNK_UNLOADED);
             return;
@@ -270,14 +270,14 @@ public final class MonitorNetwork {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.NETWORK_OFFLINE);
             return;
         }
-        Status status = object = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
+        Status status = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         if (requestStatistics.statisticsPage() == StatisticsPage.STORAGE) {
             StorageStats storageStats = StorageStats.from(productionMonitorBlockEntity.storageCapacitySnapshot());
-            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), (Status)((Object)object), StatisticsPage.STORAGE, 0, 1, 0, storageStats, List.of(), DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), status, StatisticsPage.STORAGE, 0, 1, 0, storageStats, List.of(), DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
         }
         if (requestStatistics.statisticsPage() == StatisticsPage.DEVICES) {
-            MonitorNetwork.sendDeviceStatistics(serverPlayer, requestStatistics, productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()), (Status)((Object)object));
+            MonitorNetwork.sendDeviceStatistics(serverPlayer, requestStatistics, productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()), status);
             return;
         }
         String string = requestStatistics.search().strip().toLowerCase(Locale.ROOT);
@@ -289,14 +289,14 @@ public final class MonitorNetwork {
             if (snapshotEntry.amount() <= 0L || aEItemKey.getReadOnlyStack().getComponentsPatch().isEmpty()) continue;
             hashMap.computeIfAbsent(aEItemKey.getItem(), item -> new MutableComponentGroup(AEItemKey.of((ItemLike)item))).add(aEItemKey, snapshotEntry.amount(), MonitorNetwork.isInfinite((AEKey)aEItemKey, snapshotEntry.amount()));
         }
-        List<ComponentGroup> list = hashMap.values().stream().filter(mutableComponentGroup -> string.isEmpty() || mutableComponentGroup.matches(string)).map(MutableComponentGroup::finish).sorted(Comparator.comparingLong(componentGroup -> componentGroup.infinite() ? Long.MAX_VALUE : componentGroup.totalAmount()).reversed().thenComparing(componentGroup -> componentGroup.baseKey().getDisplayName().getString(), String.CASE_INSENSITIVE_ORDER)).toList();
+        List<ComponentGroup> list = hashMap.values().stream().filter(mutableComponentGroup -> string.isEmpty() || mutableComponentGroup.matches(string)).map(MutableComponentGroup::finish).sorted(Comparator.<ComponentGroup>comparingLong(componentGroup -> componentGroup.infinite() ? Long.MAX_VALUE : componentGroup.totalAmount()).reversed().thenComparing(componentGroup -> componentGroup.baseKey().getDisplayName().getString(), String.CASE_INSENSITIVE_ORDER)).toList();
         int n = Math.max(6, Math.min(18, requestStatistics.pageSize()));
         int n2 = Math.max(1, (list.size() + n - 1) / n);
         int n3 = Math.max(0, Math.min(requestStatistics.page(), n2 - 1));
         int n4 = n3 * n;
         int n5 = Math.min(list.size(), n4 + n);
         ArrayList<ComponentGroup> arrayList = new ArrayList<ComponentGroup>(list.subList(n4, n5));
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), (Status)((Object)object), StatisticsPage.COMPONENTS, n3, n2, list.size(), StorageStats.EMPTY, arrayList, DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), status, StatisticsPage.COMPONENTS, n3, n2, list.size(), StorageStats.EMPTY, arrayList, DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static void sendDeviceStatistics(ServerPlayer serverPlayer, RequestStatistics requestStatistics, ProductionMonitorBlockEntity.DeviceSnapshot deviceSnapshot, Status status) {
@@ -309,7 +309,7 @@ public final class MonitorNetwork {
             case DeviceSort.NAME -> comparator;
             case DeviceSort.PROBLEMS -> Comparator.comparingInt(MonitorNetwork::deviceProblemCount).reversed().thenComparing(Comparator.comparingDouble(ProductionMonitorBlockEntity.DeviceGroupSnapshot::idlePower).reversed()).thenComparing(comparator);
         };
-        List<DeviceGroup> list = deviceSnapshot.groups().stream().filter(deviceGroupSnapshot -> string.isEmpty() || deviceGroupSnapshot.name().toLowerCase(Locale.ROOT).contains(string) || BuiltInRegistries.ITEM.getKey((Object)deviceGroupSnapshot.visual().getItem()).toString().toLowerCase(Locale.ROOT).contains(string)).filter(deviceGroupSnapshot -> MonitorNetwork.matchesDeviceFilter(deviceGroupSnapshot, requestStatistics.deviceFilter())).sorted(comparator2).map(DeviceGroup::from).toList();
+        List<DeviceGroup> list = deviceSnapshot.groups().stream().filter(deviceGroupSnapshot -> string.isEmpty() || deviceGroupSnapshot.name().toLowerCase(Locale.ROOT).contains(string) || BuiltInRegistries.ITEM.getKey(deviceGroupSnapshot.visual().getItem()).toString().toLowerCase(Locale.ROOT).contains(string)).filter(deviceGroupSnapshot -> MonitorNetwork.matchesDeviceFilter(deviceGroupSnapshot, requestStatistics.deviceFilter())).sorted(comparator2).map(DeviceGroup::from).toList();
         int n = Math.max(6, Math.min(18, requestStatistics.pageSize()));
         int n2 = Math.max(1, (list.size() + n - 1) / n);
         int n3 = Math.max(0, Math.min(requestStatistics.page(), n2 - 1));
@@ -376,12 +376,12 @@ public final class MonitorNetwork {
             object3 = productionMonitorBlockEntity.dashboardSnapshot(serverLevel.getGameTime()).stream().limit(requestHud.entryCount()).map(dashboardEntrySnapshot -> new Entry(MonitorNetwork.fromDashboardKind(dashboardEntrySnapshot.kind()), dashboardEntrySnapshot.key(), dashboardEntrySnapshot.amount(), dashboardEntrySnapshot.currentPerMinute(), dashboardEntrySnapshot.averagePerMinute(), dashboardEntrySnapshot.secondsSinceChange(), dashboardEntrySnapshot.infinite(), dashboardEntrySnapshot.state() == ProductionMonitorBlockEntity.AlarmState.ACTIVE)).toList();
         } else {
             object = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime()).stream().filter(displayEntry -> MonitorNetwork.hudFilter(requestHud.mode(), displayEntry)).sorted(MonitorNetwork.hudComparator(requestHud.mode())).limit(requestHud.entryCount()).toList();
-            object3 = new ArrayList(object.size());
-            Iterator iterator = object.iterator();
-            while (iterator.hasNext()) {
-                DisplayEntry displayEntry2 = (DisplayEntry)iterator.next();
-                object3.add(displayEntry2.toNetworkEntry());
+            List<DisplayEntry> entries = (List<DisplayEntry>)object;
+            List<Entry> hudEntries = new ArrayList<>(entries.size());
+            for (DisplayEntry displayEntry2 : entries) {
+                hudEntries.add(displayEntry2.toNetworkEntry());
             }
+            object3 = hudEntries;
         }
         object = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new HudSnapshot((Status)((Object)object), requestHud.mode(), (List<Entry>)object3), (CustomPacketPayload[])new CustomPacketPayload[0]);
@@ -436,8 +436,8 @@ public final class MonitorNetwork {
             default -> throw new IncompatibleClassChangeError();
             case HudMode.STORED -> Comparator.comparingLong(DisplayEntry::stored).reversed().thenComparing(comparator);
             case HudMode.INCOMING -> Comparator.comparingLong(DisplayEntry::averagePerMinute).reversed().thenComparing(comparator);
-            case HudMode.OUTGOING -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
-            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case HudMode.OUTGOING -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
         };
     }
 
@@ -452,8 +452,8 @@ public final class MonitorNetwork {
             MonitorNetwork.sendOffline(serverPlayer, requestSnapshot, Status.INVALID_LINK);
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestSnapshot.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestSnapshot.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (serverLevel == null || !serverLevel.hasChunkAt(requestSnapshot.pos())) {
             MonitorNetwork.sendOffline(serverPlayer, requestSnapshot, Status.CHUNK_UNLOADED);
             return;
@@ -469,15 +469,15 @@ public final class MonitorNetwork {
             return;
         }
         productionMonitorBlockEntity.requestSampleInterval(requestSnapshot.sampleIntervalTicks(), serverLevel.getGameTime());
-        object2 = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime());
+        List<DisplayEntry> displayEntries = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime());
         long l = 0L;
         int n = 0;
         long l2 = 0L;
         long l3 = 0L;
         long l4 = 0L;
-        Object object3 = object2.iterator();
-        while (object3.hasNext()) {
-            object = (DisplayEntry)object3.next();
+        Iterator<DisplayEntry> iterator = displayEntries.iterator();
+        while (iterator.hasNext()) {
+            object = iterator.next();
             if (((DisplayEntry)object).kind() != EntryKind.ITEM || ((DisplayEntry)object).infinite()) continue;
             l = MonitorNetwork.saturatingAdd(l, Math.max(0L, ((DisplayEntry)object).stored()));
             if (((DisplayEntry)object).stored() > 0L) {
@@ -492,20 +492,20 @@ public final class MonitorNetwork {
             if (l5 >= 0L) continue;
             l3 = MonitorNetwork.saturatingAdd(l3, l5 == Long.MIN_VALUE ? Long.MAX_VALUE : -l5);
         }
-        object3 = requestSnapshot.search().strip().toLowerCase(Locale.ROOT);
-        object = object2.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(arg_0 -> MonitorNetwork.lambda$handleRequest$14((String)object3, arg_0)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
+        String search = requestSnapshot.search().strip().toLowerCase(Locale.ROOT);
+        List<DisplayEntry> sortedEntries = displayEntries.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(entry -> MonitorNetwork.matchesSearch(search, entry)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
         int n2 = Math.max(6, Math.min(18, requestSnapshot.pageSize()));
-        int n3 = Math.max(1, (object.size() + n2 - 1) / n2);
+        int n3 = Math.max(1, (sortedEntries.size() + n2 - 1) / n2);
         int n4 = Math.max(0, Math.min(requestSnapshot.page(), n3 - 1));
         int n5 = n4 * n2;
-        int n6 = Math.min(object.size(), n5 + n2);
+        int n6 = Math.min(sortedEntries.size(), n5 + n2);
         ArrayList<Entry> arrayList = new ArrayList<Entry>(Math.max(0, n6 - n5));
         for (int i = n5; i < n6; ++i) {
-            DisplayEntry displayEntry2 = (DisplayEntry)object.get(i);
+            DisplayEntry displayEntry2 = sortedEntries.get(i);
             arrayList.add(displayEntry2.toNetworkEntry());
         }
         Status status = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new MonitorSnapshot(requestSnapshot.dimension(), requestSnapshot.pos(), status, n4, n3, object.size(), l, n, l2, l3, l4, arrayList), (CustomPacketPayload[])new CustomPacketPayload[0]);
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new MonitorSnapshot(requestSnapshot.dimension(), requestSnapshot.pos(), status, n4, n3, sortedEntries.size(), l, n, l2, l3, l4, arrayList), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static Comparator<DisplayEntry> comparator(SortMode sortMode) {
@@ -515,8 +515,8 @@ public final class MonitorNetwork {
             default -> throw new IncompatibleClassChangeError();
             case SortMode.NAME -> comparator2.thenComparing(comparator);
             case SortMode.STORED -> comparator2.thenComparing(Comparator.comparingLong(DisplayEntry::stored).reversed()).thenComparing(comparator);
-            case SortMode.ACTIVITY -> comparator2.thenComparing(Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed()).thenComparing(comparator);
-            case SortMode.FLUIDS -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case SortMode.ACTIVITY -> comparator2.thenComparing(Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed()).thenComparing(comparator);
+            case SortMode.FLUIDS -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
         };
     }
 
@@ -606,7 +606,7 @@ public final class MonitorNetwork {
         return ResourceLocation.fromNamespaceAndPath((String)"forever_production_monitor", (String)string);
     }
 
-    private static /* synthetic */ boolean lambda$handleRequest$14(String string, DisplayEntry displayEntry) {
+    private static /* synthetic */ boolean matchesSearch(String string, DisplayEntry displayEntry) {
         return string.isEmpty() || MonitorNetwork.displayName(displayEntry).toLowerCase(Locale.ROOT).contains(string) || displayEntry.key().getId().toString().contains(string);
     }
 
@@ -614,7 +614,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestSnapshot.pos);
             registryFriendlyByteBuf.writeUtf(requestSnapshot.search, 64);
             registryFriendlyByteBuf.writeEnum((Enum)requestSnapshot.sort);
@@ -624,10 +624,10 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestSnapshot((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readUtf(64), (SortMode)registryFriendlyByteBuf.readEnum(SortMode.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public RequestSnapshot {
-            string = string == null ? "" : string.substring(0, Math.min(64, string.length()));
-            n = Math.max(0, n);
-            n2 = Math.max(6, Math.min(18, n2));
-            n3 = MonitorNetwork.clampSampleInterval(n3);
+            search = search == null ? "" : search.substring(0, Math.min(64, search.length()));
+            page = Math.max(0, page);
+            pageSize = Math.max(6, Math.min(18, pageSize));
+            sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -639,7 +639,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<MonitorSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("monitor_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, MonitorSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, monitorSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)monitorSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, monitorSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(monitorSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)monitorSnapshot.status);
             registryFriendlyByteBuf.writeVarInt(monitorSnapshot.page);
@@ -681,7 +681,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestStatistics> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_statistics"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestStatistics> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestStatistics) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestStatistics.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestStatistics.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestStatistics.pos);
             registryFriendlyByteBuf.writeEnum((Enum)requestStatistics.statisticsPage);
             registryFriendlyByteBuf.writeUtf(requestStatistics.search, 64);
@@ -692,9 +692,9 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestStatistics((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (StatisticsPage)registryFriendlyByteBuf.readEnum(StatisticsPage.class), registryFriendlyByteBuf.readUtf(64), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt(), (DeviceSort)registryFriendlyByteBuf.readEnum(DeviceSort.class), (DeviceFilter)registryFriendlyByteBuf.readEnum(DeviceFilter.class)));
 
         public RequestStatistics {
-            string = string == null ? "" : string.substring(0, Math.min(64, string.length()));
-            n = Math.max(0, n);
-            n2 = Math.max(6, Math.min(18, n2));
+            search = search == null ? "" : search.substring(0, Math.min(64, search.length()));
+            page = Math.max(0, page);
+            pageSize = Math.max(6, Math.min(18, pageSize));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -706,7 +706,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<StatisticsSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("statistics_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, StatisticsSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, statisticsSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)statisticsSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, statisticsSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(statisticsSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)statisticsSnapshot.status);
             registryFriendlyByteBuf.writeEnum((Enum)statisticsSnapshot.statisticsPage);
@@ -743,8 +743,8 @@ public final class MonitorNetwork {
         });
 
         public StatisticsSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(18, list.size())));
-            list2 = List.copyOf(list2.subList(0, Math.min(18, list2.size())));
+            componentGroups = List.copyOf(componentGroups.subList(0, Math.min(18, componentGroups.size())));
+            deviceGroups = List.copyOf(deviceGroups.subList(0, Math.min(18, deviceGroups.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -762,8 +762,8 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestHud((HudMode)registryFriendlyByteBuf.readEnum(HudMode.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public RequestHud {
-            n = MonitorNetwork.clampSampleInterval(n);
-            n2 = Math.max(1, Math.min(10, n2));
+            sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
+            entryCount = Math.max(1, Math.min(10, entryCount));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -791,7 +791,7 @@ public final class MonitorNetwork {
         });
 
         public HudSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(10, list.size())));
+            entries = List.copyOf(entries.subList(0, Math.min(10, entries.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -803,16 +803,16 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestLocateDevice> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_locate_device"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestLocateDevice> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestLocateDevice) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestLocateDevice.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestLocateDevice.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestLocateDevice.monitorPos);
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestLocateDevice.visualId);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestLocateDevice.visualId);
             registryFriendlyByteBuf.writeUtf(requestLocateDevice.name, 96);
             registryFriendlyByteBuf.writeVarInt(requestLocateDevice.index);
         }, registryFriendlyByteBuf -> new RequestLocateDevice((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(96), registryFriendlyByteBuf.readVarInt()));
 
         public RequestLocateDevice {
-            string = string == null ? "" : string.substring(0, Math.min(96, string.length()));
-            n = Math.max(0, n);
+            name = name == null ? "" : name.substring(0, Math.min(96, name.length()));
+            index = Math.max(0, index);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -825,7 +825,7 @@ public final class MonitorNetwork {
         public static final CustomPacketPayload.Type<LocateDeviceResult> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("locate_device_result"));
         public static final StreamCodec<RegistryFriendlyByteBuf, LocateDeviceResult> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, locateDeviceResult) -> {
             registryFriendlyByteBuf.writeBoolean(locateDeviceResult.found);
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)locateDeviceResult.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, locateDeviceResult.dimension);
             registryFriendlyByteBuf.writeBlockPos(locateDeviceResult.pos);
             registryFriendlyByteBuf.writeVarInt(locateDeviceResult.side + 1);
             registryFriendlyByteBuf.writeUtf(locateDeviceResult.name, 96);
@@ -834,9 +834,9 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new LocateDeviceResult(registryFriendlyByteBuf.readBoolean(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt() - 1, registryFriendlyByteBuf.readUtf(96), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public LocateDeviceResult {
-            string = string == null ? "" : string.substring(0, Math.min(96, string.length()));
-            n2 = Math.max(0, n2);
-            n3 = Math.max(0, n3);
+            name = name == null ? "" : name.substring(0, Math.min(96, name.length()));
+            index = Math.max(0, index);
+            total = Math.max(0, total);
         }
 
         public static LocateDeviceResult unavailable(ResourceLocation resourceLocation, String string) {
@@ -852,7 +852,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestDashboard> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_dashboard"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestDashboard> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestDashboard) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestDashboard.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestDashboard.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestDashboard.pos);
         }, registryFriendlyByteBuf -> new RequestDashboard((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos()));
 
@@ -865,7 +865,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<DashboardSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("dashboard_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, DashboardSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, dashboardSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)dashboardSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, dashboardSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(dashboardSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)dashboardSnapshot.status);
             registryFriendlyByteBuf.writeVarInt(dashboardSnapshot.entries.size());
@@ -883,7 +883,7 @@ public final class MonitorNetwork {
         });
 
         public DashboardSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(24, list.size())));
+            entries = List.copyOf(entries.subList(0, Math.min(24, entries.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -895,11 +895,11 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<UpdateDashboardPin> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("update_dashboard_pin"));
         public static final StreamCodec<RegistryFriendlyByteBuf, UpdateDashboardPin> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, updateDashboardPin) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)updateDashboardPin.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, updateDashboardPin.dimension);
             registryFriendlyByteBuf.writeBlockPos(updateDashboardPin.pos);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.action);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.kind);
-            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)updateDashboardPin.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, updateDashboardPin.key);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.alarmMode);
             registryFriendlyByteBuf.writeLong(updateDashboardPin.threshold);
             registryFriendlyByteBuf.writeVarInt(updateDashboardPin.delaySeconds);
@@ -907,8 +907,8 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new UpdateDashboardPin((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (DashboardAction)registryFriendlyByteBuf.readEnum(DashboardAction.class), (EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong()));
 
         public UpdateDashboardPin {
-            n = Math.max(0, Math.min(3600, n));
-            l2 = Math.max(0L, l2);
+            delaySeconds = Math.max(0, Math.min(3600, delaySeconds));
+            hysteresis = Math.max(0L, hysteresis);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -920,7 +920,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestNetworkMap> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_network_map"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestNetworkMap> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestNetworkMap) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestNetworkMap.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestNetworkMap.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestNetworkMap.pos);
         }, registryFriendlyByteBuf -> new RequestNetworkMap((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos()));
 
@@ -933,7 +933,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<NetworkMapPayload> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("network_map_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, NetworkMapPayload> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, networkMapPayload) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)networkMapPayload.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, networkMapPayload.dimension);
             registryFriendlyByteBuf.writeBlockPos(networkMapPayload.pos);
             registryFriendlyByteBuf.writeEnum((Enum)networkMapPayload.status);
             registryFriendlyByteBuf.writeBoolean(networkMapPayload.truncated);
@@ -953,7 +953,7 @@ public final class MonitorNetwork {
         });
 
         public NetworkMapPayload {
-            list = List.copyOf(list.subList(0, Math.min(4096, list.size())));
+            nodes = List.copyOf(nodes.subList(0, Math.min(4096, nodes.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -1021,7 +1021,7 @@ public final class MonitorNetwork {
 
     public record DeviceGroup(AEItemKey visual, String name, int count, int active, int missingChannel, int unpowered, int booting, int assignedChannels, double idlePower, int locatableDevices) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.visual);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.visual);
             registryFriendlyByteBuf.writeUtf(this.name, 96);
             registryFriendlyByteBuf.writeVarInt(this.count);
             registryFriendlyByteBuf.writeVarInt(this.active);
@@ -1034,7 +1034,7 @@ public final class MonitorNetwork {
         }
 
         private static DeviceGroup read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey aEKey = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
+            AEKey aEKey = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
             if (!(aEKey instanceof AEItemKey)) {
                 throw new IllegalArgumentException("Channel device visual is not an item key");
             }
@@ -1167,7 +1167,7 @@ public final class MonitorNetwork {
     public record Entry(EntryKind kind, AEKey key, long stored, long currentPerMinute, long averagePerMinute, long secondsSinceChange, boolean infinite, boolean alarmActive) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeEnum((Enum)this.kind);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.key);
             registryFriendlyByteBuf.writeVarLong(this.stored);
             registryFriendlyByteBuf.writeLong(this.currentPerMinute);
             registryFriendlyByteBuf.writeLong(this.averagePerMinute);
@@ -1177,14 +1177,14 @@ public final class MonitorNetwork {
         }
 
         private static Entry read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new Entry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), registryFriendlyByteBuf.readBoolean());
+            return new Entry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), registryFriendlyByteBuf.readBoolean());
         }
     }
 
     public record ComponentGroup(AEItemKey baseKey, AEItemKey representativeKey, long totalAmount, int variants, boolean infinite) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.baseKey);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.representativeKey);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.baseKey);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.representativeKey);
             registryFriendlyByteBuf.writeVarLong(this.totalAmount);
             registryFriendlyByteBuf.writeVarInt(this.variants);
             registryFriendlyByteBuf.writeBoolean(this.infinite);
@@ -1195,8 +1195,8 @@ public final class MonitorNetwork {
             AEKey aEKey;
             block3: {
                 block2: {
-                    AEKey aEKey2 = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
-                    aEKey = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
+                    AEKey aEKey2 = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
+                    aEKey = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
                     if (!(aEKey2 instanceof AEItemKey)) break block2;
                     aEItemKey = (AEItemKey)aEKey2;
                     if (aEKey instanceof AEItemKey) break block3;
@@ -1211,7 +1211,7 @@ public final class MonitorNetwork {
     public record DashboardEntry(EntryKind kind, AEKey key, long stored, long currentPerMinute, long averagePerMinute, long secondsSinceChange, boolean infinite, ProductionMonitorBlockEntity.AlarmMode alarmMode, long threshold, int delaySeconds, long hysteresis, ProductionMonitorBlockEntity.AlarmState alarmState) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeEnum((Enum)this.kind);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.key);
             registryFriendlyByteBuf.writeVarLong(this.stored);
             registryFriendlyByteBuf.writeLong(this.currentPerMinute);
             registryFriendlyByteBuf.writeLong(this.averagePerMinute);
@@ -1225,7 +1225,7 @@ public final class MonitorNetwork {
         }
 
         private static DashboardEntry read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new DashboardEntry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong(), (ProductionMonitorBlockEntity.AlarmState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmState.class));
+            return new DashboardEntry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong(), (ProductionMonitorBlockEntity.AlarmState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmState.class));
         }
     }
 
@@ -1233,7 +1233,7 @@ public final class MonitorNetwork {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeBlockPos(this.pos);
             registryFriendlyByteBuf.writeVarInt(this.blockStateId);
-            ResourceLocation.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.visualId);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, this.visualId);
             registryFriendlyByteBuf.writeUtf(this.name, 128);
             registryFriendlyByteBuf.writeEnum((Enum)this.state);
             registryFriendlyByteBuf.writeVarInt(this.channels);
@@ -1244,7 +1244,7 @@ public final class MonitorNetwork {
         }
 
         private static MapNode read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new MapNode(registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(128), (ProductionMonitorBlockEntity.MapNodeState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapNodeState.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readDouble(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.MapRenderKind)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapRenderKind.class), registryFriendlyByteBuf.readByte());
+            return new MapNode(registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(128), (ProductionMonitorBlockEntity.MapNodeState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapNodeState.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readDouble(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.MapRenderKind)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapRenderKind.class), registryFriendlyByteBuf.readByte());
         }
 
         private static MapNode from(ProductionMonitorBlockEntity.NetworkMapNode networkMapNode) {

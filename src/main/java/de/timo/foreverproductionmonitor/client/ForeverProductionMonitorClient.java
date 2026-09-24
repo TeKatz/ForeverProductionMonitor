@@ -61,7 +61,7 @@ public final class ForeverProductionMonitorClient {
         iEventBus.addListener(ForeverProductionMonitorClient::registerGuiLayers);
         NeoForge.EVENT_BUS.addListener(ForeverProductionMonitorClient::clientTick);
         NeoForge.EVENT_BUS.addListener(DeviceLocator::render);
-        modContainer2.registerExtensionPoint(IConfigScreenFactory.class, (IExtensionPoint)((IConfigScreenFactory)(modContainer, screen) -> new ProductionMonitorThemeScreen(screen)));
+        modContainer2.registerExtensionPoint(IConfigScreenFactory.class, (modContainer, screen) -> new ProductionMonitorThemeScreen(screen));
     }
 
     private static void registerKeys(RegisterKeyMappingsEvent registerKeyMappingsEvent) {
@@ -114,4 +114,3 @@ public final class ForeverProductionMonitorClient {
         ClientMonitorState.clearHud();
     }
 }
-

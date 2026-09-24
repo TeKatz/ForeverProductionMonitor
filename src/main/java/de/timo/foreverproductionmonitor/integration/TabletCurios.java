@@ -34,7 +34,7 @@ public final class TabletCurios {
                 return Optional.empty();
             }
             Predicate<ItemStack> predicate = stack -> stack.is((Item)ModContent.PRODUCTION_TABLET.get());
-            Optional result = (Optional)FIND_FIRST_CURIO.invoke(inventory.get(), predicate);
+            Optional<?> result = (Optional<?>)FIND_FIRST_CURIO.invoke(inventory.get(), predicate);
             return result.map(slot -> {
                 try {
                     return (ItemStack)SLOT_RESULT_STACK.invoke(slot, new Object[0]);
@@ -69,4 +69,3 @@ public final class TabletCurios {
         }
     }
 }
-
