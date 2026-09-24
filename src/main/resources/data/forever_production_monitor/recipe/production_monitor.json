@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["GCG", "FRF", "GCG"],
+  "key": {
+    "G": { "item": "ae2:quartz_glass" },
+    "C": { "item": "ae2:fluix_glass_cable" },
+    "F": { "item": "ae2:fluix_crystal" },
+    "R": { "item": "ae2:calculation_processor" }
+  },
+  "result": { "id": "forever_production_monitor:production_monitor", "count": 1 }
+}

@@ -1,0 +1,261 @@
+{
+  "block.forever_production_monitor.production_monitor": "ME Production Monitor",
+  "item.forever_production_monitor.production_tablet": "Production Tablet",
+  "message.forever_production_monitor.linked": "Tablet linked to monitor at %s",
+  "message.forever_production_monitor.not_linked": "This tablet is not linked. Use it on an ME Production Monitor.",
+  "message.forever_production_monitor.no_equipped_tablet": "Equip a linked Production Tablet in its Curios slot first.",
+  "message.forever_production_monitor.use_tablet": "Use a Production Tablet on this monitor to link it.",
+  "tooltip.forever_production_monitor.linked_dimension": "Network: %s",
+  "tooltip.forever_production_monitor.linked_position": "Monitor: %s",
+  "tooltip.forever_production_monitor.unlinked": "Unlinked — use on an ME Production Monitor",
+  "screen.forever_production_monitor.title": "Forever Production Monitor",
+  "screen.forever_production_monitor.search": "Search items, fluids and energy…",
+  "screen.forever_production_monitor.search.components": "Search NBT items…",
+  "screen.forever_production_monitor.search.map": "Search devices and blocks…",
+  "screen.forever_production_monitor.search.devices": "Search channel devices…",
+  "screen.forever_production_monitor.sort.activity": "Sort: Activity",
+  "screen.forever_production_monitor.sort.stored": "Sort: Stored",
+  "screen.forever_production_monitor.sort.name": "Sort: Name",
+  "screen.forever_production_monitor.sort.fluids": "Sort: Fluids only",
+  "screen.forever_production_monitor.item": "Item / Fluid / Energy",
+  "screen.forever_production_monitor.energy": "FE Energy",
+  "screen.forever_production_monitor.energy_tooltip": "Stored AE network power converted to FE",
+  "screen.forever_production_monitor.stored": "Stored",
+  "screen.forever_production_monitor.rate": "Now",
+  "screen.forever_production_monitor.average": "1 min average",
+  "screen.forever_production_monitor.entries": "%s matching entries",
+  "screen.forever_production_monitor.infinite": "∞ Infinite",
+  "screen.forever_production_monitor.summary.items": "Items",
+  "screen.forever_production_monitor.summary.types": "Types",
+  "screen.forever_production_monitor.summary.incoming": "In",
+  "screen.forever_production_monitor.summary.outgoing": "Out",
+  "screen.forever_production_monitor.summary.net": "Net",
+  "screen.forever_production_monitor.loading": "Requesting network snapshot…",
+  "screen.forever_production_monitor.tab.production": "Production",
+  "screen.forever_production_monitor.tab.storage": "Storage Capacity",
+  "screen.forever_production_monitor.tab.components": "Component Items",
+  "screen.forever_production_monitor.tab.devices": "Channel Devices",
+  "screen.forever_production_monitor.storage.subtitle": "Physical AE cell capacity — external and infinite storage is listed separately",
+  "screen.forever_production_monitor.storage.bytes": "Cell byte utilization",
+  "screen.forever_production_monitor.storage.used": "Used bytes",
+  "screen.forever_production_monitor.storage.free": "Free bytes",
+  "screen.forever_production_monitor.storage.capacity": "Total capacity",
+  "screen.forever_production_monitor.storage.utilization": "Utilization",
+  "screen.forever_production_monitor.storage.types": "Type-slot utilization",
+  "screen.forever_production_monitor.storage.sources": "Storage sources",
+  "screen.forever_production_monitor.storage.finite_cells": "Measurable cells",
+  "screen.forever_production_monitor.storage.infinite_cells": "Creative / infinite",
+  "screen.forever_production_monitor.storage.other_cells": "Other cells",
+  "screen.forever_production_monitor.storage.external": "External buses",
+  "screen.forever_production_monitor.storage.note": "Capacity bars include measurable finite cells only.",
+  "screen.forever_production_monitor.components.item": "NBT item",
+  "screen.forever_production_monitor.storage.section.capacity": "Capacity",
+  "screen.forever_production_monitor.storage.section.nbt_items": "NBT Items",
+  "screen.forever_production_monitor.components.variants": "Variants",
+  "screen.forever_production_monitor.components.entries": "%s NBT item groups",
+  "screen.forever_production_monitor.components.grouped_hint": "%s groups — NBT/Data Component variants are combined by base item",
+  "screen.forever_production_monitor.components.tooltip.variants": "%s stored NBT variants",
+  "screen.forever_production_monitor.components.tooltip.grouped": "Representative variant shown; amounts are grouped by base item",
+  "screen.forever_production_monitor.device_sort.power": "Sort: Power",
+  "screen.forever_production_monitor.device_sort.count": "Sort: Count",
+  "screen.forever_production_monitor.device_sort.name": "Sort: Name",
+  "screen.forever_production_monitor.device_sort.problems": "Sort: Problems",
+  "screen.forever_production_monitor.device_filter.all": "Filter: All",
+  "screen.forever_production_monitor.device_filter.active": "Filter: Active",
+  "screen.forever_production_monitor.device_filter.missing_channel": "Filter: No Channel",
+  "screen.forever_production_monitor.device_filter.unpowered": "Filter: Unpowered",
+  "screen.forever_production_monitor.devices.device": "Channel device",
+  "screen.forever_production_monitor.devices.count": "Count",
+  "screen.forever_production_monitor.devices.channels": "Channels",
+  "screen.forever_production_monitor.devices.idle_power": "Idle power",
+  "screen.forever_production_monitor.devices.status": "Status",
+  "screen.forever_production_monitor.devices.entries": "%s matching device groups",
+  "screen.forever_production_monitor.devices.unresolved": "· %s channel node not grouped",
+  "screen.forever_production_monitor.devices.locate": "Locate missing-channel device (%s)",
+  "screen.forever_production_monitor.devices.status.active": "%s Active",
+  "screen.forever_production_monitor.devices.status.missing": "%s No channel",
+  "screen.forever_production_monitor.devices.status.unpowered": "%s Unpowered",
+  "screen.forever_production_monitor.devices.status.booting": "%s Booting",
+  "screen.forever_production_monitor.devices.tooltip.count": "%s devices in this group",
+  "screen.forever_production_monitor.devices.tooltip.channels": "%s channels assigned",
+  "screen.forever_production_monitor.devices.tooltip.power": "%s total passive power",
+  "screen.forever_production_monitor.devices.tooltip.per_device": "%s average per device",
+  "screen.forever_production_monitor.devices.tooltip.states": "Active %s · No channel %s · Unpowered %s · Booting %s",
+  "screen.forever_production_monitor.devices.summary.devices": "Devices",
+  "screen.forever_production_monitor.devices.summary.channels": "Channels",
+  "screen.forever_production_monitor.devices.summary.idle": "Idle",
+  "screen.forever_production_monitor.devices.summary.missing": "Missing",
+  "screen.forever_production_monitor.devices.summary.unpowered": "No power",
+  "screen.forever_production_monitor.status.online": "● Online",
+  "screen.forever_production_monitor.status.warming_up": "● Warming up",
+  "screen.forever_production_monitor.status.network_offline": "● Network offline",
+  "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor chunk unloaded",
+  "screen.forever_production_monitor.status.monitor_missing": "● Monitor missing",
+  "screen.forever_production_monitor.status.invalid_link": "● Invalid tablet link"
+  ,"message.forever_production_monitor.locator.found": "%s marked at %s, %s, %s (%s/%s)"
+  ,"message.forever_production_monitor.locator.unavailable": "No loaded location found for %s"
+  ,"message.forever_production_monitor.locator.wrong_dimension": "%s is in %s at %s, %s, %s. Travel to that dimension to locate it."
+  ,"key.forever_production_monitor.open_tablet": "Open Production Tablet"
+  ,"key.categories.forever_production_monitor": "Forever Production Monitor"
+  ,"curios.identifier.production_tablet": "Production Tablet"
+  ,"hud.forever_production_monitor.mode.activity": "Top Activity"
+  ,"hud.forever_production_monitor.mode.stored": "Top Stored"
+  ,"hud.forever_production_monitor.mode.incoming": "Top Incoming"
+  ,"hud.forever_production_monitor.mode.outgoing": "Top Outgoing"
+  ,"hud.forever_production_monitor.mode.fluids": "Top Fluids"
+  ,"hud.forever_production_monitor.mode.energy": "FE Energy"
+  ,"hud.forever_production_monitor.infinite": "Infinite"
+  ,"config.forever_production_monitor.title": "Production Monitor HUD"
+  ,"config.forever_production_monitor.hint": "The live preview follows your selected screen position"
+  ,"config.forever_production_monitor.enabled": "HUD: %s"
+  ,"config.forever_production_monitor.anchor": "Position: %s"
+  ,"config.forever_production_monitor.anchor.top_left": "Top Left"
+  ,"config.forever_production_monitor.anchor.top_right": "Top Right"
+  ,"config.forever_production_monitor.anchor.bottom_left": "Bottom Left"
+  ,"config.forever_production_monitor.anchor.bottom_right": "Bottom Right"
+  ,"config.forever_production_monitor.mode": "Display: %s"
+  ,"config.forever_production_monitor.scale": "Scale: %s"
+  ,"config.forever_production_monitor.opacity": "Opacity: %s"
+  ,"config.forever_production_monitor.x_offset": "X Offset: %s"
+  ,"config.forever_production_monitor.y_offset": "Y Offset: %s"
+  ,"config.forever_production_monitor.frame": "Frame: %s"
+  ,"config.forever_production_monitor.frame.none": "No Frame"
+  ,"config.forever_production_monitor.frame.oritech": "Oritech Theme"
+  ,"config.forever_production_monitor.frame.ae2": "AE2 Theme"
+  ,"config.forever_production_monitor.frame.forever": "Forever Theme"
+  ,"config.forever_production_monitor.frame.standard": "Standard Frame"
+  ,"config.forever_production_monitor.frame.custom": "Custom"
+  ,"config.forever_production_monitor.custom_hue": "Custom Color: %s°"
+  ,"config.forever_production_monitor.rate_unit": "Rate Unit: %s"
+  ,"config.forever_production_monitor.refresh": "Refresh: %s"
+  ,"config.forever_production_monitor.refresh.one_second": "Every second"
+  ,"config.forever_production_monitor.refresh.two_seconds": "Every 2 seconds"
+  ,"config.forever_production_monitor.refresh.five_seconds": "Every 5 seconds"
+  ,"config.forever_production_monitor.reset": "Reset"
+  ,"screen.forever_production_monitor.theme.open": "Appearance settings"
+  ,"screen.forever_production_monitor.theme.title": "Production Monitor Appearance"
+  ,"screen.forever_production_monitor.theme.subtitle": "Choose a dashboard theme — changes are previewed live"
+  ,"screen.forever_production_monitor.theme.preview": "Forever Production Monitor"
+  ,"screen.forever_production_monitor.theme.standard": "Standard"
+  ,"screen.forever_production_monitor.theme.forever": "Forever"
+  ,"screen.forever_production_monitor.theme.ae2": "AE2"
+  ,"screen.forever_production_monitor.theme.oritech": "Oritech"
+  ,"screen.forever_production_monitor.theme.minimal": "Minimal"
+  ,"screen.forever_production_monitor.theme.custom": "Custom"
+  ,"screen.forever_production_monitor.theme.hue": "Custom accent: %s°"
+  ,"screen.forever_production_monitor.theme.match_hud": "Match compact HUD: %s"
+  ,"screen.forever_production_monitor.tab.dashboard": "Dashboard"
+  ,"screen.forever_production_monitor.dashboard.pinned": "Pinned resource"
+  ,"screen.forever_production_monitor.dashboard.alarm": "Alarm"
+  ,"screen.forever_production_monitor.dashboard.empty": "No resources pinned yet"
+  ,"screen.forever_production_monitor.dashboard.empty_hint": "Open Production and click ◇ to pin an entry"
+  ,"screen.forever_production_monitor.dashboard.summary": "%s pinned · %s active alarms"
+  ,"screen.forever_production_monitor.alarm.none": "No alarm"
+  ,"screen.forever_production_monitor.alarm.amount_below": "Amount below"
+  ,"screen.forever_production_monitor.alarm.amount_above": "Amount above"
+  ,"screen.forever_production_monitor.alarm.rate_below": "Rate below"
+  ,"screen.forever_production_monitor.alarm.rate_above": "Rate above"
+  ,"screen.forever_production_monitor.alarm.stalled": "Stalled"
+  ,"screen.forever_production_monitor.alarm_editor.title": "Dashboard Alarm"
+  ,"screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s"
+  ,"screen.forever_production_monitor.alarm_editor.threshold": "Threshold"
+  ,"screen.forever_production_monitor.alarm_editor.delay": "Trigger delay: %s seconds"
+  ,"screen.forever_production_monitor.alarm_editor.delay_label": "Delay and anti-flapping"
+  ,"screen.forever_production_monitor.alarm_editor.hysteresis": "Hysteresis"
+  ,"screen.forever_production_monitor.alarm_editor.disabled": "This pin is displayed without an alarm."
+  ,"screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm when this resource does not change for the selected delay."
+  ,"screen.forever_production_monitor.alarm_editor.save": "Save Rule"
+  ,"message.forever_production_monitor.alarm": "Production alarm: %s"
+  ,"hud.forever_production_monitor.mode.pinned": "Pinned Dashboard"
+  ,"screen.forever_production_monitor.tab.map": "Network Map"
+  ,"screen.forever_production_monitor.map.loading": "Scanning ME network..."
+  ,"screen.forever_production_monitor.map.empty": "No physical network nodes found"
+  ,"screen.forever_production_monitor.map.controls": "Drag rotate  ·  RMB move  ·  Wheel zoom  ·  Click select  ·  Double-click focus  ·  R reset"
+  ,"screen.forever_production_monitor.map.controls.navigation": "Drag: rotate  ·  RMB: move  ·  Wheel: zoom"
+  ,"screen.forever_production_monitor.map.controls.selection": "Click: select  ·  Double-click: focus  ·  R: reset"
+  ,"screen.forever_production_monitor.map.view.fit": "Fit"
+  ,"screen.forever_production_monitor.map.view.iso": "Iso"
+  ,"screen.forever_production_monitor.map.view.top": "Top"
+  ,"screen.forever_production_monitor.map.view.front": "Front"
+  ,"screen.forever_production_monitor.map.truncated": "Large network: showing the first 4,096 blocks"
+  ,"screen.forever_production_monitor.map.details": "Selected block"
+  ,"screen.forever_production_monitor.map.blocks": "%s network blocks"
+  ,"screen.forever_production_monitor.map.select_hint": "Click a block in the 3D view to inspect it."
+  ,"screen.forever_production_monitor.map.position": "Position"
+  ,"screen.forever_production_monitor.map.state": "Network state"
+  ,"screen.forever_production_monitor.map.channels": "Channels"
+  ,"screen.forever_production_monitor.map.power": "Idle power"
+  ,"screen.forever_production_monitor.map.state.connected": "Connected"
+  ,"screen.forever_production_monitor.map.state.active": "Active"
+  ,"screen.forever_production_monitor.map.state.missing_channel": "Missing channel"
+  ,"screen.forever_production_monitor.map.state.unpowered": "Unpowered"
+  ,"screen.forever_production_monitor.map.state.booting": "Booting"
+  ,"screen.forever_production_monitor.theme.map_rotation": "Map rotation: %s"
+  ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
+  ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Inverted"
+  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
+  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
+  ,"screen.forever_production_monitor.theme.holographic": "Holographic"
+  ,"screen.forever_production_monitor.theme.monochrome": "Monochrome"
+  ,"screen.forever_production_monitor.settings.title": "Production Monitor Settings"
+  ,"screen.forever_production_monitor.settings.category.general": "General"
+  ,"screen.forever_production_monitor.settings.category.interface": "Interface"
+  ,"screen.forever_production_monitor.settings.category.map": "Network Map"
+  ,"screen.forever_production_monitor.settings.category.hud": "Mini HUD"
+  ,"screen.forever_production_monitor.settings.default_tab": "Default tab: %s"
+  ,"screen.forever_production_monitor.settings.remember_tab": "Remember last tab: %s"
+  ,"screen.forever_production_monitor.settings.rate": "Rate unit: %s"
+  ,"screen.forever_production_monitor.settings.refresh": "Refresh: %s"
+  ,"screen.forever_production_monitor.settings.custom.primary": "Primary accent: %s°"
+  ,"screen.forever_production_monitor.settings.custom.secondary": "Secondary accent: %s°"
+  ,"screen.forever_production_monitor.settings.custom.brightness": "Surface brightness: %s"
+  ,"screen.forever_production_monitor.settings.interface.opacity": "Interface opacity: %s"
+  ,"screen.forever_production_monitor.settings.map.default_view": "Default view: %s"
+  ,"screen.forever_production_monitor.settings.map.view.iso": "Isometric"
+  ,"screen.forever_production_monitor.settings.map.view.top": "Top"
+  ,"screen.forever_production_monitor.settings.map.view.front": "Front"
+  ,"screen.forever_production_monitor.settings.map.remember": "Remember camera: %s"
+  ,"screen.forever_production_monitor.settings.map.rotation": "Rotation sensitivity: %s"
+  ,"screen.forever_production_monitor.settings.map.pan": "Pan sensitivity: %s"
+  ,"screen.forever_production_monitor.settings.map.zoom": "Zoom sensitivity: %s"
+  ,"screen.forever_production_monitor.settings.map.focus_zoom": "Focus zoom: %s"
+  ,"screen.forever_production_monitor.settings.map.invert_horizontal": "Invert horizontal: %s"
+  ,"screen.forever_production_monitor.settings.map.invert_vertical": "Invert vertical: %s"
+  ,"screen.forever_production_monitor.settings.map.cables": "Show cables: %s"
+  ,"screen.forever_production_monitor.settings.map.parts": "Show buses and parts: %s"
+  ,"screen.forever_production_monitor.settings.map.inactive": "Show inactive nodes: %s"
+  ,"screen.forever_production_monitor.settings.map.controls": "Show control help: %s"
+  ,"screen.forever_production_monitor.settings.map.view_buttons": "Show view shortcuts: %s"
+  ,"screen.forever_production_monitor.settings.map.details": "Show details panel: %s"
+  ,"screen.forever_production_monitor.settings.hud.enabled": "HUD enabled: %s"
+  ,"screen.forever_production_monitor.settings.hud.anchor": "Position: %s"
+  ,"screen.forever_production_monitor.settings.hud.mode": "Display: %s"
+  ,"screen.forever_production_monitor.settings.hud.frame": "Frame: %s"
+  ,"screen.forever_production_monitor.settings.hud.match": "Match interface theme: %s"
+  ,"screen.forever_production_monitor.settings.hud.entries": "Rows: %s"
+  ,"screen.forever_production_monitor.settings.hud.icons": "Icons: %s"
+  ,"screen.forever_production_monitor.settings.hud.names": "Names: %s"
+  ,"screen.forever_production_monitor.settings.hud.values": "Values: %s"
+  ,"screen.forever_production_monitor.settings.hud.scale": "Scale: %s"
+  ,"screen.forever_production_monitor.settings.hud.opacity": "Opacity: %s"
+  ,"screen.forever_production_monitor.settings.hud.hue": "Custom hue: %s°"
+  ,"screen.forever_production_monitor.settings.hud.x": "X offset: %s"
+  ,"screen.forever_production_monitor.settings.hud.y": "Y offset: %s"
+  ,"screen.forever_production_monitor.map.filter.all": "All"
+  ,"screen.forever_production_monitor.map.filter.devices": "Devices"
+  ,"screen.forever_production_monitor.map.filter.cables": "Cables"
+  ,"screen.forever_production_monitor.map.filter.parts": "Parts"
+  ,"screen.forever_production_monitor.map.filter.errors": "Errors"
+  ,"screen.forever_production_monitor.map.heatmap": "Heatmap"
+  ,"screen.forever_production_monitor.map.events": "Events"
+  ,"screen.forever_production_monitor.map.bookmark_hint": "Left click: load · Right click: save"
+  ,"screen.forever_production_monitor.map.event_log": "Network events"
+  ,"screen.forever_production_monitor.map.event_log.empty": "No network changes recorded in this session."
+  ,"screen.forever_production_monitor.map.event.added": "Device connected"
+  ,"screen.forever_production_monitor.map.event.removed": "Device removed"
+  ,"screen.forever_production_monitor.map.event.channel_lost": "Channel lost"
+  ,"screen.forever_production_monitor.map.event.channel_restored": "Channel restored"
+  ,"screen.forever_production_monitor.map.event.power_lost": "Power lost"
+  ,"screen.forever_production_monitor.map.event.power_restored": "Power restored"
+  ,"screen.forever_production_monitor.map.event.state_changed": "State changed"
+}

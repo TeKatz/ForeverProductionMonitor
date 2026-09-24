@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "forever_production_monitor:block/production_monitor"
+  }
+}
