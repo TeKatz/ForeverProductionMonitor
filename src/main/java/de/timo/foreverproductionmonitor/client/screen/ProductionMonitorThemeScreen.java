@@ -103,7 +103,7 @@ extends Screen {
         ClientConfig.InterfaceStyle[] interfaceStyleArray = ClientConfig.InterfaceStyle.values();
         for (n3 = 0; n3 < interfaceStyleArray.length; ++n3) {
             ClientConfig.InterfaceStyle style = interfaceStyleArray[n3];
-            this.addRenderableWidget(ForeverButton.create(ProductionMonitorThemeScreen.themeName(style), button -> this.lambda$buildInterface$7(style, button), style == ClientConfig.VALUES.interfaceStyle.get() ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED, n + n3 % 5 * (n5 + n4), this.contentTop + n3 / 5 * 24, n5, 20));
+            this.addRenderableWidget(ForeverButton.create(ProductionMonitorThemeScreen.themeName(style), button -> this.selectInterfaceStyle(style, button), style == ClientConfig.VALUES.interfaceStyle.get() ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED, n + n3 % 5 * (n5 + n4), this.contentTop + n3 / 5 * 24, n5, 20));
         }
         boolean customActive = ClientConfig.VALUES.interfaceStyle.get() == ClientConfig.InterfaceStyle.CUSTOM;
         SettingSlider primary = new SettingSlider(n, this.contentTop + 52, n2, "settings.custom.primary", 0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomHue.get()).intValue(), d -> ClientConfig.VALUES.interfaceCustomHue.set(((int)Math.round(d))), false);
@@ -351,7 +351,7 @@ extends Screen {
         return ProductionMonitorThemeScreen.translated("settings.hud.frame", Component.translatable((String)("config.forever_production_monitor.frame." + ProductionMonitorThemeScreen.lower((Enum)ClientConfig.VALUES.hudFrameStyle.get()))));
     }
 
-    private /* synthetic */ void lambda$buildInterface$7(ClientConfig.InterfaceStyle interfaceStyle, Button button) {
+    private /* synthetic */ void selectInterfaceStyle(ClientConfig.InterfaceStyle interfaceStyle, Button button) {
         ClientConfig.VALUES.interfaceStyle.set(interfaceStyle);
         this.rebuildWidgets();
     }
