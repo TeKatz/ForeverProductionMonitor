@@ -104,7 +104,7 @@ public final class MonitorNetwork {
     }
 
     public static void requestLocate(ProductionTabletItem.MonitorLink monitorLink, DeviceGroup deviceGroup, int n) {
-        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey((Object)deviceGroup.visual().getItem());
+        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey(deviceGroup.visual().getItem());
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestLocateDevice(monitorLink.dimension(), monitorLink.pos(), resourceLocation, deviceGroup.name(), Math.max(0, n)), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
@@ -144,7 +144,7 @@ public final class MonitorNetwork {
             PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new DashboardSnapshot(requestDashboard.dimension(), requestDashboard.pos(), object == null ? Status.MONITOR_MISSING : Status.NETWORK_OFFLINE, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
         }
-        ServerLevel serverLevel = (ServerLevel)object.getLevel();
+        ServerLevel serverLevel = (ServerLevel)((ProductionMonitorBlockEntity)object).getLevel();
         List<DashboardEntry> list = ((ProductionMonitorBlockEntity)((Object)object)).dashboardSnapshot(serverLevel.getGameTime()).stream().map(dashboardEntrySnapshot -> new DashboardEntry(MonitorNetwork.fromDashboardKind(dashboardEntrySnapshot.kind()), dashboardEntrySnapshot.key(), dashboardEntrySnapshot.amount(), dashboardEntrySnapshot.currentPerMinute(), dashboardEntrySnapshot.averagePerMinute(), dashboardEntrySnapshot.secondsSinceChange(), dashboardEntrySnapshot.infinite(), dashboardEntrySnapshot.rule().mode(), dashboardEntrySnapshot.rule().threshold(), dashboardEntrySnapshot.rule().delaySeconds(), dashboardEntrySnapshot.rule().hysteresis(), dashboardEntrySnapshot.state())).toList();
         Status status = ((ProductionMonitorBlockEntity)((Object)object)).isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new DashboardSnapshot(requestDashboard.dimension(), requestDashboard.pos(), status, list), (CustomPacketPayload[])new CustomPacketPayload[0]);
@@ -229,12 +229,12 @@ public final class MonitorNetwork {
         if (!(player instanceof ServerPlayer) || !MonitorNetwork.hasMatchingTablet(serverPlayer = (ServerPlayer)player, requestLocateDevice.dimension(), requestLocateDevice.monitorPos())) {
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestLocateDevice.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestLocateDevice.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (!(serverLevel != null && serverLevel.hasChunkAt(requestLocateDevice.monitorPos()) && (object = serverLevel.getBlockEntity(requestLocateDevice.monitorPos())) instanceof ProductionMonitorBlockEntity && (productionMonitorBlockEntity = (ProductionMonitorBlockEntity)((Object)object)).isMonitorOnline())) {
             return;
         }
-        object = productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()).groups().stream().filter(deviceGroupSnapshot -> deviceGroupSnapshot.name().equals(requestLocateDevice.name())).filter(deviceGroupSnapshot -> BuiltInRegistries.ITEM.getKey((Object)deviceGroupSnapshot.visual().getItem()).equals((Object)requestLocateDevice.visualId())).findFirst().orElse(null);
+        object = productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()).groups().stream().filter(deviceGroupSnapshot -> deviceGroupSnapshot.name().equals(requestLocateDevice.name())).filter(deviceGroupSnapshot -> BuiltInRegistries.ITEM.getKey(deviceGroupSnapshot.visual().getItem()).equals((Object)requestLocateDevice.visualId())).findFirst().orElse(null);
         if (object == null || ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().isEmpty()) {
             PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)LocateDeviceResult.unavailable(requestLocateDevice.dimension(), requestLocateDevice.name()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
@@ -254,8 +254,8 @@ public final class MonitorNetwork {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.INVALID_LINK);
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestStatistics.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestStatistics.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (serverLevel == null || !serverLevel.hasChunkAt(requestStatistics.pos())) {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.CHUNK_UNLOADED);
             return;
@@ -270,14 +270,14 @@ public final class MonitorNetwork {
             MonitorNetwork.sendStatisticsOffline(serverPlayer, requestStatistics, Status.NETWORK_OFFLINE);
             return;
         }
-        Status status = object = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
+        Status status = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         if (requestStatistics.statisticsPage() == StatisticsPage.STORAGE) {
             StorageStats storageStats = StorageStats.from(productionMonitorBlockEntity.storageCapacitySnapshot());
-            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), (Status)((Object)object), StatisticsPage.STORAGE, 0, 1, 0, storageStats, List.of(), DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), status, StatisticsPage.STORAGE, 0, 1, 0, storageStats, List.of(), DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
         }
         if (requestStatistics.statisticsPage() == StatisticsPage.DEVICES) {
-            MonitorNetwork.sendDeviceStatistics(serverPlayer, requestStatistics, productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()), (Status)((Object)object));
+            MonitorNetwork.sendDeviceStatistics(serverPlayer, requestStatistics, productionMonitorBlockEntity.deviceSnapshot(serverLevel.getGameTime()), status);
             return;
         }
         String string = requestStatistics.search().strip().toLowerCase(Locale.ROOT);
@@ -289,14 +289,14 @@ public final class MonitorNetwork {
             if (snapshotEntry.amount() <= 0L || aEItemKey.getReadOnlyStack().getComponentsPatch().isEmpty()) continue;
             hashMap.computeIfAbsent(aEItemKey.getItem(), item -> new MutableComponentGroup(AEItemKey.of((ItemLike)item))).add(aEItemKey, snapshotEntry.amount(), MonitorNetwork.isInfinite((AEKey)aEItemKey, snapshotEntry.amount()));
         }
-        List<ComponentGroup> list = hashMap.values().stream().filter(mutableComponentGroup -> string.isEmpty() || mutableComponentGroup.matches(string)).map(MutableComponentGroup::finish).sorted(Comparator.comparingLong(componentGroup -> componentGroup.infinite() ? Long.MAX_VALUE : componentGroup.totalAmount()).reversed().thenComparing(componentGroup -> componentGroup.baseKey().getDisplayName().getString(), String.CASE_INSENSITIVE_ORDER)).toList();
+        List<ComponentGroup> list = hashMap.values().stream().filter(mutableComponentGroup -> string.isEmpty() || mutableComponentGroup.matches(string)).map(MutableComponentGroup::finish).sorted(Comparator.<ComponentGroup>comparingLong(componentGroup -> componentGroup.infinite() ? Long.MAX_VALUE : componentGroup.totalAmount()).reversed().thenComparing(componentGroup -> componentGroup.baseKey().getDisplayName().getString(), String.CASE_INSENSITIVE_ORDER)).toList();
         int n = Math.max(6, Math.min(18, requestStatistics.pageSize()));
         int n2 = Math.max(1, (list.size() + n - 1) / n);
         int n3 = Math.max(0, Math.min(requestStatistics.page(), n2 - 1));
         int n4 = n3 * n;
         int n5 = Math.min(list.size(), n4 + n);
         ArrayList<ComponentGroup> arrayList = new ArrayList<ComponentGroup>(list.subList(n4, n5));
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), (Status)((Object)object), StatisticsPage.COMPONENTS, n3, n2, list.size(), StorageStats.EMPTY, arrayList, DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new StatisticsSnapshot(requestStatistics.dimension(), requestStatistics.pos(), status, StatisticsPage.COMPONENTS, n3, n2, list.size(), StorageStats.EMPTY, arrayList, DeviceTotals.EMPTY, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static void sendDeviceStatistics(ServerPlayer serverPlayer, RequestStatistics requestStatistics, ProductionMonitorBlockEntity.DeviceSnapshot deviceSnapshot, Status status) {
@@ -309,7 +309,7 @@ public final class MonitorNetwork {
             case DeviceSort.NAME -> comparator;
             case DeviceSort.PROBLEMS -> Comparator.comparingInt(MonitorNetwork::deviceProblemCount).reversed().thenComparing(Comparator.comparingDouble(ProductionMonitorBlockEntity.DeviceGroupSnapshot::idlePower).reversed()).thenComparing(comparator);
         };
-        List<DeviceGroup> list = deviceSnapshot.groups().stream().filter(deviceGroupSnapshot -> string.isEmpty() || deviceGroupSnapshot.name().toLowerCase(Locale.ROOT).contains(string) || BuiltInRegistries.ITEM.getKey((Object)deviceGroupSnapshot.visual().getItem()).toString().toLowerCase(Locale.ROOT).contains(string)).filter(deviceGroupSnapshot -> MonitorNetwork.matchesDeviceFilter(deviceGroupSnapshot, requestStatistics.deviceFilter())).sorted(comparator2).map(DeviceGroup::from).toList();
+        List<DeviceGroup> list = deviceSnapshot.groups().stream().filter(deviceGroupSnapshot -> string.isEmpty() || deviceGroupSnapshot.name().toLowerCase(Locale.ROOT).contains(string) || BuiltInRegistries.ITEM.getKey(deviceGroupSnapshot.visual().getItem()).toString().toLowerCase(Locale.ROOT).contains(string)).filter(deviceGroupSnapshot -> MonitorNetwork.matchesDeviceFilter(deviceGroupSnapshot, requestStatistics.deviceFilter())).sorted(comparator2).map(DeviceGroup::from).toList();
         int n = Math.max(6, Math.min(18, requestStatistics.pageSize()));
         int n2 = Math.max(1, (list.size() + n - 1) / n);
         int n3 = Math.max(0, Math.min(requestStatistics.page(), n2 - 1));
@@ -376,12 +376,12 @@ public final class MonitorNetwork {
             object3 = productionMonitorBlockEntity.dashboardSnapshot(serverLevel.getGameTime()).stream().limit(requestHud.entryCount()).map(dashboardEntrySnapshot -> new Entry(MonitorNetwork.fromDashboardKind(dashboardEntrySnapshot.kind()), dashboardEntrySnapshot.key(), dashboardEntrySnapshot.amount(), dashboardEntrySnapshot.currentPerMinute(), dashboardEntrySnapshot.averagePerMinute(), dashboardEntrySnapshot.secondsSinceChange(), dashboardEntrySnapshot.infinite(), dashboardEntrySnapshot.state() == ProductionMonitorBlockEntity.AlarmState.ACTIVE)).toList();
         } else {
             object = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime()).stream().filter(displayEntry -> MonitorNetwork.hudFilter(requestHud.mode(), displayEntry)).sorted(MonitorNetwork.hudComparator(requestHud.mode())).limit(requestHud.entryCount()).toList();
-            object3 = new ArrayList(object.size());
-            Iterator iterator = object.iterator();
-            while (iterator.hasNext()) {
-                DisplayEntry displayEntry2 = (DisplayEntry)iterator.next();
-                object3.add(displayEntry2.toNetworkEntry());
+            List<DisplayEntry> entries = (List<DisplayEntry>)object;
+            List<Entry> hudEntries = new ArrayList<>(entries.size());
+            for (DisplayEntry displayEntry2 : entries) {
+                hudEntries.add(displayEntry2.toNetworkEntry());
             }
+            object3 = hudEntries;
         }
         object = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
         PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new HudSnapshot((Status)((Object)object), requestHud.mode(), (List<Entry>)object3), (CustomPacketPayload[])new CustomPacketPayload[0]);
@@ -436,8 +436,8 @@ public final class MonitorNetwork {
             default -> throw new IncompatibleClassChangeError();
             case HudMode.STORED -> Comparator.comparingLong(DisplayEntry::stored).reversed().thenComparing(comparator);
             case HudMode.INCOMING -> Comparator.comparingLong(DisplayEntry::averagePerMinute).reversed().thenComparing(comparator);
-            case HudMode.OUTGOING -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
-            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case HudMode.OUTGOING -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
         };
     }
 
@@ -452,8 +452,8 @@ public final class MonitorNetwork {
             MonitorNetwork.sendOffline(serverPlayer, requestSnapshot, Status.INVALID_LINK);
             return;
         }
-        player = ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)requestSnapshot.dimension());
-        ServerLevel serverLevel = serverPlayer.server.getLevel((ResourceKey)player);
+        ResourceKey<net.minecraft.world.level.Level> dimension = ResourceKey.create(Registries.DIMENSION, requestSnapshot.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(dimension);
         if (serverLevel == null || !serverLevel.hasChunkAt(requestSnapshot.pos())) {
             MonitorNetwork.sendOffline(serverPlayer, requestSnapshot, Status.CHUNK_UNLOADED);
             return;
@@ -469,15 +469,15 @@ public final class MonitorNetwork {
             return;
         }
         productionMonitorBlockEntity.requestSampleInterval(requestSnapshot.sampleIntervalTicks(), serverLevel.getGameTime());
-        object2 = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime());
+        List<DisplayEntry> displayEntries = MonitorNetwork.displaySnapshot(productionMonitorBlockEntity, serverLevel.getGameTime());
         long l = 0L;
         int n = 0;
         long l2 = 0L;
         long l3 = 0L;
         long l4 = 0L;
-        Object object3 = object2.iterator();
-        while (object3.hasNext()) {
-            object = (DisplayEntry)object3.next();
+        Iterator<DisplayEntry> iterator = displayEntries.iterator();
+        while (iterator.hasNext()) {
+            object = iterator.next();
             if (((DisplayEntry)object).kind() != EntryKind.ITEM || ((DisplayEntry)object).infinite()) continue;
             l = MonitorNetwork.saturatingAdd(l, Math.max(0L, ((DisplayEntry)object).stored()));
             if (((DisplayEntry)object).stored() > 0L) {
@@ -492,20 +492,20 @@ public final class MonitorNetwork {
             if (l5 >= 0L) continue;
             l3 = MonitorNetwork.saturatingAdd(l3, l5 == Long.MIN_VALUE ? Long.MAX_VALUE : -l5);
         }
-        object3 = requestSnapshot.search().strip().toLowerCase(Locale.ROOT);
-        object = object2.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(arg_0 -> MonitorNetwork.lambda$handleRequest$14((String)object3, arg_0)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
+        String search = requestSnapshot.search().strip().toLowerCase(Locale.ROOT);
+        List<DisplayEntry> sortedEntries = displayEntries.stream().filter(displayEntry -> requestSnapshot.sort() != SortMode.FLUIDS || displayEntry.kind() == EntryKind.FLUID).filter(entry -> MonitorNetwork.lambda$handleRequest$14(search, entry)).sorted(MonitorNetwork.comparator(requestSnapshot.sort())).toList();
         int n2 = Math.max(6, Math.min(18, requestSnapshot.pageSize()));
-        int n3 = Math.max(1, (object.size() + n2 - 1) / n2);
+        int n3 = Math.max(1, (sortedEntries.size() + n2 - 1) / n2);
         int n4 = Math.max(0, Math.min(requestSnapshot.page(), n3 - 1));
         int n5 = n4 * n2;
-        int n6 = Math.min(object.size(), n5 + n2);
+        int n6 = Math.min(sortedEntries.size(), n5 + n2);
         ArrayList<Entry> arrayList = new ArrayList<Entry>(Math.max(0, n6 - n5));
         for (int i = n5; i < n6; ++i) {
-            DisplayEntry displayEntry2 = (DisplayEntry)object.get(i);
+            DisplayEntry displayEntry2 = sortedEntries.get(i);
             arrayList.add(displayEntry2.toNetworkEntry());
         }
         Status status = productionMonitorBlockEntity.isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new MonitorSnapshot(requestSnapshot.dimension(), requestSnapshot.pos(), status, n4, n3, object.size(), l, n, l2, l3, l4, arrayList), (CustomPacketPayload[])new CustomPacketPayload[0]);
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new MonitorSnapshot(requestSnapshot.dimension(), requestSnapshot.pos(), status, n4, n3, sortedEntries.size(), l, n, l2, l3, l4, arrayList), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static Comparator<DisplayEntry> comparator(SortMode sortMode) {
@@ -515,8 +515,8 @@ public final class MonitorNetwork {
             default -> throw new IncompatibleClassChangeError();
             case SortMode.NAME -> comparator2.thenComparing(comparator);
             case SortMode.STORED -> comparator2.thenComparing(Comparator.comparingLong(DisplayEntry::stored).reversed()).thenComparing(comparator);
-            case SortMode.ACTIVITY -> comparator2.thenComparing(Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed()).thenComparing(comparator);
-            case SortMode.FLUIDS -> Comparator.comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case SortMode.ACTIVITY -> comparator2.thenComparing(Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed()).thenComparing(comparator);
+            case SortMode.FLUIDS -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
         };
     }
 
@@ -614,7 +614,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestSnapshot.pos);
             registryFriendlyByteBuf.writeUtf(requestSnapshot.search, 64);
             registryFriendlyByteBuf.writeEnum((Enum)requestSnapshot.sort);
