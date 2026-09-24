@@ -503,7 +503,7 @@ extends AENetworkedBlockEntity {
         int n2 = 0;
         int n3 = 0;
         int n4 = 0;
-        Set<IGridNode> set = Collections.newSetFromMap(new IdentityHashMap<IGridNode, Boolean>());
+        Set<Object> set = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
         for (Class clazz : iGrid.getMachineClasses()) {
             if (StorageBusPart.class.isAssignableFrom(clazz)) {
                 n4 += iGrid.getActiveMachines(clazz).size();

@@ -624,10 +624,10 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestSnapshot((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readUtf(64), (SortMode)registryFriendlyByteBuf.readEnum(SortMode.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public RequestSnapshot {
-            string = string == null ? "" : string.substring(0, Math.min(64, string.length()));
-            n = Math.max(0, n);
-            n2 = Math.max(6, Math.min(18, n2));
-            n3 = MonitorNetwork.clampSampleInterval(n3);
+            search = search == null ? "" : search.substring(0, Math.min(64, search.length()));
+            page = Math.max(0, page);
+            pageSize = Math.max(6, Math.min(18, pageSize));
+            sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -639,7 +639,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<MonitorSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("monitor_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, MonitorSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, monitorSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)monitorSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, monitorSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(monitorSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)monitorSnapshot.status);
             registryFriendlyByteBuf.writeVarInt(monitorSnapshot.page);
@@ -681,7 +681,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestStatistics> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_statistics"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestStatistics> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestStatistics) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestStatistics.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestStatistics.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestStatistics.pos);
             registryFriendlyByteBuf.writeEnum((Enum)requestStatistics.statisticsPage);
             registryFriendlyByteBuf.writeUtf(requestStatistics.search, 64);
@@ -692,9 +692,9 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestStatistics((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (StatisticsPage)registryFriendlyByteBuf.readEnum(StatisticsPage.class), registryFriendlyByteBuf.readUtf(64), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt(), (DeviceSort)registryFriendlyByteBuf.readEnum(DeviceSort.class), (DeviceFilter)registryFriendlyByteBuf.readEnum(DeviceFilter.class)));
 
         public RequestStatistics {
-            string = string == null ? "" : string.substring(0, Math.min(64, string.length()));
-            n = Math.max(0, n);
-            n2 = Math.max(6, Math.min(18, n2));
+            search = search == null ? "" : search.substring(0, Math.min(64, search.length()));
+            page = Math.max(0, page);
+            pageSize = Math.max(6, Math.min(18, pageSize));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -706,7 +706,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<StatisticsSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("statistics_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, StatisticsSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, statisticsSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)statisticsSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, statisticsSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(statisticsSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)statisticsSnapshot.status);
             registryFriendlyByteBuf.writeEnum((Enum)statisticsSnapshot.statisticsPage);
@@ -743,8 +743,8 @@ public final class MonitorNetwork {
         });
 
         public StatisticsSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(18, list.size())));
-            list2 = List.copyOf(list2.subList(0, Math.min(18, list2.size())));
+            componentGroups = List.copyOf(componentGroups.subList(0, Math.min(18, componentGroups.size())));
+            deviceGroups = List.copyOf(deviceGroups.subList(0, Math.min(18, deviceGroups.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -762,8 +762,8 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestHud((HudMode)registryFriendlyByteBuf.readEnum(HudMode.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public RequestHud {
-            n = MonitorNetwork.clampSampleInterval(n);
-            n2 = Math.max(1, Math.min(10, n2));
+            sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
+            entryCount = Math.max(1, Math.min(10, entryCount));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -791,7 +791,7 @@ public final class MonitorNetwork {
         });
 
         public HudSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(10, list.size())));
+            entries = List.copyOf(entries.subList(0, Math.min(10, entries.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -803,16 +803,16 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestLocateDevice> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_locate_device"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestLocateDevice> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestLocateDevice) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestLocateDevice.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestLocateDevice.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestLocateDevice.monitorPos);
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestLocateDevice.visualId);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestLocateDevice.visualId);
             registryFriendlyByteBuf.writeUtf(requestLocateDevice.name, 96);
             registryFriendlyByteBuf.writeVarInt(requestLocateDevice.index);
         }, registryFriendlyByteBuf -> new RequestLocateDevice((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(96), registryFriendlyByteBuf.readVarInt()));
 
         public RequestLocateDevice {
-            string = string == null ? "" : string.substring(0, Math.min(96, string.length()));
-            n = Math.max(0, n);
+            name = name == null ? "" : name.substring(0, Math.min(96, name.length()));
+            index = Math.max(0, index);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -825,7 +825,7 @@ public final class MonitorNetwork {
         public static final CustomPacketPayload.Type<LocateDeviceResult> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("locate_device_result"));
         public static final StreamCodec<RegistryFriendlyByteBuf, LocateDeviceResult> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, locateDeviceResult) -> {
             registryFriendlyByteBuf.writeBoolean(locateDeviceResult.found);
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)locateDeviceResult.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, locateDeviceResult.dimension);
             registryFriendlyByteBuf.writeBlockPos(locateDeviceResult.pos);
             registryFriendlyByteBuf.writeVarInt(locateDeviceResult.side + 1);
             registryFriendlyByteBuf.writeUtf(locateDeviceResult.name, 96);
@@ -834,9 +834,9 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new LocateDeviceResult(registryFriendlyByteBuf.readBoolean(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt() - 1, registryFriendlyByteBuf.readUtf(96), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public LocateDeviceResult {
-            string = string == null ? "" : string.substring(0, Math.min(96, string.length()));
-            n2 = Math.max(0, n2);
-            n3 = Math.max(0, n3);
+            name = name == null ? "" : name.substring(0, Math.min(96, name.length()));
+            index = Math.max(0, index);
+            total = Math.max(0, total);
         }
 
         public static LocateDeviceResult unavailable(ResourceLocation resourceLocation, String string) {
@@ -852,7 +852,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestDashboard> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_dashboard"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestDashboard> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestDashboard) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestDashboard.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestDashboard.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestDashboard.pos);
         }, registryFriendlyByteBuf -> new RequestDashboard((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos()));
 
@@ -865,7 +865,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<DashboardSnapshot> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("dashboard_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, DashboardSnapshot> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, dashboardSnapshot) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)dashboardSnapshot.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, dashboardSnapshot.dimension);
             registryFriendlyByteBuf.writeBlockPos(dashboardSnapshot.pos);
             registryFriendlyByteBuf.writeEnum((Enum)dashboardSnapshot.status);
             registryFriendlyByteBuf.writeVarInt(dashboardSnapshot.entries.size());
@@ -883,7 +883,7 @@ public final class MonitorNetwork {
         });
 
         public DashboardSnapshot {
-            list = List.copyOf(list.subList(0, Math.min(24, list.size())));
+            entries = List.copyOf(entries.subList(0, Math.min(24, entries.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -895,11 +895,11 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<UpdateDashboardPin> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("update_dashboard_pin"));
         public static final StreamCodec<RegistryFriendlyByteBuf, UpdateDashboardPin> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, updateDashboardPin) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)updateDashboardPin.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, updateDashboardPin.dimension);
             registryFriendlyByteBuf.writeBlockPos(updateDashboardPin.pos);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.action);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.kind);
-            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)updateDashboardPin.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, updateDashboardPin.key);
             registryFriendlyByteBuf.writeEnum((Enum)updateDashboardPin.alarmMode);
             registryFriendlyByteBuf.writeLong(updateDashboardPin.threshold);
             registryFriendlyByteBuf.writeVarInt(updateDashboardPin.delaySeconds);
@@ -907,8 +907,8 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new UpdateDashboardPin((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos(), (DashboardAction)registryFriendlyByteBuf.readEnum(DashboardAction.class), (EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong()));
 
         public UpdateDashboardPin {
-            n = Math.max(0, Math.min(3600, n));
-            l2 = Math.max(0L, l2);
+            delaySeconds = Math.max(0, Math.min(3600, delaySeconds));
+            hysteresis = Math.max(0L, hysteresis);
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -920,7 +920,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<RequestNetworkMap> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_network_map"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RequestNetworkMap> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestNetworkMap) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)requestNetworkMap.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestNetworkMap.dimension);
             registryFriendlyByteBuf.writeBlockPos(requestNetworkMap.pos);
         }, registryFriendlyByteBuf -> new RequestNetworkMap((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos()));
 
@@ -933,7 +933,7 @@ public final class MonitorNetwork {
     {
         public static final CustomPacketPayload.Type<NetworkMapPayload> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("network_map_snapshot"));
         public static final StreamCodec<RegistryFriendlyByteBuf, NetworkMapPayload> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, networkMapPayload) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, (Object)networkMapPayload.dimension);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, networkMapPayload.dimension);
             registryFriendlyByteBuf.writeBlockPos(networkMapPayload.pos);
             registryFriendlyByteBuf.writeEnum((Enum)networkMapPayload.status);
             registryFriendlyByteBuf.writeBoolean(networkMapPayload.truncated);
@@ -953,7 +953,7 @@ public final class MonitorNetwork {
         });
 
         public NetworkMapPayload {
-            list = List.copyOf(list.subList(0, Math.min(4096, list.size())));
+            nodes = List.copyOf(nodes.subList(0, Math.min(4096, nodes.size())));
         }
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -1021,7 +1021,7 @@ public final class MonitorNetwork {
 
     public record DeviceGroup(AEItemKey visual, String name, int count, int active, int missingChannel, int unpowered, int booting, int assignedChannels, double idlePower, int locatableDevices) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.visual);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.visual);
             registryFriendlyByteBuf.writeUtf(this.name, 96);
             registryFriendlyByteBuf.writeVarInt(this.count);
             registryFriendlyByteBuf.writeVarInt(this.active);
@@ -1034,7 +1034,7 @@ public final class MonitorNetwork {
         }
 
         private static DeviceGroup read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey aEKey = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
+            AEKey aEKey = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
             if (!(aEKey instanceof AEItemKey)) {
                 throw new IllegalArgumentException("Channel device visual is not an item key");
             }
@@ -1167,7 +1167,7 @@ public final class MonitorNetwork {
     public record Entry(EntryKind kind, AEKey key, long stored, long currentPerMinute, long averagePerMinute, long secondsSinceChange, boolean infinite, boolean alarmActive) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeEnum((Enum)this.kind);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.key);
             registryFriendlyByteBuf.writeVarLong(this.stored);
             registryFriendlyByteBuf.writeLong(this.currentPerMinute);
             registryFriendlyByteBuf.writeLong(this.averagePerMinute);
@@ -1177,14 +1177,14 @@ public final class MonitorNetwork {
         }
 
         private static Entry read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new Entry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), registryFriendlyByteBuf.readBoolean());
+            return new Entry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), registryFriendlyByteBuf.readBoolean());
         }
     }
 
     public record ComponentGroup(AEItemKey baseKey, AEItemKey representativeKey, long totalAmount, int variants, boolean infinite) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.baseKey);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.representativeKey);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.baseKey);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.representativeKey);
             registryFriendlyByteBuf.writeVarLong(this.totalAmount);
             registryFriendlyByteBuf.writeVarInt(this.variants);
             registryFriendlyByteBuf.writeBoolean(this.infinite);
@@ -1195,8 +1195,8 @@ public final class MonitorNetwork {
             AEKey aEKey;
             block3: {
                 block2: {
-                    AEKey aEKey2 = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
-                    aEKey = (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf);
+                    AEKey aEKey2 = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
+                    aEKey = (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf);
                     if (!(aEKey2 instanceof AEItemKey)) break block2;
                     aEItemKey = (AEItemKey)aEKey2;
                     if (aEKey instanceof AEItemKey) break block3;
@@ -1211,7 +1211,7 @@ public final class MonitorNetwork {
     public record DashboardEntry(EntryKind kind, AEKey key, long stored, long currentPerMinute, long averagePerMinute, long secondsSinceChange, boolean infinite, ProductionMonitorBlockEntity.AlarmMode alarmMode, long threshold, int delaySeconds, long hysteresis, ProductionMonitorBlockEntity.AlarmState alarmState) {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeEnum((Enum)this.kind);
-            AEKey.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.key);
+            AEKey.STREAM_CODEC.encode(registryFriendlyByteBuf, this.key);
             registryFriendlyByteBuf.writeVarLong(this.stored);
             registryFriendlyByteBuf.writeLong(this.currentPerMinute);
             registryFriendlyByteBuf.writeLong(this.averagePerMinute);
@@ -1225,7 +1225,7 @@ public final class MonitorNetwork {
         }
 
         private static DashboardEntry read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new DashboardEntry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong(), (ProductionMonitorBlockEntity.AlarmState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmState.class));
+            return new DashboardEntry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong(), (ProductionMonitorBlockEntity.AlarmState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmState.class));
         }
     }
 
@@ -1233,7 +1233,7 @@ public final class MonitorNetwork {
         private void write(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             registryFriendlyByteBuf.writeBlockPos(this.pos);
             registryFriendlyByteBuf.writeVarInt(this.blockStateId);
-            ResourceLocation.STREAM_CODEC.encode((Object)registryFriendlyByteBuf, (Object)this.visualId);
+            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, this.visualId);
             registryFriendlyByteBuf.writeUtf(this.name, 128);
             registryFriendlyByteBuf.writeEnum((Enum)this.state);
             registryFriendlyByteBuf.writeVarInt(this.channels);
@@ -1244,7 +1244,7 @@ public final class MonitorNetwork {
         }
 
         private static MapNode read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
-            return new MapNode(registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode((Object)registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(128), (ProductionMonitorBlockEntity.MapNodeState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapNodeState.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readDouble(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.MapRenderKind)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapRenderKind.class), registryFriendlyByteBuf.readByte());
+            return new MapNode(registryFriendlyByteBuf.readBlockPos(), registryFriendlyByteBuf.readVarInt(), (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readUtf(128), (ProductionMonitorBlockEntity.MapNodeState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapNodeState.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readDouble(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.MapRenderKind)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.MapRenderKind.class), registryFriendlyByteBuf.readByte());
         }
 
         private static MapNode from(ProductionMonitorBlockEntity.NetworkMapNode networkMapNode) {

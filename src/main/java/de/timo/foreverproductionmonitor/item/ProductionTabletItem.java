@@ -76,7 +76,7 @@ extends Item {
                 player.displayClientMessage((Component)Component.translatable((String)"message.forever_production_monitor.not_linked"), true);
             }
         }
-        return InteractionResultHolder.sidedSuccess((Object)stack, (boolean)level.isClientSide);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
@@ -114,4 +114,3 @@ extends Item {
     public record MonitorLink(ResourceLocation dimension, BlockPos pos) {
     }
 }
-
