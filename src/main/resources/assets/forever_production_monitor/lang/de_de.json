@@ -1,0 +1,261 @@
+{
+  "block.forever_production_monitor.production_monitor": "ME-Produktionsmonitor",
+  "item.forever_production_monitor.production_tablet": "Produktionstablet",
+  "message.forever_production_monitor.linked": "Tablet mit dem Monitor bei %s verbunden",
+  "message.forever_production_monitor.not_linked": "Dieses Tablet ist nicht verbunden. Benutze es an einem ME-Produktionsmonitor.",
+  "message.forever_production_monitor.no_equipped_tablet": "Rüste zuerst ein verbundenes Produktionstablet im Curios-Slot aus.",
+  "message.forever_production_monitor.use_tablet": "Benutze ein Produktionstablet an diesem Monitor, um es zu verbinden.",
+  "tooltip.forever_production_monitor.linked_dimension": "Netzwerk: %s",
+  "tooltip.forever_production_monitor.linked_position": "Monitor: %s",
+  "tooltip.forever_production_monitor.unlinked": "Nicht verbunden — an einem ME-Produktionsmonitor benutzen",
+  "screen.forever_production_monitor.title": "Forever Produktionsmonitor",
+  "screen.forever_production_monitor.search": "Items, Fluids und Energie suchen…",
+  "screen.forever_production_monitor.search.components": "NBT-Items suchen…",
+  "screen.forever_production_monitor.search.map": "Geräte und Blöcke suchen…",
+  "screen.forever_production_monitor.search.devices": "Channel-Geräte suchen…",
+  "screen.forever_production_monitor.sort.activity": "Sortierung: Aktivität",
+  "screen.forever_production_monitor.sort.stored": "Sortierung: Bestand",
+  "screen.forever_production_monitor.sort.name": "Sortierung: Name",
+  "screen.forever_production_monitor.sort.fluids": "Sortierung: Nur Fluids",
+  "screen.forever_production_monitor.item": "Item / Fluid / Energie",
+  "screen.forever_production_monitor.energy": "FE-Energie",
+  "screen.forever_production_monitor.energy_tooltip": "Gespeicherte AE-Netzwerkenergie, umgerechnet in FE",
+  "screen.forever_production_monitor.stored": "Bestand",
+  "screen.forever_production_monitor.rate": "Aktuell",
+  "screen.forever_production_monitor.average": "Ø 1 Minute",
+  "screen.forever_production_monitor.entries": "%s passende Einträge",
+  "screen.forever_production_monitor.infinite": "∞ Unendlich",
+  "screen.forever_production_monitor.summary.items": "Items",
+  "screen.forever_production_monitor.summary.types": "Typen",
+  "screen.forever_production_monitor.summary.incoming": "Eingang",
+  "screen.forever_production_monitor.summary.outgoing": "Ausgang",
+  "screen.forever_production_monitor.summary.net": "Netto",
+  "screen.forever_production_monitor.loading": "Netzwerkdaten werden abgerufen…",
+  "screen.forever_production_monitor.tab.production": "Produktion",
+  "screen.forever_production_monitor.tab.storage": "Speicherkapazität",
+  "screen.forever_production_monitor.tab.components": "Komponenten-Items",
+  "screen.forever_production_monitor.tab.devices": "Channel-Geräte",
+  "screen.forever_production_monitor.storage.subtitle": "Physische AE-Zellkapazität — externe und unendliche Speicher werden separat aufgeführt",
+  "screen.forever_production_monitor.storage.bytes": "Auslastung der Zell-Bytes",
+  "screen.forever_production_monitor.storage.used": "Belegte Bytes",
+  "screen.forever_production_monitor.storage.free": "Freie Bytes",
+  "screen.forever_production_monitor.storage.capacity": "Gesamtkapazität",
+  "screen.forever_production_monitor.storage.utilization": "Auslastung",
+  "screen.forever_production_monitor.storage.types": "Auslastung der Typ-Slots",
+  "screen.forever_production_monitor.storage.sources": "Speicherquellen",
+  "screen.forever_production_monitor.storage.finite_cells": "Messbare Zellen",
+  "screen.forever_production_monitor.storage.infinite_cells": "Kreativ / unendlich",
+  "screen.forever_production_monitor.storage.other_cells": "Andere Zellen",
+  "screen.forever_production_monitor.storage.external": "Externe Busse",
+  "screen.forever_production_monitor.storage.note": "Die Balken enthalten ausschließlich messbare endliche Zellen.",
+  "screen.forever_production_monitor.components.item": "NBT-Item",
+  "screen.forever_production_monitor.storage.section.capacity": "Kapazität",
+  "screen.forever_production_monitor.storage.section.nbt_items": "NBT-Items",
+  "screen.forever_production_monitor.components.variants": "Varianten",
+  "screen.forever_production_monitor.components.entries": "%s NBT-Item-Gruppen",
+  "screen.forever_production_monitor.components.grouped_hint": "%s Gruppen — NBT-/Data-Component-Varianten werden nach Basis-Item zusammengefasst",
+  "screen.forever_production_monitor.components.tooltip.variants": "%s gespeicherte NBT-Varianten",
+  "screen.forever_production_monitor.components.tooltip.grouped": "Repräsentative Variante; Mengen sind nach Basis-Item gruppiert",
+  "screen.forever_production_monitor.device_sort.power": "Sortierung: Energie",
+  "screen.forever_production_monitor.device_sort.count": "Sortierung: Anzahl",
+  "screen.forever_production_monitor.device_sort.name": "Sortierung: Name",
+  "screen.forever_production_monitor.device_sort.problems": "Sortierung: Probleme",
+  "screen.forever_production_monitor.device_filter.all": "Filter: Alle",
+  "screen.forever_production_monitor.device_filter.active": "Filter: Aktiv",
+  "screen.forever_production_monitor.device_filter.missing_channel": "Filter: Kein Channel",
+  "screen.forever_production_monitor.device_filter.unpowered": "Filter: Ohne Strom",
+  "screen.forever_production_monitor.devices.device": "Channel-Gerät",
+  "screen.forever_production_monitor.devices.count": "Anzahl",
+  "screen.forever_production_monitor.devices.channels": "Channels",
+  "screen.forever_production_monitor.devices.idle_power": "Leerlauf",
+  "screen.forever_production_monitor.devices.status": "Status",
+  "screen.forever_production_monitor.devices.entries": "%s passende Gerätegruppen",
+  "screen.forever_production_monitor.devices.unresolved": "· %s Channel-Knoten nicht gruppiert",
+  "screen.forever_production_monitor.devices.locate": "Gerät ohne Channel markieren (%s)",
+  "screen.forever_production_monitor.devices.status.active": "%s Aktiv",
+  "screen.forever_production_monitor.devices.status.missing": "%s Ohne Channel",
+  "screen.forever_production_monitor.devices.status.unpowered": "%s Ohne Strom",
+  "screen.forever_production_monitor.devices.status.booting": "%s Startet",
+  "screen.forever_production_monitor.devices.tooltip.count": "%s Geräte in dieser Gruppe",
+  "screen.forever_production_monitor.devices.tooltip.channels": "%s Channels zugewiesen",
+  "screen.forever_production_monitor.devices.tooltip.power": "%s gesamter passiver Verbrauch",
+  "screen.forever_production_monitor.devices.tooltip.per_device": "%s durchschnittlich pro Gerät",
+  "screen.forever_production_monitor.devices.tooltip.states": "Aktiv %s · Ohne Channel %s · Ohne Strom %s · Startet %s",
+  "screen.forever_production_monitor.devices.summary.devices": "Geräte",
+  "screen.forever_production_monitor.devices.summary.channels": "Channels",
+  "screen.forever_production_monitor.devices.summary.idle": "Leerlauf",
+  "screen.forever_production_monitor.devices.summary.missing": "Fehlend",
+  "screen.forever_production_monitor.devices.summary.unpowered": "Ohne Strom",
+  "screen.forever_production_monitor.status.online": "● Online",
+  "screen.forever_production_monitor.status.warming_up": "● Messung startet",
+  "screen.forever_production_monitor.status.network_offline": "● Netzwerk offline",
+  "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor-Chunk nicht geladen",
+  "screen.forever_production_monitor.status.monitor_missing": "● Monitor fehlt",
+  "screen.forever_production_monitor.status.invalid_link": "● Ungültige Tablet-Verbindung"
+  ,"message.forever_production_monitor.locator.found": "%s bei %s, %s, %s markiert (%s/%s)"
+  ,"message.forever_production_monitor.locator.unavailable": "Kein geladener Standort für %s gefunden"
+  ,"message.forever_production_monitor.locator.wrong_dimension": "%s befindet sich in %s bei %s, %s, %s. Wechsle zum Markieren in diese Dimension."
+  ,"key.forever_production_monitor.open_tablet": "Produktionstablet öffnen"
+  ,"key.categories.forever_production_monitor": "Forever Produktionsmonitor"
+  ,"curios.identifier.production_tablet": "Produktionstablet"
+  ,"hud.forever_production_monitor.mode.activity": "Höchste Aktivität"
+  ,"hud.forever_production_monitor.mode.stored": "Größter Bestand"
+  ,"hud.forever_production_monitor.mode.incoming": "Größte Eingänge"
+  ,"hud.forever_production_monitor.mode.outgoing": "Größte Ausgänge"
+  ,"hud.forever_production_monitor.mode.fluids": "Top-Fluids"
+  ,"hud.forever_production_monitor.mode.energy": "FE-Energie"
+  ,"hud.forever_production_monitor.infinite": "Unendlich"
+  ,"config.forever_production_monitor.title": "Produktionsmonitor-HUD"
+  ,"config.forever_production_monitor.hint": "Die Live-Vorschau folgt der gewählten Bildschirmposition"
+  ,"config.forever_production_monitor.enabled": "HUD: %s"
+  ,"config.forever_production_monitor.anchor": "Position: %s"
+  ,"config.forever_production_monitor.anchor.top_left": "Oben links"
+  ,"config.forever_production_monitor.anchor.top_right": "Oben rechts"
+  ,"config.forever_production_monitor.anchor.bottom_left": "Unten links"
+  ,"config.forever_production_monitor.anchor.bottom_right": "Unten rechts"
+  ,"config.forever_production_monitor.mode": "Anzeige: %s"
+  ,"config.forever_production_monitor.scale": "Größe: %s"
+  ,"config.forever_production_monitor.opacity": "Transparenz: %s"
+  ,"config.forever_production_monitor.x_offset": "X-Abstand: %s"
+  ,"config.forever_production_monitor.y_offset": "Y-Abstand: %s"
+  ,"config.forever_production_monitor.frame": "Rahmen: %s"
+  ,"config.forever_production_monitor.frame.none": "Ohne Rahmen"
+  ,"config.forever_production_monitor.frame.oritech": "Oritech-Theme"
+  ,"config.forever_production_monitor.frame.ae2": "AE2-Theme"
+  ,"config.forever_production_monitor.frame.forever": "Forever-Theme"
+  ,"config.forever_production_monitor.frame.standard": "Standardrahmen"
+  ,"config.forever_production_monitor.frame.custom": "Benutzerdefiniert"
+  ,"config.forever_production_monitor.custom_hue": "Eigene Farbe: %s°"
+  ,"config.forever_production_monitor.rate_unit": "Rateneinheit: %s"
+  ,"config.forever_production_monitor.refresh": "Aktualisierung: %s"
+  ,"config.forever_production_monitor.refresh.one_second": "Jede Sekunde"
+  ,"config.forever_production_monitor.refresh.two_seconds": "Alle 2 Sekunden"
+  ,"config.forever_production_monitor.refresh.five_seconds": "Alle 5 Sekunden"
+  ,"config.forever_production_monitor.reset": "Zurücksetzen"
+  ,"screen.forever_production_monitor.theme.open": "Design-Einstellungen"
+  ,"screen.forever_production_monitor.theme.title": "Produktionsmonitor-Design"
+  ,"screen.forever_production_monitor.theme.subtitle": "Wähle ein Dashboard-Theme — Änderungen erscheinen sofort"
+  ,"screen.forever_production_monitor.theme.preview": "Forever Produktionsmonitor"
+  ,"screen.forever_production_monitor.theme.standard": "Standard"
+  ,"screen.forever_production_monitor.theme.forever": "Forever"
+  ,"screen.forever_production_monitor.theme.ae2": "AE2"
+  ,"screen.forever_production_monitor.theme.oritech": "Oritech"
+  ,"screen.forever_production_monitor.theme.minimal": "Minimal"
+  ,"screen.forever_production_monitor.theme.custom": "Benutzerdefiniert"
+  ,"screen.forever_production_monitor.theme.hue": "Eigener Akzent: %s°"
+  ,"screen.forever_production_monitor.theme.match_hud": "Kompaktes HUD koppeln: %s"
+  ,"screen.forever_production_monitor.tab.dashboard": "Dashboard"
+  ,"screen.forever_production_monitor.dashboard.pinned": "Angepinnte Ressource"
+  ,"screen.forever_production_monitor.dashboard.alarm": "Alarm"
+  ,"screen.forever_production_monitor.dashboard.empty": "Noch keine Ressourcen angepinnt"
+  ,"screen.forever_production_monitor.dashboard.empty_hint": "Öffne Produktion und klicke zum Anpinnen auf ◇"
+  ,"screen.forever_production_monitor.dashboard.summary": "%s angepinnt · %s aktive Alarme"
+  ,"screen.forever_production_monitor.alarm.none": "Kein Alarm"
+  ,"screen.forever_production_monitor.alarm.amount_below": "Menge unter"
+  ,"screen.forever_production_monitor.alarm.amount_above": "Menge über"
+  ,"screen.forever_production_monitor.alarm.rate_below": "Rate unter"
+  ,"screen.forever_production_monitor.alarm.rate_above": "Rate über"
+  ,"screen.forever_production_monitor.alarm.stalled": "Stillstand"
+  ,"screen.forever_production_monitor.alarm_editor.title": "Dashboard-Alarm"
+  ,"screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s"
+  ,"screen.forever_production_monitor.alarm_editor.threshold": "Grenzwert"
+  ,"screen.forever_production_monitor.alarm_editor.delay": "Auslöseverzögerung: %s Sekunden"
+  ,"screen.forever_production_monitor.alarm_editor.delay_label": "Verzögerung gegen Alarm-Flattern"
+  ,"screen.forever_production_monitor.alarm_editor.hysteresis": "Hysterese"
+  ,"screen.forever_production_monitor.alarm_editor.disabled": "Dieser Pin wird ohne Alarm angezeigt."
+  ,"screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm, wenn sich die Ressource für die gewählte Zeit nicht verändert."
+  ,"screen.forever_production_monitor.alarm_editor.save": "Regel speichern"
+  ,"message.forever_production_monitor.alarm": "Produktionsalarm: %s"
+  ,"hud.forever_production_monitor.mode.pinned": "Angepinntes Dashboard"
+  ,"screen.forever_production_monitor.tab.map": "Netzwerkkarte"
+  ,"screen.forever_production_monitor.map.loading": "ME-Netzwerk wird gescannt..."
+  ,"screen.forever_production_monitor.map.empty": "Keine physischen Netzwerkknoten gefunden"
+  ,"screen.forever_production_monitor.map.controls": "Ziehen drehen  ·  Rechts bewegen  ·  Rad zoomen  ·  Klick wählen  ·  Doppelklick Fokus  ·  R zurück"
+  ,"screen.forever_production_monitor.map.controls.navigation": "Ziehen: drehen  ·  Rechts: bewegen  ·  Rad: zoomen"
+  ,"screen.forever_production_monitor.map.controls.selection": "Klick: wählen  ·  Doppelklick: Fokus  ·  R: zurück"
+  ,"screen.forever_production_monitor.map.view.fit": "Alles"
+  ,"screen.forever_production_monitor.map.view.iso": "Iso"
+  ,"screen.forever_production_monitor.map.view.top": "Oben"
+  ,"screen.forever_production_monitor.map.view.front": "Vorne"
+  ,"screen.forever_production_monitor.map.truncated": "Großes Netzwerk: Die ersten 4.096 Blöcke werden angezeigt"
+  ,"screen.forever_production_monitor.map.details": "Ausgewählter Block"
+  ,"screen.forever_production_monitor.map.blocks": "%s Netzwerkblöcke"
+  ,"screen.forever_production_monitor.map.select_hint": "Klicke in der 3D-Ansicht auf einen Block, um ihn zu untersuchen."
+  ,"screen.forever_production_monitor.map.position": "Position"
+  ,"screen.forever_production_monitor.map.state": "Netzwerkstatus"
+  ,"screen.forever_production_monitor.map.channels": "Channels"
+  ,"screen.forever_production_monitor.map.power": "Passiver Verbrauch"
+  ,"screen.forever_production_monitor.map.state.connected": "Verbunden"
+  ,"screen.forever_production_monitor.map.state.active": "Aktiv"
+  ,"screen.forever_production_monitor.map.state.missing_channel": "Channel fehlt"
+  ,"screen.forever_production_monitor.map.state.unpowered": "Ohne Strom"
+  ,"screen.forever_production_monitor.map.state.booting": "Startet"
+  ,"screen.forever_production_monitor.theme.map_rotation": "Kartendrehung: %s"
+  ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
+  ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Invertiert"
+  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
+  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
+  ,"screen.forever_production_monitor.theme.holographic": "Holografisch"
+  ,"screen.forever_production_monitor.theme.monochrome": "Monochrom"
+  ,"screen.forever_production_monitor.settings.title": "Produktionsmonitor-Einstellungen"
+  ,"screen.forever_production_monitor.settings.category.general": "Allgemein"
+  ,"screen.forever_production_monitor.settings.category.interface": "Oberfläche"
+  ,"screen.forever_production_monitor.settings.category.map": "Netzwerkkarte"
+  ,"screen.forever_production_monitor.settings.category.hud": "Mini-HUD"
+  ,"screen.forever_production_monitor.settings.default_tab": "Startseite: %s"
+  ,"screen.forever_production_monitor.settings.remember_tab": "Letzten Tab merken: %s"
+  ,"screen.forever_production_monitor.settings.rate": "Rateneinheit: %s"
+  ,"screen.forever_production_monitor.settings.refresh": "Aktualisierung: %s"
+  ,"screen.forever_production_monitor.settings.custom.primary": "Primärakzent: %s°"
+  ,"screen.forever_production_monitor.settings.custom.secondary": "Sekundärakzent: %s°"
+  ,"screen.forever_production_monitor.settings.custom.brightness": "Flächenhelligkeit: %s"
+  ,"screen.forever_production_monitor.settings.interface.opacity": "Fensterdeckkraft: %s"
+  ,"screen.forever_production_monitor.settings.map.default_view": "Startansicht: %s"
+  ,"screen.forever_production_monitor.settings.map.view.iso": "Isometrisch"
+  ,"screen.forever_production_monitor.settings.map.view.top": "Oben"
+  ,"screen.forever_production_monitor.settings.map.view.front": "Vorne"
+  ,"screen.forever_production_monitor.settings.map.remember": "Kamera merken: %s"
+  ,"screen.forever_production_monitor.settings.map.rotation": "Dreh-Empfindlichkeit: %s"
+  ,"screen.forever_production_monitor.settings.map.pan": "Bewegen-Empfindlichkeit: %s"
+  ,"screen.forever_production_monitor.settings.map.zoom": "Zoom-Empfindlichkeit: %s"
+  ,"screen.forever_production_monitor.settings.map.focus_zoom": "Fokus-Zoom: %s"
+  ,"screen.forever_production_monitor.settings.map.invert_horizontal": "Horizontal invertieren: %s"
+  ,"screen.forever_production_monitor.settings.map.invert_vertical": "Vertikal invertieren: %s"
+  ,"screen.forever_production_monitor.settings.map.cables": "Kabel anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.map.parts": "Busse und Parts anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.map.inactive": "Inaktive Knoten anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.map.controls": "Steuerungshilfe anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.map.view_buttons": "Ansichtsbuttons anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.map.details": "Detailleiste anzeigen: %s"
+  ,"screen.forever_production_monitor.settings.hud.enabled": "HUD aktiviert: %s"
+  ,"screen.forever_production_monitor.settings.hud.anchor": "Position: %s"
+  ,"screen.forever_production_monitor.settings.hud.mode": "Anzeige: %s"
+  ,"screen.forever_production_monitor.settings.hud.frame": "Rahmen: %s"
+  ,"screen.forever_production_monitor.settings.hud.match": "An Oberfläche koppeln: %s"
+  ,"screen.forever_production_monitor.settings.hud.entries": "Zeilen: %s"
+  ,"screen.forever_production_monitor.settings.hud.icons": "Icons: %s"
+  ,"screen.forever_production_monitor.settings.hud.names": "Namen: %s"
+  ,"screen.forever_production_monitor.settings.hud.values": "Werte: %s"
+  ,"screen.forever_production_monitor.settings.hud.scale": "Größe: %s"
+  ,"screen.forever_production_monitor.settings.hud.opacity": "Deckkraft: %s"
+  ,"screen.forever_production_monitor.settings.hud.hue": "Eigene Farbe: %s°"
+  ,"screen.forever_production_monitor.settings.hud.x": "X-Abstand: %s"
+  ,"screen.forever_production_monitor.settings.hud.y": "Y-Abstand: %s"
+  ,"screen.forever_production_monitor.map.filter.all": "Alle"
+  ,"screen.forever_production_monitor.map.filter.devices": "Geräte"
+  ,"screen.forever_production_monitor.map.filter.cables": "Kabel"
+  ,"screen.forever_production_monitor.map.filter.parts": "Parts"
+  ,"screen.forever_production_monitor.map.filter.errors": "Fehler"
+  ,"screen.forever_production_monitor.map.heatmap": "Heatmap"
+  ,"screen.forever_production_monitor.map.events": "Ereignisse"
+  ,"screen.forever_production_monitor.map.bookmark_hint": "Linksklick: laden · Rechtsklick: speichern"
+  ,"screen.forever_production_monitor.map.event_log": "Netzwerkereignisse"
+  ,"screen.forever_production_monitor.map.event_log.empty": "In dieser Sitzung wurden noch keine Netzwerkänderungen erfasst."
+  ,"screen.forever_production_monitor.map.event.added": "Gerät verbunden"
+  ,"screen.forever_production_monitor.map.event.removed": "Gerät entfernt"
+  ,"screen.forever_production_monitor.map.event.channel_lost": "Channel verloren"
+  ,"screen.forever_production_monitor.map.event.channel_restored": "Channel wiederhergestellt"
+  ,"screen.forever_production_monitor.map.event.power_lost": "Stromversorgung verloren"
+  ,"screen.forever_production_monitor.map.event.power_restored": "Stromversorgung wiederhergestellt"
+  ,"screen.forever_production_monitor.map.event.state_changed": "Status geändert"
+}
