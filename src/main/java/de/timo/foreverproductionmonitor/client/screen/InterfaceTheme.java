@@ -176,7 +176,7 @@ public final class InterfaceTheme {
         float f8 = f3 * (1.0f - f2);
         float f9 = f3 * (1.0f - f2 * f7);
         float f10 = f3 * (1.0f - f2 * (1.0f - f7));
-        return (int)(f5 * 255.0f) << 16 | (int)(f4 * 255.0f) << 8 | (int)((switch (n % 6) {
+        float blue = switch (n % 6) {
             case 0 -> {
                 f5 = f3;
                 f4 = f10;
@@ -207,7 +207,8 @@ public final class InterfaceTheme {
                 f4 = f8;
                 yield f9;
             }
-        }) * 255.0f);
+        };
+        return (int)(f5 * 255.0f) << 16 | (int)(f4 * 255.0f) << 8 | (int)(blue * 255.0f);
     }
 
     private static int opacity(int n, double d) {
@@ -221,4 +222,3 @@ public final class InterfaceTheme {
         }
     }
 }
-
