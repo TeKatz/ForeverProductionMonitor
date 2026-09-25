@@ -650,7 +650,8 @@ extends AENetworkedBlockEntity {
             if (owner instanceof QuantumBridgeBlockEntity bridge
                     && bridge.getBlockState().is(AEBlocks.QUANTUM_LINK.block())
                     && bridge.isFormed()
-                    && bridge.hasQES()) {
+                    && bridge.hasQES()
+                    && bridge.isPowered()) {
                 long frequency = bridge.getQEFrequency();
                 if (frequency != 0L) {
                     QuantumBridgeEndpoint endpoint = new QuantumBridgeEndpoint(
