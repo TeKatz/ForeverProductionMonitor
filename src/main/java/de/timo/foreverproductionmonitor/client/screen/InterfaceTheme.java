@@ -26,7 +26,7 @@ public final class InterfaceTheme {
             default -> throw new IncompatibleClassChangeError();
             case ClientConfig.InterfaceStyle.STANDARD -> new Palette(1510542095, -2063597568, -16118768, -233037784, -14078408, -15723751, -13617599, -14670804, -15065563, 1716344420, -14209995, -986379, -7103576, -8484972, -4406324, -9932418);
             case ClientConfig.InterfaceStyle.FOREVER -> new Palette(1695024397, -2063597568, -16054256, -233105373, -14015949, -15725290, -13423810, -14607318, -15001822, 1717452408, -14015436, -724745, -6647388, -2516414, -6591279, -10926747);
-            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x7007080A, -2063597568, 0xFF292B30, 0xF132343A, 0xFF3A3C42, 0xFF15171B, 0xFF40434A, 0xFF25282D, 0xFF1D2025, 0x664C405F, 0xFF302D38, 0xFFF1F1F3, 0xFFA0A3AA, 0xFF8355B2, 0xFFCDA7D1, 0xFF514664);
+            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x7007080A, -2063597568, 0xFF2B2D33, 0xF1363940, 0xFF41444C, 0xFF15171B, 0xFF4B4F58, 0xFF292C32, 0xFF202329, 0x665E636D, 0xFF34373E, 0xFFF2F3F5, 0xFFA6A9B0, 0xFF8D929C, 0xFFC9CCD3, 0xFF5B606B);
             case ClientConfig.InterfaceStyle.ORITECH -> new Palette(1611466756, -2063597568, -15594745, -232974831, -13097705, -15594231, -12440805, -14148846, -14608881, 1718566173, -13294824, -3875, -5005171, -1606867, -1920177, -9354461);
             case ClientConfig.InterfaceStyle.MEKANISM -> new Palette(1610943760, -2063597568, -16314348, -233759712, -15125702, -16313833, -14597046, -15455697, -15719639, 1716709329, -15059395, -983041, -7227465, -14295865, -9633934, -13276048);
             case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(0x76040308, -2063597568, 0xFF17151C, 0xF11D1A23, 0xFF2A2631, 0xFF0E0C12, 0xFF322D3A, 0xFF201C27, 0xFF18151E, 0x665C2B83, 0xFF28222F, 0xFFF1ECF6, 0xFFA39DA9, 0xFF8C43D6, 0xFFD39DFF, 0xFF54415F);
@@ -85,18 +85,23 @@ public final class InterfaceTheme {
                 break;
             }
             case AE2: {
-                int n6 = n + n3 / 2;
-                guiGraphics.fill(n, n2, n6, n2 + 2, palette.accentA());
-                guiGraphics.fill(n6, n2, n + n3, n2 + 2, palette.accentB());
-                guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.border());
-                guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.border());
+                // ME Controller-style structural shell: cool silver bands around a dark core.
+                guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentB());
+                guiGraphics.fill(n + 1, n2 + 2, n + 3, n2 + n4 - 2, palette.accentA());
+                guiGraphics.fill(n + n3 - 3, n2 + 2, n + n3 - 1, n2 + n4 - 2, palette.border());
 
-                // A single restrained smart-cable-like rail under the header.
-                guiGraphics.fill(n + 12, n2 + 28, n + n3 - 12, n2 + 30, 0xFF25282D);
-                guiGraphics.fill(n + 13, n2 + 28, n + n3 - 13, n2 + 29, palette.border());
-                int mark = n + Math.max(30, n3 / 4);
-                guiGraphics.fill(mark, n2 + 25, mark + 7, n2 + 28, palette.accentA());
-                guiGraphics.fill(mark + 13, n2 + 25, mark + 18, n2 + 28, palette.accentB());
+                // Stepped header geometry echoes the block's layered metal corners.
+                guiGraphics.fill(n + 8, n2 + 27, n + n3 - 8, n2 + 30, 0xFF22252B);
+                guiGraphics.fill(n + 10, n2 + 27, n + n3 - 10, n2 + 28, palette.accentA());
+                guiGraphics.fill(n + 18, n2 + 23, n + 42, n2 + 25, palette.accentB());
+                guiGraphics.fill(n + n3 - 42, n2 + 23, n + n3 - 18, n2 + 25, palette.border());
+
+                // Small dark corner insets keep the controller's maze/casing vocabulary
+                // without repeating coloured LEDs across every widget.
+                guiGraphics.fill(n + 5, n2 + 6, n + 18, n2 + 8, 0xFF1A1C21);
+                guiGraphics.fill(n + 5, n2 + 8, n + 7, n2 + 17, 0xFF1A1C21);
+                guiGraphics.fill(n + n3 - 18, n2 + 6, n + n3 - 5, n2 + 8, 0xFF1A1C21);
+                guiGraphics.fill(n + n3 - 7, n2 + 8, n + n3 - 5, n2 + 17, 0xFF1A1C21);
                 break;
             }
             case ORITECH: {

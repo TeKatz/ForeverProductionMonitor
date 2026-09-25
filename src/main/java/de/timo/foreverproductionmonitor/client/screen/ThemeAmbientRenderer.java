@@ -20,6 +20,10 @@ final class ThemeAmbientRenderer {
     private static final int AE2_CELL_USED = 0xFF00AAFF;
     private static final int AE2_CELL_TYPES_FULL = 0xFFFFAA00;
     private static final int AE2_CELL_FULL = 0xFFFF0000;
+    private static final int AE2_CONTROLLER_FRAME_LIGHT = 0xFFC9CCD3;
+    private static final int AE2_CONTROLLER_FRAME_MID = 0xFF7E838E;
+    private static final int AE2_CONTROLLER_FRAME_DARK = 0xFF454A55;
+    private static final int AE2_CONTROLLER_INSET = 0xFF17191E;
 
     // AdvancedAE Quantum Computer visual language: dark casing, metallic frame,
     // emissive purple internals and sparse yellow hazard markings.
@@ -105,12 +109,20 @@ final class ThemeAmbientRenderer {
             }
             case AE2 -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 5, bottom, x + width - 11, bottom + 1, alpha(AE2_FLUIX_DARK, active ? 84 : 48));
-                graphics.fill(x + 5, cy - 1, x + 15, cy, alpha(AE2_FLUIX_MEDIUM, active ? 58 : 30));
-                if (active || hoverProgress > 0.35f) {
-                    int led = active ? AE2_CELL_USED : AE2_CELL_EMPTY;
-                    int ledAlpha = active ? 112 : Math.round(42 + hoverProgress * 42.0f);
-                    graphics.fill(x + width - 9, cy - 2, x + width - 6, cy + 1, alpha(led, ledAlpha));
+                int trace = ae2ControllerColor(active ? 0.03f : 0.0f, active ? 96 : 58);
+                graphics.fill(x + 5, cy - 1, x + width / 3, cy, trace);
+                graphics.fill(x + width / 3, cy - 4, x + width / 3 + 1, cy, trace);
+                graphics.fill(x + width / 3, cy - 4, x + width * 2 / 3, cy - 3, trace);
+                graphics.fill(x + width * 2 / 3, cy - 3, x + width * 2 / 3 + 1, cy + 3, trace);
+                graphics.fill(x + width * 2 / 3, cy + 2, x + width - 10, cy + 3, trace);
+
+                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(AE2_CONTROLLER_FRAME_LIGHT, 30));
+                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(AE2_CONTROLLER_FRAME_MID, 28));
+
+                if (active || hoverProgress > 0.25f) {
+                    int glowAlpha = active ? 88 : Math.round(24 + hoverProgress * 52.0f);
+                    graphics.fill(x + width - 9, cy - 1, x + width - 6, cy + 2,
+                            ae2ControllerColor(0.18f, glowAlpha));
                 }
             }
             case ORITECH -> {
@@ -249,17 +261,11 @@ final class ThemeAmbientRenderer {
                 graphics.fill(split, y + 2, right - 2, y + 3, b);
             }
             case AE2 -> {
-                graphics.fill(x + 5, bottom - 3, right - 5, bottom - 2, alpha(AE2_FLUIX_DARK, 40));
-                int bankRight = right - 7;
-                int bankLeft = Math.max(x + width * 3 / 4, bankRight - 46);
-                graphics.fill(bankLeft, y + 3, bankRight, Math.min(bottom - 3, y + 13), alpha(0xFF2D3036, 118));
-                for (int i = 0; i < 3; ++i) {
-                    int sx = bankLeft + 4 + i * 12;
-                    if (sx + 8 >= bankRight) break;
-                    graphics.fill(sx, y + 5, sx + 8, Math.min(bottom - 5, y + 11), alpha(0xFF1B1D22, 132));
-                    graphics.fill(sx + 2, Math.min(bottom - 6, y + 9), sx + 6, Math.min(bottom - 4, y + 11),
-                            alpha(ae2CellColor(i + 1), 76));
-                }
+                int traceA = ae2ControllerColor(0.00f, 42);
+                int traceB = ae2ControllerColor(0.22f, 34);
+                graphics.fill(x + 5, bottom - 3, right - 5, bottom - 2, alpha(AE2_CONTROLLER_FRAME_DARK, 48));
+                controllerTrace(graphics, x + 7, y + 5, Math.max(18, width / 3), Math.max(6, height / 3), traceA, false);
+                controllerTrace(graphics, right - 8, bottom - 6, -Math.max(16, width / 4), -Math.max(5, height / 4), traceB, true);
             }
             case ORITECH -> {
                 rivet(graphics, x + 4, y + 4, a);
@@ -417,63 +423,76 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Keep most of the surface clean. One Fluix smart-cable line and one compact
-        // animated ME Drive bank are enough to establish AE2 without decorating every widget.
-        int cableY = t + Math.max(13, Math.min(27, height / 7));
-        int driveW = Math.max(52, Math.min(82, width / 5));
-        int driveH = Math.max(34, Math.min(54, height / 4));
-        int driveRight = r - 12;
-        int driveLeft = driveRight - driveW;
-        int driveTop = t + 9;
-        int driveBottom = Math.min(b - 12, driveTop + driveH);
+        // ME Controller-inspired body: pale structural bands framing a dark inset.
+        int frameAlpha = 28;
+        g.fill(l + 6, t + 7, r - 6, t + 9, alpha(AE2_CONTROLLER_FRAME_LIGHT, frameAlpha));
+        g.fill(l + 6, b - 9, r - 6, b - 7, alpha(AE2_CONTROLLER_FRAME_MID, frameAlpha));
+        g.fill(l + 6, t + 9, l + 8, b - 9, alpha(AE2_CONTROLLER_FRAME_LIGHT, frameAlpha));
+        g.fill(r - 8, t + 9, r - 6, b - 9, alpha(AE2_CONTROLLER_FRAME_DARK, frameAlpha));
 
-        g.fill(l + 12, cableY - 1, driveLeft - 10, cableY + 2, alpha(0xFF25282E, 72));
-        g.fill(l + 13, cableY, driveLeft - 11, cableY + 1, alpha(AE2_FLUIX_DARK, 54));
+        // A large orthogonal maze fills the otherwise-empty panel, but stays behind content.
+        int mazeLeft = l + Math.max(16, width / 10);
+        int mazeTop = t + Math.max(20, height / 7);
+        int mazeRight = r - Math.max(18, width / 9);
+        int mazeBottom = b - Math.max(20, height / 8);
+        int mazeW = Math.max(50, mazeRight - mazeLeft);
+        int mazeH = Math.max(40, mazeBottom - mazeTop);
 
-        int channelCount = Math.max(3, Math.min(6, (driveLeft - l - 28) / 30));
-        for (int i = 0; i < channelCount; ++i) {
-            int px = l + 24 + i * Math.max(20, (driveLeft - l - 38) / Math.max(1, channelCount));
-            g.fill(px, cableY - 3, px + 5, cableY - 2,
-                    alpha(i % 3 == 0 ? AE2_FLUIX_BRIGHT : AE2_FLUIX_MEDIUM, 30));
+        // Slowly color-cycling controller traces. Each route gets a phase offset,
+        // so the panel feels alive without becoming a rainbow strobe.
+        controllerTrace(g, mazeLeft, mazeTop + mazeH / 5, mazeW * 3 / 5, mazeH / 3,
+                ae2ControllerColor(0.00f, 34), false);
+        controllerTrace(g, mazeRight, mazeTop + mazeH / 3, -mazeW / 2, mazeH / 4,
+                ae2ControllerColor(0.14f, 31), true);
+        controllerTrace(g, mazeLeft + mazeW / 5, mazeBottom, mazeW / 2, -mazeH * 2 / 5,
+                ae2ControllerColor(0.28f, 28), false);
+        controllerTrace(g, mazeRight - mazeW / 6, mazeBottom - mazeH / 7, -mazeW * 2 / 5, -mazeH / 3,
+                ae2ControllerColor(0.42f, 26), true);
+
+        // Secondary dark traces create the Controller's layered circuit-labyrinth look.
+        controllerTrace(g, mazeLeft + 9, mazeTop + 6, mazeW / 3, mazeH / 5,
+                alpha(AE2_CONTROLLER_FRAME_DARK, 32), true);
+        controllerTrace(g, mazeRight - 12, mazeBottom - 8, -mazeW / 3, -mazeH / 5,
+                alpha(AE2_CONTROLLER_FRAME_MID, 24), false);
+
+        // One small ME Drive cluster only; status colours stay contextual instead of covering every widget.
+        if (width > 240 && height > 130) {
+            int driveW = Math.max(46, Math.min(66, width / 6));
+            int driveH = Math.max(34, Math.min(48, height / 5));
+            int driveRight = r - 18;
+            int driveLeft = driveRight - driveW;
+            int driveTop = t + 16;
+            int driveBottom = driveTop + driveH;
+            g.fill(driveLeft, driveTop, driveRight, driveBottom, alpha(AE2_CONTROLLER_FRAME_MID, 54));
+            g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, driveBottom - 2, alpha(AE2_CONTROLLER_INSET, 94));
+
+            int slotW = Math.max(8, (driveW - 11) / 2);
+            int slotH = Math.max(5, (driveH - 11) / 5);
+            float activity = phase(22000L, 0.31f) * 10.0f;
+            int active = Math.floorMod((int)Math.floor(activity), 10);
+            int next = (active + 1) % 10;
+            float blend = smoothstep(activity - (float)Math.floor(activity));
+            for (int i = 0; i < 10; ++i) {
+                int col = i % 2;
+                int row = i / 2;
+                int sx = driveLeft + 4 + col * (slotW + 3);
+                int sy = driveTop + 4 + row * (slotH + 1);
+                if (sx + slotW > driveRight - 3 || sy + slotH > driveBottom - 3) continue;
+                int led = ae2CellColor(i);
+                float glow = i == active ? 1.0f - blend : (i == next ? blend : 0.0f);
+                g.fill(sx, sy, sx + slotW, sy + slotH, alpha(0xFF292C32, 92));
+                g.fill(sx + 2, sy + slotH - 2, sx + slotW - 2, sy + slotH - 1,
+                        alpha(led, 44 + Math.round(glow * 42.0f * GuiMotion.ambientMotionIntensity())));
+            }
         }
 
-        // Compact drive: neutral casing, 10 restrained cells, status colors only here.
-        g.fill(driveLeft, driveTop, driveRight, driveBottom, alpha(0xFF34373D, 112));
-        g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, driveBottom - 2, alpha(0xFF1B1D22, 128));
-
-        int innerW = driveRight - driveLeft - 8;
-        int innerH = driveBottom - driveTop - 8;
-        int slotW = Math.max(8, (innerW - 3) / 2);
-        int slotH = Math.max(5, (innerH - 8) / 5);
-        float activity = phase(22000L, 0.3f) * 10.0f;
-        int active = Math.floorMod((int)Math.floor(activity), 10);
-        int next = (active + 1) % 10;
-        float blend = smoothstep(activity - (float)Math.floor(activity));
-
-        for (int i = 0; i < 10; ++i) {
-            int col = i % 2;
-            int row = i / 2;
-            int sx = driveLeft + 4 + col * (slotW + 3);
-            int sy = driveTop + 4 + row * (slotH + 1);
-            if (sx + slotW > driveRight - 3 || sy + slotH > driveBottom - 3) continue;
-            int led = ae2CellColor(i);
-            g.fill(sx, sy, sx + slotW, sy + slotH, alpha(0xFF292C32, 116));
-            g.fill(sx + 2, sy + 1, sx + slotW - 2, sy + 2, alpha(AE2_FLUIX_DARK, 28));
-
-            float glow = i == active ? 1.0f - blend : (i == next ? blend : 0.0f);
-            int ledAlpha = 48 + Math.round(glow * 52.0f * GuiMotion.ambientMotionIntensity());
-            g.fill(sx + 2, sy + slotH - 2, sx + slotW - 2, sy + slotH - 1, alpha(led, ledAlpha));
-        }
-
-        // One faint terminal plate balances the drive without turning the whole GUI into a circuit board.
-        if (width > 220 && height > 100) {
-            int plateX = l + 18;
-            int plateY = Math.min(b - 35, cableY + 20);
-            g.fill(plateX, plateY, plateX + 38, plateY + 20, alpha(0xFF30333A, 44));
-            g.fill(plateX + 2, plateY + 2, plateX + 36, plateY + 18, alpha(0xFF17191E, 52));
-            g.fill(plateX + 7, plateY + 7, plateX + 28, plateY + 8, alpha(AE2_FLUIX_MEDIUM, 24));
-            g.fill(plateX + 7, plateY + 12, plateX + 20, plateY + 13, alpha(AE2_FLUIX_BRIGHT, 18));
-        }
+        // One tiny controller core tile anchors the palette without dominating the screen.
+        int coreX = l + 24;
+        int coreY = b - 28;
+        g.fill(coreX, coreY, coreX + 18, coreY + 18, alpha(AE2_CONTROLLER_FRAME_MID, 42));
+        g.fill(coreX + 3, coreY + 3, coreX + 15, coreY + 15, alpha(AE2_CONTROLLER_INSET, 72));
+        int coreColor = ae2ControllerColor(0.08f, 62);
+        controllerTrace(g, coreX + 4, coreY + 5, 10, 7, coreColor, false);
     }
 
     private static void oritechPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -1054,6 +1073,87 @@ final class ThemeAmbientRenderer {
         corner(g, r - 8, b - 8, 9, alpha(p.accentB(), 42), false, false);
         g.fill(l + width / 2, t + height / 2 - 3, l + width / 2 + 1, t + height / 2 + 4, alpha(p.text(), 22));
         g.fill(l + width / 2 - 3, t + height / 2, l + width / 2 + 4, t + height / 2 + 1, alpha(p.text(), 22));
+    }
+
+    private static int ae2ControllerColor(float offset, int requestedAlpha) {
+        float hue = phase(18000L, 0.075f) + offset;
+        hue = hue - (float)Math.floor(hue);
+
+        // Keep the cycle vivid but slightly warmer than a generic RGB rainbow,
+        // which better matches the classic ME Controller impression.
+        float saturation = 0.86f;
+        float value = 0.96f;
+        int rgb = hsvColor(hue, saturation, value);
+        return alpha(rgb, requestedAlpha);
+    }
+
+    private static int hsvColor(float hue, float saturation, float value) {
+        float h = hue - (float)Math.floor(hue);
+        float s = clamp01(saturation);
+        float v = clamp01(value);
+        float scaled = h * 6.0f;
+        int sector = (int)Math.floor(scaled);
+        float f = scaled - sector;
+        float p = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+        float rr, gg, bb;
+        switch (Math.floorMod(sector, 6)) {
+            case 0 -> { rr = v; gg = t; bb = p; }
+            case 1 -> { rr = q; gg = v; bb = p; }
+            case 2 -> { rr = p; gg = v; bb = t; }
+            case 3 -> { rr = p; gg = q; bb = v; }
+            case 4 -> { rr = t; gg = p; bb = v; }
+            default -> { rr = v; gg = p; bb = q; }
+        }
+        int r = Math.max(0, Math.min(255, Math.round(rr * 255.0f)));
+        int g = Math.max(0, Math.min(255, Math.round(gg * 255.0f)));
+        int b = Math.max(0, Math.min(255, Math.round(bb * 255.0f)));
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
+    private static void controllerTrace(GuiGraphics g, int startX, int startY, int dx, int dy,
+                                        int color, boolean mirror) {
+        int endX = startX + dx;
+        int endY = startY + dy;
+        int stepX = dx >= 0 ? 1 : -1;
+        int stepY = dy >= 0 ? 1 : -1;
+        int absX = Math.abs(dx);
+        int absY = Math.abs(dy);
+
+        int x1 = startX;
+        int x2 = startX + stepX * Math.max(5, absX / 4);
+        int x3 = startX + stepX * Math.max(10, absX * 3 / 5);
+        int y1 = startY + stepY * Math.max(4, absY / 3);
+        int y2 = startY + stepY * Math.max(8, absY * 2 / 3);
+
+        if (!mirror) {
+            horizontal(g, x1, x2, startY, color);
+            vertical(g, x2, startY, y1, color);
+            horizontal(g, x2, x3, y1, color);
+            vertical(g, x3, y1, y2, color);
+            horizontal(g, x3, endX, y2, color);
+            vertical(g, endX, y2, endY, color);
+        } else {
+            vertical(g, startX, startY, y1, color);
+            horizontal(g, startX, x2, y1, color);
+            vertical(g, x2, y1, y2, color);
+            horizontal(g, x2, x3, y2, color);
+            vertical(g, x3, y2, endY, color);
+            horizontal(g, x3, endX, endY, color);
+        }
+    }
+
+    private static void horizontal(GuiGraphics g, int x1, int x2, int y, int color) {
+        int left = Math.min(x1, x2);
+        int right = Math.max(x1, x2);
+        if (right > left) g.fill(left, y, right + 1, y + 2, color);
+    }
+
+    private static void vertical(GuiGraphics g, int x, int y1, int y2, int color) {
+        int top = Math.min(y1, y2);
+        int bottom = Math.max(y1, y2);
+        if (bottom > top) g.fill(x, top, x + 2, bottom + 1, color);
     }
 
     private static int ae2CellColor(int index) {
