@@ -154,19 +154,19 @@ final class NetworkMapView {
     }
 
     void accept(MonitorNetwork.NetworkMapPayload networkMapPayload) {
-        boolean bl;
-        boolean bl2 = bl = this.snapshot == null
-                || !this.snapshot.dimension().equals((Object)networkMapPayload.dimension())
-                || !this.snapshot.pos().equals((Object)networkMapPayload.pos())
-                || !this.snapshot.viewDimension().equals((Object)networkMapPayload.viewDimension());
+        boolean contextChanged = this.snapshot == null
+                || !this.snapshot.dimension().equals(networkMapPayload.dimension())
+                || !this.snapshot.pos().equals(networkMapPayload.pos())
+                || !this.snapshot.viewDimension().equals(networkMapPayload.viewDimension());
 
         // Most real map edits require closing the tablet first. Keep the last snapshot for
         // each network/dimension outside the screen instance so reopening the tablet can still
         // diff "before" and "after" and produce session events.
         String eventKey = this.eventKey(networkMapPayload);
-        MonitorNetwork.NetworkMapPayload previousForEvents = !bl && this.snapshot != null
-                ? this.snapshot
-                : LAST_EVENT_SNAPSHOTS.get(eventKey);
+        MonitorNetwork.NetworkMapPayload previousForEvents =
+                !contextChanged && this.snapshot != null
+                        ? this.snapshot
+                        : LAST_EVENT_SNAPSHOTS.get(eventKey);
         if (previousForEvents != null) {
             this.recordEvents(previousForEvents, networkMapPayload);
         }
@@ -175,13 +175,15 @@ final class NetworkMapView {
         this.snapshot = networkMapPayload;
         this.performanceCache.acceptSnapshot(this.snapshot, this::shouldRender);
         if (this.selectedIndex >= networkMapPayload.nodes().size()
-                || this.selectedIndex >= 0 && !this.shouldRender(networkMapPayload.nodes().get(this.selectedIndex))) {
+                || this.selectedIndex >= 0
+                && !this.shouldRender(networkMapPayload.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
         }
-        if (bl) {
-            String string = this.snapshotKey(networkMapPayload);
-            CameraState remembered = REMEMBERED_CAMERAS.get(string);
-            if (((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue() && remembered != null) {
+
+        if (contextChanged) {
+            String snapshotKey = this.snapshotKey(networkMapPayload);
+            CameraState remembered = REMEMBERED_CAMERAS.get(snapshotKey);
+            if (ClientConfig.VALUES.mapRememberCamera.get() && remembered != null) {
                 this.restoreCamera(remembered);
             } else {
                 this.applyDefaultView();
@@ -231,13 +233,12 @@ final class NetworkMapView {
         }
     }
 
-    void setSearch(String string) {
-        String string2;
-        String string3 = string2 = string == null ? "" : string.strip().toLowerCase(Locale.ROOT);
-        if (Objects.equals(this.search, string2)) {
+    void setSearch(String value) {
+        String normalized = value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
+        if (Objects.equals(this.search, normalized)) {
             return;
         }
-        this.search = string2;
+        this.search = normalized;
         this.searchCursor = -1;
         this.rebuildVisibilityCache();
         if (this.selectedIndex >= 0 && this.snapshot != null
