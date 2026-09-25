@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -119,7 +120,9 @@ final class NetworkMapView {
     private boolean heatmap;
     private boolean showEvents;
     private boolean detailsCollapsed;
-    private PathTarget followTarget;
+    private NetworkMapPathResolver.Target followTarget;
+    private final NetworkMapPerformanceCache performanceCache = new NetworkMapPerformanceCache();
+    private final ArrayList<Integer> frameNodeIndices = new ArrayList<>();
     private int followButtonX;
     private int followButtonY;
     private int followButtonWidth;
@@ -171,8 +174,9 @@ final class NetworkMapView {
         LAST_EVENT_SNAPSHOTS.put(eventKey, networkMapPayload);
 
         this.snapshot = networkMapPayload;
-        this.recomputeCableLoads();
-        if (this.selectedIndex >= networkMapPayload.nodes().size()) {
+        this.rebuildPerformanceCache();
+        if (this.selectedIndex >= networkMapPayload.nodes().size()
+                || this.selectedIndex >= 0 && !this.shouldRender(networkMapPayload.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
         }
         if (bl) {
@@ -197,7 +201,8 @@ final class NetworkMapView {
         this.followTarget = null;
         this.dragButton = -1;
         this.focusedOnBlock = false;
-        this.cableLoads.clear();
+        this.performanceCache.clear();
+        this.frameNodeIndices.clear();
     }
 
     void focusPosition(BlockPos target) {
@@ -235,7 +240,9 @@ final class NetworkMapView {
         }
         this.search = string2;
         this.searchCursor = -1;
-        if (this.selectedIndex >= 0 && this.snapshot != null && !this.shouldRender(this.snapshot.nodes().get(this.selectedIndex))) {
+        this.rebuildPerformanceCache();
+        if (this.selectedIndex >= 0 && this.snapshot != null
+                && !this.shouldRender(this.snapshot.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
         }
         this.focusedOnBlock = false;
@@ -243,19 +250,21 @@ final class NetworkMapView {
     }
 
     void focusNextSearchMatch() {
-        if (this.snapshot == null || this.snapshot.nodes().isEmpty()) {
+        if (this.snapshot == null || this.performanceCache.visibleNodeIndices().isEmpty()) {
             return;
         }
-        int n = this.snapshot.nodes().size();
-        for (int i = 1; i <= n; ++i) {
-            int n2 = Math.floorMod(this.searchCursor + i, n);
-            if (!this.shouldRender(this.snapshot.nodes().get(n2))) continue;
-            this.searchCursor = n2;
-            this.selectedIndex = n2;
-            this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
-            this.focusSelected();
-            return;
+        List<Integer> visible = this.performanceCache.visibleNodeIndices();
+        int nextIndex = visible.get(0);
+        for (int index : visible) {
+            if (index > this.searchCursor) {
+                nextIndex = index;
+                break;
+            }
         }
+        this.searchCursor = nextIndex;
+        this.selectedIndex = nextIndex;
+        this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
+        this.focusSelected();
     }
 
     private void applyDefaultView() {
@@ -348,76 +357,128 @@ final class NetworkMapView {
         guiGraphics.disableScissor();
     }
 
-    private void renderScene(GuiGraphics guiGraphics, int n) {
-        int n2;
-                double d = this.scale();
-        double d2 = (double)(this.left + n) * 0.5 + this.panX;
-        double d3 = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY;
+    private void renderScene(GuiGraphics guiGraphics, int sceneRight) {
+        double scale = this.scale();
+        double centerScreenX = (double)(this.left + sceneRight) * 0.5 + this.panX;
+        double centerScreenY = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY;
+
         guiGraphics.flush();
-        guiGraphics.enableScissor(this.left + 1, this.sceneContentTop(), n - 1, this.sceneContentBottom());
-        RenderSystem.clearDepth((double)1.0);
-        RenderSystem.clear((int)256, (boolean)Minecraft.ON_OSX);
+        guiGraphics.enableScissor(this.left + 1, this.sceneContentTop(),
+                sceneRight - 1, this.sceneContentBottom());
+        RenderSystem.clearDepth(1.0);
+        RenderSystem.clear(256, Minecraft.ON_OSX);
         RenderSystem.enableDepthTest();
         Lighting.setupFor3DItems();
+
         PoseStack poseStack = guiGraphics.pose();
         poseStack.pushPose();
-        poseStack.translate(d2, d3, 180.0);
-        float f = (float)Math.min(d, 4096.0 / this.sceneDepthSpan);
-        poseStack.scale((float)d, (float)(-d), f);
+        poseStack.translate(centerScreenX, centerScreenY, 180.0);
+        float depthScale = (float)Math.min(scale, 4096.0 / this.sceneDepthSpan);
+        poseStack.scale((float)scale, (float)(-scale), depthScale);
         poseStack.mulPose(Axis.XP.rotationDegrees(this.pitch));
         poseStack.mulPose(Axis.YP.rotationDegrees(this.yaw));
         poseStack.translate(-this.centerX, -this.centerY, -this.centerZ);
+
         MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
-        List<MonitorNetwork.MapNode> list = this.snapshot.nodes();
-        HashSet<BlockPos> hashSet = new HashSet<BlockPos>();
-        for (MonitorNetwork.MapNode mapNode22 : list) {
-            if (!this.shouldRender(mapNode22)) continue;
-            hashSet.add(mapNode22.pos());
-        }
-        for (MonitorNetwork.MapNode mapNode22 : list) {
-            if (!this.shouldRender(mapNode22) || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.BLOCK) continue;
-            this.renderBlock(poseStack, bufferSource, mapNode22);
-        }
-        if (!this.heatmap) {
-            for (MonitorNetwork.MapNode mapNode22 : list) {
-                if (!this.shouldRender(mapNode22)
-                        || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART
-                        || !NetworkMapView.isCable(mapNode22.visualId().getPath())) {
-                    continue;
-                }
-                this.renderCableItemModels(poseStack, bufferSource, mapNode22, hashSet);
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        this.prepareFrameNodeIndices();
+
+        for (int index : this.frameNodeIndices) {
+            MonitorNetwork.MapNode node = nodes.get(index);
+            if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.BLOCK) {
+                this.renderBlock(poseStack, bufferSource, node);
             }
         }
+
+        if (!this.heatmap) {
+            for (int index : this.frameNodeIndices) {
+                MonitorNetwork.MapNode node = nodes.get(index);
+                if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART
+                        && NetworkMapView.isCable(node.visualId().getPath())) {
+                    this.renderCableItemModels(
+                            poseStack, bufferSource, node,
+                            this.performanceCache.visiblePositions());
+                }
+            }
+        }
+
         bufferSource.endBatch();
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.debugQuads());
+        VertexConsumer faceConsumer = bufferSource.getBuffer(RenderType.debugQuads());
         VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
-        for (MonitorNetwork.MapNode object2 : list) {
-            if (!this.shouldRender(object2) || object2.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART) continue;
-            this.renderPartGeometry(poseStack, vertexConsumer, lineConsumer, object2, hashSet);
+        for (int index : this.frameNodeIndices) {
+            MonitorNetwork.MapNode node = nodes.get(index);
+            if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART) {
+                this.renderPartGeometry(
+                        poseStack, faceConsumer, lineConsumer, node,
+                        this.performanceCache.visiblePositions());
+            }
         }
         bufferSource.endBatch(RenderType.debugQuads());
         bufferSource.endBatch(RenderType.lines());
+
         if (this.heatmap) {
-            VertexConsumer vertexConsumer2 = bufferSource.getBuffer(RenderType.lines());
-            for (MonitorNetwork.MapNode mapNode : list) {
-                if (!this.shouldRender(mapNode)) continue;
-                float[] fArray = this.heatColor(mapNode);
-                LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)vertexConsumer2, (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.025), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)0.96f);
+            VertexConsumer heatLines = bufferSource.getBuffer(RenderType.lines());
+            for (int index : this.frameNodeIndices) {
+                MonitorNetwork.MapNode node = nodes.get(index);
+                float[] color = this.heatColor(node);
+                LevelRenderer.renderLineBox(
+                        poseStack, heatLines,
+                        NetworkMapView.boundsFor(node).inflate(0.025),
+                        color[0], color[1], color[2], 0.96f);
             }
             bufferSource.endBatch(RenderType.lines());
         }
-        int n3 = n2 = this.selectedIndex >= 0 ? this.selectedIndex : this.hoveredIndex;
-        if (n2 >= 0 && n2 < list.size() && this.shouldRender(list.get(n2))) {
-            MonitorNetwork.MapNode mapNode = list.get(n2);
-            float[] fArray = NetworkMapView.stateColor(mapNode.state());
+
+        int highlightedIndex = this.selectedIndex >= 0 ? this.selectedIndex : this.hoveredIndex;
+        if (highlightedIndex >= 0
+                && highlightedIndex < nodes.size()
+                && this.performanceCache.visibleNodeIndices().contains(highlightedIndex)) {
+            MonitorNetwork.MapNode node = nodes.get(highlightedIndex);
+            float[] color = NetworkMapView.stateColor(node.state());
             float selectionProgress = GuiMotion.progress(this.selectedAtNanos, 300L);
-            double pulse = GuiMotion.enabled() ? (Math.sin((double)GuiMotion.now() / 2.2E8) + 1.0) * 0.006 + (1.0 - GuiMotion.easeOut(selectionProgress)) * 0.028 : 0.0;
-            LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)bufferSource.getBuffer(RenderType.lines()), (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.035 + pulse), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)1.0f);
+            double pulse = GuiMotion.enabled()
+                    ? (Math.sin((double)GuiMotion.now() / 2.2E8) + 1.0) * 0.006
+                    + (1.0 - GuiMotion.easeOut(selectionProgress)) * 0.028
+                    : 0.0;
+            LevelRenderer.renderLineBox(
+                    poseStack,
+                    bufferSource.getBuffer(RenderType.lines()),
+                    NetworkMapView.boundsFor(node).inflate(0.035 + pulse),
+                    color[0], color[1], color[2], 1.0f);
             bufferSource.endBatch(RenderType.lines());
         }
+
         poseStack.popPose();
         RenderSystem.disableDepthTest();
         guiGraphics.disableScissor();
+    }
+
+    private void prepareFrameNodeIndices() {
+        this.frameNodeIndices.clear();
+        List<Integer> visible = this.performanceCache.visibleNodeIndices();
+        if (visible.size() <= 512) {
+            this.frameNodeIndices.addAll(visible);
+            return;
+        }
+
+        // Item/block rendering is the expensive part of very large maps. Once a map grows
+        // beyond a few hundred nodes, omit nodes whose projected centres are well outside
+        // the clipped scene. A generous margin keeps cables and large item models from
+        // visibly popping at the edge while avoiding thousands of off-screen draw calls.
+        double margin = Math.max(64.0, Math.min(512.0, this.scale() * 1.75));
+        double minX = this.left - margin;
+        double maxX = this.sceneRight() + margin;
+        double minY = this.sceneContentTop() - margin;
+        double maxY = this.sceneContentBottom() + margin;
+
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        for (int index : visible) {
+            double[] projected = this.project(nodes.get(index));
+            if (projected[0] >= minX && projected[0] <= maxX
+                    && projected[1] >= minY && projected[1] <= maxY) {
+                this.frameNodeIndices.add(index);
+            }
+        }
     }
 
     private void renderBlock(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, MonitorNetwork.MapNode mapNode) {
@@ -754,6 +815,7 @@ final class NetworkMapView {
                 this.filter = mapFilter;
                 this.selectedIndex = -1;
                 this.focusedOnBlock = false;
+                this.rebuildPerformanceCache();
                 this.recomputeFit();
                 return true;
             }
@@ -958,18 +1020,19 @@ final class NetworkMapView {
                 NetworkMapView.formatPower(selected.idlePower()), -14740);
 
         int registryY = lineY + 24;
-        PathTarget pathTarget = this.pathTarget(selected);
+        NetworkMapPathResolver.Target pathTarget =
+                NetworkMapPathResolver.resolve(this.snapshot, selected);
         if (pathTarget != null) {
             int pathY = lineY + 25;
             Component linkTitle = Component.translatable(
-                    pathTarget.type() == PathType.QUANTUM
+                    pathTarget.type() == NetworkMapPathResolver.Type.QUANTUM
                             ? "screen.forever_production_monitor.map.quantum_bridge"
                             : "screen.forever_production_monitor.map.wireless_connector");
             guiGraphics.drawString(this.font,
                     this.ellipsize(linkTitle.getString(), Math.max(40, right - left)),
                     left, pathY, palette.accentB(), false);
 
-            String destination = pathTarget.type() == PathType.QUANTUM
+            String destination = pathTarget.type() == NetworkMapPathResolver.Type.QUANTUM
                     ? NetworkMapView.dimensionName(pathTarget.dimension())
                     : pathTarget.pos().toShortString();
             guiGraphics.drawString(this.font,
@@ -1000,63 +1063,6 @@ final class NetworkMapView {
 
         guiGraphics.drawWordWrap(this.font, Component.literal(selected.visualId().toString()),
                 left, registryY, Math.max(40, right - left), palette.muted());
-    }
-
-    private PathTarget pathTarget(MonitorNetwork.MapNode selected) {
-        if (this.snapshot == null) {
-            return null;
-        }
-
-        ResourceLocation currentDimension = this.snapshot.viewDimension();
-        if (NetworkMapView.isAe2QuantumBridgePart(selected)) {
-            for (MonitorNetwork.QuantumLink link : this.snapshot.quantumLinks()) {
-                if (currentDimension.equals(link.dimensionA())
-                        && NetworkMapView.sameBridge(selected.pos(), link.posA())) {
-                    return new PathTarget(link.dimensionB(), link.posB(), PathType.QUANTUM);
-                }
-                if (currentDimension.equals(link.dimensionB())
-                        && NetworkMapView.sameBridge(selected.pos(), link.posB())) {
-                    return new PathTarget(link.dimensionA(), link.posA(), PathType.QUANTUM);
-                }
-            }
-        }
-
-        if (NetworkMapView.isExtendedAeWirelessConnector(selected)) {
-            for (MonitorNetwork.WirelessLink link : this.snapshot.wirelessLinks()) {
-                if (!currentDimension.equals(link.dimension())) {
-                    continue;
-                }
-                if (selected.pos().equals(link.posA())) {
-                    return new PathTarget(currentDimension, link.posB(), PathType.WIRELESS);
-                }
-                if (selected.pos().equals(link.posB())) {
-                    return new PathTarget(currentDimension, link.posA(), PathType.WIRELESS);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static boolean isAe2QuantumBridgePart(MonitorNetwork.MapNode node) {
-        BlockState state = Block.stateById(node.blockStateId());
-        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return "ae2".equals(blockId.getNamespace())
-                && ("quantum_link".equals(blockId.getPath())
-                || "quantum_ring".equals(blockId.getPath()));
-    }
-
-    private static boolean isExtendedAeWirelessConnector(MonitorNetwork.MapNode node) {
-        BlockState state = Block.stateById(node.blockStateId());
-        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return "extendedae".equals(blockId.getNamespace())
-                && "wireless_connect".equals(blockId.getPath());
-    }
-
-    private static boolean sameBridge(BlockPos selected, BlockPos center) {
-        return Math.abs(selected.getX() - center.getX()) <= 1
-                && Math.abs(selected.getY() - center.getY()) <= 1
-                && Math.abs(selected.getZ() - center.getZ()) <= 1;
     }
 
     static String dimensionName(ResourceLocation dimension) {
@@ -1320,21 +1326,26 @@ final class NetworkMapView {
         return false;
     }
 
-    private void updateHover(int n, int n2) {
+    private void updateHover(int mouseX, int mouseY) {
         this.hoveredIndex = -1;
-        if (this.snapshot == null || !this.insideScene(n, n2)) {
+        if (this.snapshot == null || !this.insideScene(mouseX, mouseY)) {
             return;
         }
-        double d = Double.MAX_VALUE;
-        double d2 = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
-        for (int i = 0; i < this.snapshot.nodes().size(); ++i) {
-            double d3;
-            double[] dArray;
-            double d4;
-            double d5;
-            if (!this.shouldRender(this.snapshot.nodes().get(i)) || !((d5 = (d4 = (double)n - (dArray = this.project(this.snapshot.nodes().get(i)))[0]) * d4 + (d3 = (double)n2 - dArray[1]) * d3) <= d2 * d2) || !(d5 < d)) continue;
-            d = d5;
-            this.hoveredIndex = i;
+
+        double bestDistance = Double.MAX_VALUE;
+        double hitRadius = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
+        double hitRadiusSquared = hitRadius * hitRadius;
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+
+        for (int index : this.performanceCache.visibleNodeIndices()) {
+            double[] projected = this.project(nodes.get(index));
+            double dx = (double)mouseX - projected[0];
+            double dy = (double)mouseY - projected[1];
+            double distance = dx * dx + dy * dy;
+            if (distance <= hitRadiusSquared && distance < bestDistance) {
+                bestDistance = distance;
+                this.hoveredIndex = index;
+            }
         }
     }
 
@@ -1364,46 +1375,58 @@ final class NetworkMapView {
     }
 
     private void recomputeFit() {
-        if (this.snapshot == null || this.snapshot.nodes().isEmpty() || this.width <= this.detailsWidth() || this.height <= 0) {
+        if (this.snapshot == null
+                || this.performanceCache.visibleNodeIndices().isEmpty()
+                || this.width <= this.detailsWidth()
+                || this.height <= 0) {
             return;
         }
-        double d = this.centerX;
-        double d2 = this.centerY;
-        double d3 = this.centerZ;
-        int n = Integer.MAX_VALUE;
-        int n2 = Integer.MAX_VALUE;
-        int n3 = Integer.MAX_VALUE;
-        int n4 = Integer.MIN_VALUE;
-        int n5 = Integer.MIN_VALUE;
-        int n6 = Integer.MIN_VALUE;
-        for (MonitorNetwork.MapNode mapNode : this.snapshot.nodes()) {
-            if (!this.shouldRender(mapNode)) continue;
-            BlockPos blockPos = mapNode.pos();
-            n = Math.min(n, blockPos.getX());
-            n2 = Math.min(n2, blockPos.getY());
-            n3 = Math.min(n3, blockPos.getZ());
-            n4 = Math.max(n4, blockPos.getX());
-            n5 = Math.max(n5, blockPos.getY());
-            n6 = Math.max(n6, blockPos.getZ());
+
+        double previousCenterX = this.centerX;
+        double previousCenterY = this.centerY;
+        double previousCenterZ = this.centerZ;
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        for (int index : this.performanceCache.visibleNodeIndices()) {
+            BlockPos pos = nodes.get(index).pos();
+            minX = Math.min(minX, pos.getX());
+            minY = Math.min(minY, pos.getY());
+            minZ = Math.min(minZ, pos.getZ());
+            maxX = Math.max(maxX, pos.getX());
+            maxY = Math.max(maxY, pos.getY());
+            maxZ = Math.max(maxZ, pos.getZ());
         }
-        if (n == Integer.MAX_VALUE) {
-            return;
-        }
+
         if (this.focusedOnBlock) {
-            this.centerX = d;
-            this.centerY = d2;
-            this.centerZ = d3;
+            this.centerX = previousCenterX;
+            this.centerY = previousCenterY;
+            this.centerZ = previousCenterZ;
         } else {
-            this.centerX = (double)(n + n4 + 1) * 0.5;
-            this.centerY = (double)(n2 + n5 + 1) * 0.5;
-            this.centerZ = (double)(n3 + n6 + 1) * 0.5;
+            this.centerX = (double)(minX + maxX + 1) * 0.5;
+            this.centerY = (double)(minY + maxY + 1) * 0.5;
+            this.centerZ = (double)(minZ + maxZ + 1) * 0.5;
         }
-        this.sceneDepthSpan = Math.max(2.0, (double)(n4 - n) + 1.0 + ((double)(n5 - n2) + 1.0) + ((double)(n6 - n3) + 1.0));
-        double d4 = Math.max(2.0, (double)(n4 - n + n6 - n3) + 2.0);
-        double d5 = Math.max(2.0, (double)(n5 - n2) + d4 * 0.35 + 2.0);
-        double d6 = Math.max(80.0, (double)(this.sceneRight() - this.left) - 28.0);
-        double d7 = Math.max(80.0, (double)(this.sceneContentBottom() - this.sceneContentTop()) - 28.0);
-        this.fitScale = Math.max(0.2, Math.min(22.0, Math.min(d6 / d4, d7 / d5)));
+
+        this.sceneDepthSpan = Math.max(
+                2.0,
+                (double)(maxX - minX) + 1.0
+                        + ((double)(maxY - minY) + 1.0)
+                        + ((double)(maxZ - minZ) + 1.0));
+        double horizontalSpan = Math.max(2.0, (double)(maxX - minX + maxZ - minZ) + 2.0);
+        double verticalSpan = Math.max(2.0, (double)(maxY - minY) + horizontalSpan * 0.35 + 2.0);
+        double availableWidth = Math.max(80.0, (double)(this.sceneRight() - this.left) - 28.0);
+        double availableHeight = Math.max(
+                80.0,
+                (double)(this.sceneContentBottom() - this.sceneContentTop()) - 28.0);
+        this.fitScale = Math.max(
+                0.2,
+                Math.min(22.0, Math.min(availableWidth / horizontalSpan, availableHeight / verticalSpan)));
     }
 
     private double scale() {
@@ -1521,25 +1544,11 @@ final class NetworkMapView {
     }
 
     private int estimatedCableLoad(BlockPos blockPos) {
-        return this.cableLoads.getOrDefault(blockPos.asLong(), 0);
+        return this.performanceCache.cableLoad(blockPos);
     }
 
-    private void recomputeCableLoads() {
-        this.cableLoads.clear();
-        if (this.snapshot == null) {
-            return;
-        }
-        List<MonitorNetwork.MapNode> list = this.snapshot.nodes().stream().filter(mapNode -> mapNode.channels() > 0 && !NetworkMapView.isCable(mapNode.visualId().getPath())).toList();
-        for (MonitorNetwork.MapNode mapNode2 : this.snapshot.nodes()) {
-            if (!NetworkMapView.isCable(mapNode2.visualId().getPath())) continue;
-            int n = 0;
-            for (MonitorNetwork.MapNode mapNode3 : list) {
-                int n2 = Math.abs(mapNode3.pos().getX() - mapNode2.pos().getX()) + Math.abs(mapNode3.pos().getY() - mapNode2.pos().getY()) + Math.abs(mapNode3.pos().getZ() - mapNode2.pos().getZ());
-                if (n2 > 6) continue;
-                n += mapNode3.channels();
-            }
-            this.cableLoads.put(mapNode2.pos().asLong(), n);
-        }
+    private void rebuildPerformanceCache() {
+        this.performanceCache.rebuild(this.snapshot, this::shouldRender);
     }
 
     private CameraState[] cameraBookmarks() {
@@ -1797,14 +1806,6 @@ final class NetworkMapView {
     }
 
     private record CameraState(float yaw, float pitch, double zoom, double panX, double panY, double centerX, double centerY, double centerZ, boolean focused) {
-    }
-
-    private record PathTarget(ResourceLocation dimension, BlockPos pos, PathType type) {
-    }
-
-    private static enum PathType {
-        QUANTUM,
-        WIRELESS
     }
 
     private static enum ToolbarGroup {
