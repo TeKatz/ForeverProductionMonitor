@@ -172,6 +172,7 @@ public final class MonitorNetwork {
                             false,
                             List.of(requestNetworkMap.viewDimension()),
                             List.of(),
+                            List.of(),
                             List.of()),
                     (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
@@ -181,6 +182,7 @@ public final class MonitorNetwork {
                 ((ProductionMonitorBlockEntity)((Object)object)).networkMapSnapshot(requestNetworkMap.viewDimension());
         List<MapNode> nodes = networkMapSnapshot.nodes().stream().map(MapNode::from).toList();
         List<QuantumLink> quantumLinks = networkMapSnapshot.quantumLinks().stream().map(QuantumLink::from).toList();
+        List<WirelessLink> wirelessLinks = networkMapSnapshot.wirelessLinks().stream().map(WirelessLink::from).toList();
         Status status = ((ProductionMonitorBlockEntity)((Object)object)).isWarmingUp()
                 ? Status.WARMING_UP : Status.ONLINE;
 
@@ -193,6 +195,7 @@ public final class MonitorNetwork {
                         networkMapSnapshot.truncated(),
                         networkMapSnapshot.dimensions(),
                         quantumLinks,
+                        wirelessLinks,
                         nodes),
                 (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
@@ -986,6 +989,7 @@ public final class MonitorNetwork {
                                     boolean truncated,
                                     List<ResourceLocation> dimensions,
                                     List<QuantumLink> quantumLinks,
+                                    List<WirelessLink> wirelessLinks,
                                     List<MapNode> nodes) implements CustomPacketPayload
     {
         public static final CustomPacketPayload.Type<NetworkMapPayload> TYPE =
@@ -1004,6 +1008,10 @@ public final class MonitorNetwork {
 
                     buf.writeVarInt(Math.min(128, payload.quantumLinks.size()));
                     payload.quantumLinks.stream().limit(128L)
+                            .forEach(link -> link.write(buf));
+
+                    buf.writeVarInt(Math.min(256, payload.wirelessLinks.size()));
+                    payload.wirelessLinks.stream().limit(256L)
                             .forEach(link -> link.write(buf));
 
                     buf.writeVarInt(Math.min(4096, payload.nodes.size()));
@@ -1030,6 +1038,12 @@ public final class MonitorNetwork {
                         quantumLinks.add(QuantumLink.read(buf));
                     }
 
+                    int wirelessLinkCount = Math.min(256, buf.readVarInt());
+                    ArrayList<WirelessLink> wirelessLinks = new ArrayList<>(wirelessLinkCount);
+                    for (int i = 0; i < wirelessLinkCount; ++i) {
+                        wirelessLinks.add(WirelessLink.read(buf));
+                    }
+
                     int nodeCount = Math.min(4096, buf.readVarInt());
                     ArrayList<MapNode> nodes = new ArrayList<>(nodeCount);
                     for (int i = 0; i < nodeCount; ++i) {
@@ -1038,12 +1052,13 @@ public final class MonitorNetwork {
 
                     return new NetworkMapPayload(
                             dimension, pos, viewDimension, status, truncated,
-                            dimensions, quantumLinks, nodes);
+                            dimensions, quantumLinks, wirelessLinks, nodes);
                 });
 
         public NetworkMapPayload {
             dimensions = List.copyOf(dimensions.subList(0, Math.min(32, dimensions.size())));
             quantumLinks = List.copyOf(quantumLinks.subList(0, Math.min(128, quantumLinks.size())));
+            wirelessLinks = List.copyOf(wirelessLinks.subList(0, Math.min(256, wirelessLinks.size())));
             nodes = List.copyOf(nodes.subList(0, Math.min(4096, nodes.size())));
         }
 
@@ -1341,6 +1356,25 @@ public final class MonitorNetwork {
             return new QuantumLink(
                     link.dimensionA(), link.posA(),
                     link.dimensionB(), link.posB());
+        }
+    }
+
+    public record WirelessLink(ResourceLocation dimension, BlockPos posA, BlockPos posB) {
+        private void write(RegistryFriendlyByteBuf buf) {
+            ResourceLocation.STREAM_CODEC.encode(buf, this.dimension);
+            buf.writeBlockPos(this.posA);
+            buf.writeBlockPos(this.posB);
+        }
+
+        private static WirelessLink read(RegistryFriendlyByteBuf buf) {
+            return new WirelessLink(
+                    (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                    buf.readBlockPos(),
+                    buf.readBlockPos());
+        }
+
+        private static WirelessLink from(ProductionMonitorBlockEntity.NetworkMapWirelessLink link) {
+            return new WirelessLink(link.dimension(), link.posA(), link.posB());
         }
     }
 
