@@ -7,7 +7,7 @@ modId="forever_production_monitor"
 version="4.0.0"
 displayName="Forever Production Monitor"
 description='''An AE2 production dashboard with a live 3D network map, pinned resources, alarms, storage and channel diagnostics.'''
-authors="Timo & OpenAI"
+authors="Timo"
 
 [[dependencies.forever_production_monitor]]
 modId="neoforge"
