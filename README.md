@@ -26,6 +26,21 @@ Notable 4.0.0 maintenance work:
 The original project source was reconstructed from the stable 2.2.1 JAR. The historical
 baseline verification remains documented in [BASELINE.md](BASELINE.md).
 
+## Development and AI disclosure
+
+Forever Production Monitor is designed, directed and tested by Timo.
+
+The implementation has been produced extensively with generative AI (ChatGPT/OpenAI) under
+human direction and review. Feature requirements, architecture decisions, UI/UX direction,
+testing, bug reproduction, acceptance decisions and release approval are performed by Timo.
+AI assistance is used for implementation, refactoring, debugging and documentation.
+
+Releases are built from the source in this repository through GitHub Actions and are manually
+tested in-game before being accepted as stable.
+
+The reconstructed 2.2.1 baseline referenced above was Timo's own earlier build of Forever
+Production Monitor. It was not reconstructed from an unrelated third-party mod.
+
 ## Runtime target
 
 - Minecraft 1.21.1
