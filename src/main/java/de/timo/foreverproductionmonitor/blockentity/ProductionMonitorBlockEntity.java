@@ -51,6 +51,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.cells.StorageCell;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
+import appeng.blockentity.qnb.QuantumBridgeBlockEntity;
 import appeng.core.definitions.AEBlocks;
 import appeng.parts.storagebus.StorageBusPart;
 import de.timo.foreverproductionmonitor.ModContent;
@@ -77,6 +78,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -605,56 +607,204 @@ extends AENetworkedBlockEntity {
         return this.deviceSnapshot;
     }
 
-    public NetworkMapSnapshot networkMapSnapshot() {
-        IGrid iGrid = this.getMainNode().isOnline() ? this.getMainNode().getGrid() : null;
-        Level level = this.getLevel();
-        if (iGrid == null || level == null) {
-            return NetworkMapSnapshot.EMPTY;
+    public NetworkMapSnapshot networkMapSnapshot(ResourceLocation requestedDimension) {
+        IGrid grid = this.getMainNode().isOnline() ? this.getMainNode().getGrid() : null;
+        Level monitorLevel = this.getLevel();
+        ResourceLocation fallbackDimension = monitorLevel == null
+                ? requestedDimension
+                : monitorLevel.dimension().location();
+        ResourceLocation viewDimension = requestedDimension == null ? fallbackDimension : requestedDimension;
+        if (grid == null || monitorLevel == null) {
+            return NetworkMapSnapshot.empty(viewDimension);
         }
-        ArrayList<MapNodeSource> arrayList = new ArrayList<MapNodeSource>();
-        HashSet<BlockPos> hashSet = new HashSet<BlockPos>();
-        for (IGridNode node : iGrid.getNodes()) {
-            Object owner = node.getOwner();
-            Level nodeLevel = ProductionMonitorBlockEntity.findLevel(owner, 0);
-            DeviceLocation location = ProductionMonitorBlockEntity.locationOf(node, owner);
-            if (nodeLevel != null && nodeLevel != level || location == null) continue;
-            hashSet.add(location.pos());
-            arrayList.add(new MapNodeSource(node, owner, location));
-        }
-        LinkedHashMap<MapElementKey, MutableMapNode> linkedHashMap = new LinkedHashMap<>();
-        Set<BlockPos> knownBlocks = new HashSet<>();
-        for (MapNodeSource mapNodeSource : arrayList) {
-            IGridNode node = mapNodeSource.node();
-            Object owner = mapNodeSource.owner();
-            DeviceLocation deviceLocation = mapNodeSource.location();
-            BlockPos blockPos = deviceLocation.pos();
-            BlockState blockState = level.getBlockState(blockPos);
-            AEItemKey aEItemKey = node.getVisualRepresentation();
-            if (owner instanceof ProductionMonitorBlockEntity) {
-                aEItemKey = AEItemKey.of((ItemLike)ModContent.PRODUCTION_MONITOR.get());
-            } else if (aEItemKey == null) {
-                aEItemKey = ProductionMonitorBlockEntity.visualFromOwner(owner);
+
+        LinkedHashMap<ResourceLocation, ServerLevel> levels = new LinkedHashMap<>();
+        ArrayList<MapNodeSource> viewSources = new ArrayList<>();
+        HashMap<Long, List<QuantumBridgeEndpoint>> quantumEndpoints = new HashMap<>();
+        LinkedHashMap<WirelessConnectorEndpoint, BlockPos> wirelessEndpoints = new LinkedHashMap<>();
+
+        // IGrid is already the authoritative logical AE network. In particular, an active
+        // Quantum Bridge makes both physical sides part of this same grid. Wireless terminals
+        // do not create bridge nodes here; they resolve the grid through a physical WAP.
+        for (IGridNode node : grid.getNodes()) {
+            ServerLevel nodeLevel;
+            try {
+                nodeLevel = node.getLevel();
+            } catch (RuntimeException ignored) {
+                continue;
             }
-            ResourceLocation resourceLocation = aEItemKey == null ? BuiltInRegistries.ITEM.getKey(blockState.getBlock().asItem()) : BuiltInRegistries.ITEM.getKey(aEItemKey.getItem());
-            String string = aEItemKey == null ? blockState.getBlock().getName().getString() : aEItemKey.getDisplayName().getString();
-            MapNodeState mapNodeState = ProductionMonitorBlockEntity.mapNodeState(node);
-            MapRenderKind mapRenderKind = ProductionMonitorBlockEntity.isMultipartHost(blockState) || deviceLocation.side() != -1 ? MapRenderKind.PART : MapRenderKind.BLOCK;
-            MapElementKey mapElementKey = new MapElementKey(blockPos.immutable(), mapRenderKind, mapRenderKind == MapRenderKind.PART ? deviceLocation.side() : -1, (ResourceLocation)(mapRenderKind == MapRenderKind.PART ? resourceLocation : null));
-            linkedHashMap.computeIfAbsent(mapElementKey, mapElementKey2 -> new MutableMapNode(blockPos, Block.getId(blockState), resourceLocation, mapRenderKind, mapElementKey.side())).merge(resourceLocation, string, mapNodeState, node.getUsedChannels(), node.getIdlePowerUsage(), node.hasFlag(GridFlags.REQUIRE_CHANNEL));
-            ProductionMonitorBlockEntity.addKnownMultiblock(level, blockPos, resourceLocation, linkedHashMap, knownBlocks);
+
+            Object owner = node.getOwner();
+            DeviceLocation location = ProductionMonitorBlockEntity.locationOf(node, owner);
+            if (location == null) {
+                continue;
+            }
+
+            ResourceLocation dimension = nodeLevel.dimension().location();
+            levels.putIfAbsent(dimension, nodeLevel);
+            if (dimension.equals(viewDimension)) {
+                // Only the requested dimension is rendered. Keep global dimension/link
+                // discovery network-wide, but avoid retaining MapNodeSource objects for
+                // dimensions that cannot contribute to this snapshot.
+                viewSources.add(new MapNodeSource(node, owner, location));
+            }
+
+            // Only a real, formed ME Quantum Link Chamber can become a navigable map link.
+            // This intentionally excludes WAPs/wireless terminals and unrelated "quantum"
+            // devices such as AdvancedAE's Quantum Computer.
+            if (owner instanceof QuantumBridgeBlockEntity bridge
+                    && bridge.getBlockState().is(AEBlocks.QUANTUM_LINK.block())
+                    && bridge.isFormed()
+                    && bridge.isPowered()) {
+                // On the dedicated/server side, hasQES() reflects a synchronization flag in
+                // the formed-state byte and is not authoritative for the chamber inventory.
+                // The real entangled-singularity identity is the non-zero frequency stored
+                // on the QES itself, which is also what AE2's QuantumCluster pairs on.
+                long frequency = bridge.getQEFrequency();
+                if (frequency != 0L) {
+                    QuantumBridgeEndpoint endpoint = new QuantumBridgeEndpoint(
+                            dimension, bridge.getBlockPos().immutable());
+                    List<QuantumBridgeEndpoint> endpoints = quantumEndpoints.computeIfAbsent(
+                            frequency, ignored -> new ArrayList<>());
+                    if (!endpoints.contains(endpoint)) {
+                        endpoints.add(endpoint);
+                    }
+                }
+            }
+
+            // ExtendedAE's ME Wireless Connector exposes its paired block position through
+            // getOtherSide(). Keep this integration optional by using the stable block id and
+            // reflection instead of introducing a hard ExtendedAE dependency.
+            BlockState ownerState = nodeLevel.getBlockState(location.pos());
+            ResourceLocation ownerBlockId = BuiltInRegistries.BLOCK.getKey(ownerState.getBlock());
+            if ("extendedae".equals(ownerBlockId.getNamespace())
+                    && "wireless_connect".equals(ownerBlockId.getPath())
+                    && Boolean.TRUE.equals(ProductionMonitorBlockEntity.invokeNoArg(owner, "isConnected"))) {
+                Object otherSide = ProductionMonitorBlockEntity.invokeNoArg(owner, "getOtherSide");
+                if (otherSide instanceof BlockPos otherPos && !otherPos.equals(location.pos())) {
+                    wirelessEndpoints.put(
+                            new WirelessConnectorEndpoint(dimension, location.pos().immutable()),
+                            otherPos.immutable());
+                }
+            }
         }
-        for (BlockPos blockPos : hashSet) {
+
+        ArrayList<ResourceLocation> dimensions = new ArrayList<>(levels.keySet());
+        dimensions.sort((a, b) -> a.toString().compareToIgnoreCase(b.toString()));
+
+        ArrayList<NetworkMapLink> quantumLinks = new ArrayList<>();
+        for (List<QuantumBridgeEndpoint> endpoints : quantumEndpoints.values()) {
+            // A valid QES pair has exactly two physical centers. Refuse ambiguous/corrupt
+            // frequencies instead of guessing a destination.
+            if (endpoints.size() != 2) {
+                continue;
+            }
+            QuantumBridgeEndpoint a = endpoints.get(0);
+            QuantumBridgeEndpoint b = endpoints.get(1);
+            quantumLinks.add(new NetworkMapLink(a.dimension(), a.pos(), b.dimension(), b.pos()));
+        }
+
+        ArrayList<NetworkMapWirelessLink> wirelessLinks = new ArrayList<>();
+        for (Map.Entry<WirelessConnectorEndpoint, BlockPos> entry : wirelessEndpoints.entrySet()) {
+            WirelessConnectorEndpoint a = entry.getKey();
+            BlockPos bPos = entry.getValue();
+            WirelessConnectorEndpoint b = new WirelessConnectorEndpoint(a.dimension(), bPos);
+            BlockPos reciprocal = wirelessEndpoints.get(b);
+            if (reciprocal == null || !reciprocal.equals(a.pos())) {
+                continue;
+            }
+
+            // Both endpoints report each other. Add the physical pair only once.
+            if (Long.compare(a.pos().asLong(), bPos.asLong()) < 0) {
+                wirelessLinks.add(new NetworkMapWirelessLink(
+                        a.dimension(), a.pos(), bPos));
+            }
+        }
+
+        ServerLevel level = levels.get(viewDimension);
+        if (level == null) {
+            return new NetworkMapSnapshot(
+                    viewDimension, dimensions, quantumLinks, wirelessLinks, List.of(), false);
+        }
+
+        ArrayList<MapNodeSource> mapSources = new ArrayList<>();
+        HashSet<BlockPos> networkPositions = new HashSet<>();
+        for (MapNodeSource source : viewSources) {
+            BlockPos pos = source.location().pos();
+            if (!level.hasChunkAt(pos)) {
+                continue;
+            }
+            networkPositions.add(pos);
+            mapSources.add(source);
+        }
+
+        LinkedHashMap<MapElementKey, MutableMapNode> map = new LinkedHashMap<>();
+        Set<BlockPos> knownBlocks = new HashSet<>();
+
+        for (MapNodeSource source : mapSources) {
+            IGridNode node = source.node();
+            Object owner = source.owner();
+            DeviceLocation location = source.location();
+            BlockPos blockPos = location.pos();
+            BlockState blockState = level.getBlockState(blockPos);
+            AEItemKey visual = node.getVisualRepresentation();
+            if (owner instanceof ProductionMonitorBlockEntity) {
+                visual = AEItemKey.of((ItemLike)ModContent.PRODUCTION_MONITOR.get());
+            } else if (visual == null) {
+                visual = ProductionMonitorBlockEntity.visualFromOwner(owner);
+            }
+
+            ResourceLocation visualId = visual == null
+                    ? BuiltInRegistries.ITEM.getKey(blockState.getBlock().asItem())
+                    : BuiltInRegistries.ITEM.getKey(visual.getItem());
+            String name = visual == null
+                    ? blockState.getBlock().getName().getString()
+                    : visual.getDisplayName().getString();
+            MapNodeState nodeState = ProductionMonitorBlockEntity.mapNodeState(node);
+            MapRenderKind renderKind = ProductionMonitorBlockEntity.isMultipartHost(blockState)
+                    || location.side() != -1 ? MapRenderKind.PART : MapRenderKind.BLOCK;
+            MapElementKey key = new MapElementKey(
+                    blockPos.immutable(),
+                    renderKind,
+                    renderKind == MapRenderKind.PART ? location.side() : -1,
+                    renderKind == MapRenderKind.PART ? visualId : null);
+
+            map.computeIfAbsent(key, ignored -> new MutableMapNode(
+                    blockPos, Block.getId(blockState), visualId, renderKind, key.side()))
+                    .merge(visualId, name, nodeState, node.getUsedChannels(),
+                            node.getIdlePowerUsage(), node.hasFlag(GridFlags.REQUIRE_CHANNEL));
+            ProductionMonitorBlockEntity.addKnownMultiblock(
+                    level, blockPos, visualId, map, knownBlocks);
+        }
+
+        for (BlockPos blockPos : networkPositions) {
             for (Direction direction : Direction.values()) {
                 BlockPos adjacentPos = blockPos.relative(direction);
-                if (hashSet.contains(adjacentPos)) continue;
-                ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(adjacentPos).getBlock());
-                ProductionMonitorBlockEntity.addKnownMultiblock(level, adjacentPos, blockId, linkedHashMap, knownBlocks);
-                ProductionMonitorBlockEntity.addExternalMachine(level, adjacentPos, linkedHashMap);
+                if (networkPositions.contains(adjacentPos) || !level.hasChunkAt(adjacentPos)) {
+                    continue;
+                }
+                ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(
+                        level.getBlockState(adjacentPos).getBlock());
+                ProductionMonitorBlockEntity.addKnownMultiblock(
+                        level, adjacentPos, blockId, map, knownBlocks);
+                ProductionMonitorBlockEntity.addExternalMachine(level, adjacentPos, map);
             }
         }
-        ProductionMonitorBlockEntity.discoverKnownMultiblocks(level, hashSet, linkedHashMap, knownBlocks);
-        List<NetworkMapNode> nodes = linkedHashMap.values().stream().map(MutableMapNode::finish).limit(4096L).toList();
-        return new NetworkMapSnapshot(nodes, linkedHashMap.size() > 4096);
+
+        ProductionMonitorBlockEntity.discoverKnownMultiblocks(
+                level, networkPositions, map, knownBlocks);
+        List<NetworkMapNode> nodes = map.values().stream()
+                .map(MutableMapNode::finish)
+                .limit(NetworkMapSnapshot.MAX_NODES)
+                .toList();
+
+        return new NetworkMapSnapshot(
+                viewDimension,
+                dimensions,
+                quantumLinks,
+                wirelessLinks,
+                nodes,
+                map.size() > NetworkMapSnapshot.MAX_NODES);
     }
 
     private static void discoverKnownMultiblocks(Level level, Set<BlockPos> set, Map<MapElementKey, MutableMapNode> map, Set<BlockPos> set2) {
@@ -738,7 +888,10 @@ extends AENetworkedBlockEntity {
     private static boolean isKnownMultiblockMember(ResourceLocation resourceLocation, String string) {
         String string2 = resourceLocation.getPath();
         if (string.equals("quantum")) {
-            return resourceLocation.getNamespace().equals("advanced_ae") && (string2.startsWith("quantum_") || string2.equals("data_entangler"));
+            return resourceLocation.getNamespace().equals("advanced_ae")
+                    && (string2.startsWith("quantum_") || string2.equals("data_entangler"))
+                    || resourceLocation.getNamespace().equals("ae2")
+                    && (string2.equals("quantum_ring") || string2.equals("quantum_link"));
         }
         return string2.contains("assembler_matrix");
     }
@@ -890,8 +1043,35 @@ extends AENetworkedBlockEntity {
         if (blockPos == null) {
             return null;
         }
+
+        // A logical AE grid can span multiple dimensions through Quantum Bridges. A position
+        // alone is therefore not a complete device location: the same coordinates can even
+        // exist in several dimensions. Preserve the owning grid node's real dimension so the
+        // locator never mistakes the monitor dimension for the device dimension.
+        ResourceLocation dimension = null;
+        try {
+            Level nodeLevel = iGridNode.getLevel();
+            if (nodeLevel != null) {
+                dimension = nodeLevel.dimension().location();
+            }
+        } catch (RuntimeException ignored) {
+        }
+        if (dimension == null) {
+            Level foundLevel = ProductionMonitorBlockEntity.findLevel(object2, 0);
+            if (foundLevel == null) {
+                foundLevel = ProductionMonitorBlockEntity.findLevel(object, 0);
+            }
+            if (foundLevel != null) {
+                dimension = foundLevel.dimension().location();
+            }
+        }
+        if (dimension == null) {
+            return null;
+        }
+
         Direction direction = ProductionMonitorBlockEntity.findDirection(object);
-        return new DeviceLocation(blockPos.immutable(), direction == null ? -1 : direction.get3DDataValue());
+        return new DeviceLocation(dimension, blockPos.immutable(),
+                direction == null ? -1 : direction.get3DDataValue());
     }
 
     private static BlockPos findBlockPos(Object object, int n) {
@@ -1271,16 +1451,42 @@ extends AENetworkedBlockEntity {
         }
     }
 
-    public record NetworkMapSnapshot(List<NetworkMapNode> nodes, boolean truncated) {
+    public record NetworkMapSnapshot(ResourceLocation viewDimension,
+                                     List<ResourceLocation> dimensions,
+                                     List<NetworkMapLink> quantumLinks,
+                                     List<NetworkMapWirelessLink> wirelessLinks,
+                                     List<NetworkMapNode> nodes,
+                                     boolean truncated) {
         public static final int MAX_NODES = 4096;
-        public static final NetworkMapSnapshot EMPTY = new NetworkMapSnapshot(List.of(), false);
 
         public NetworkMapSnapshot {
+            dimensions = List.copyOf(dimensions);
+            quantumLinks = List.copyOf(quantumLinks);
+            wirelessLinks = List.copyOf(wirelessLinks);
             nodes = List.copyOf(nodes);
+        }
+
+        public static NetworkMapSnapshot empty(ResourceLocation viewDimension) {
+            return new NetworkMapSnapshot(
+                    viewDimension, List.of(), List.of(), List.of(), List.of(), false);
         }
     }
 
-    public record DeviceLocation(BlockPos pos, int side) {
+    public record NetworkMapLink(ResourceLocation dimensionA, BlockPos posA,
+                                 ResourceLocation dimensionB, BlockPos posB) {
+    }
+
+    public record NetworkMapWirelessLink(ResourceLocation dimension,
+                                         BlockPos posA, BlockPos posB) {
+    }
+
+    private record QuantumBridgeEndpoint(ResourceLocation dimension, BlockPos pos) {
+    }
+
+    private record WirelessConnectorEndpoint(ResourceLocation dimension, BlockPos pos) {
+    }
+
+    public record DeviceLocation(ResourceLocation dimension, BlockPos pos, int side) {
         public static final int NO_SIDE = -1;
     }
 

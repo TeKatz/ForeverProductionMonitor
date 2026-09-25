@@ -26,9 +26,11 @@ import org.slf4j.Logger;
 @Mod(value="forever_production_monitor")
 public final class ForeverProductionMonitor {
     public static final String MOD_ID = "forever_production_monitor";
+    public static String VERSION = "unknown";
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public ForeverProductionMonitor(IEventBus modBus, ModContainer container) {
+        VERSION = container.getModInfo().getVersion().toString();
         ModContent.register(modBus);
         modBus.addListener(ModContent::registerCapabilities);
         modBus.addListener(ModContent::addCreativeTabContents);

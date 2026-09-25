@@ -44,13 +44,14 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -88,14 +89,16 @@ final class NetworkMapView {
     private static final float MIN_CAMERA_PITCH = 5.0f;
     private static final float MAX_CAMERA_PITCH = 85.0f;
     private static final double MAX_SCENE_DEPTH = 4096.0;
-    private static String rememberedNetwork;
-    private static CameraState rememberedCamera;
+    private static final Map<String, CameraState> REMEMBERED_CAMERAS = new HashMap<>();
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
-    private static boolean bookmarksLoaded;
+    private static String loadedBookmarksEncoded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
+    private static final Map<String, MonitorNetwork.NetworkMapPayload> LAST_EVENT_SNAPSHOTS = new HashMap<>();
+    private static Object eventConnection;
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
     private final Font font;
+    private final BiConsumer<ResourceLocation, BlockPos> pathNavigator;
     private MonitorNetwork.NetworkMapPayload snapshot;
     private int left;
     private int top;
@@ -117,10 +120,16 @@ final class NetworkMapView {
     private boolean heatmap;
     private boolean showEvents;
     private boolean detailsCollapsed;
+    private NetworkMapPathResolver.Target followTarget;
+    private final NetworkMapPerformanceCache performanceCache = new NetworkMapPerformanceCache();
+    private final ArrayList<Integer> frameNodeIndices = new ArrayList<>();
+    private int followButtonX;
+    private int followButtonY;
+    private int followButtonWidth;
+    private static final int FOLLOW_BUTTON_HEIGHT = 16;
     private MapFilter filter = MapFilter.ALL;
     private String search = "";
     private int searchCursor = -1;
-    private final Map<Long, Integer> cableLoads = new HashMap<Long, Integer>();
     private long lastClickTime;
     private int lastClickIndex = -1;
     private double centerX;
@@ -129,9 +138,11 @@ final class NetworkMapView {
     private double fitScale = 8.0;
     private double sceneDepthSpan = 2.0;
 
-    NetworkMapView(Minecraft minecraft, Font font) {
+    NetworkMapView(Minecraft minecraft, Font font,
+                   BiConsumer<ResourceLocation, BlockPos> pathNavigator) {
         this.minecraft = minecraft;
         this.font = font;
+        this.pathNavigator = pathNavigator;
     }
 
     void setBounds(int n, int n2, int n3, int n4) {
@@ -143,20 +154,37 @@ final class NetworkMapView {
     }
 
     void accept(MonitorNetwork.NetworkMapPayload networkMapPayload) {
-        boolean bl;
-        boolean bl2 = bl = this.snapshot == null || !this.snapshot.dimension().equals((Object)networkMapPayload.dimension()) || !this.snapshot.pos().equals((Object)networkMapPayload.pos());
-        if (!bl && this.snapshot != null) {
-            this.recordEvents(this.snapshot, networkMapPayload);
+        boolean contextChanged = this.snapshot == null
+                || !this.snapshot.dimension().equals(networkMapPayload.dimension())
+                || !this.snapshot.pos().equals(networkMapPayload.pos())
+                || !this.snapshot.viewDimension().equals(networkMapPayload.viewDimension());
+
+        // Most real map edits require closing the tablet first. Keep the last snapshot for
+        // each network/dimension outside the screen instance so reopening the tablet can still
+        // diff "before" and "after" and produce session events.
+        String eventKey = this.eventKey(networkMapPayload);
+        MonitorNetwork.NetworkMapPayload previousForEvents =
+                !contextChanged && this.snapshot != null
+                        ? this.snapshot
+                        : LAST_EVENT_SNAPSHOTS.get(eventKey);
+        if (previousForEvents != null) {
+            this.recordEvents(previousForEvents, networkMapPayload);
         }
+        LAST_EVENT_SNAPSHOTS.put(eventKey, networkMapPayload);
+
         this.snapshot = networkMapPayload;
-        this.recomputeCableLoads();
-        if (this.selectedIndex >= networkMapPayload.nodes().size()) {
+        this.performanceCache.acceptSnapshot(this.snapshot, this::shouldRender);
+        if (this.selectedIndex >= networkMapPayload.nodes().size()
+                || this.selectedIndex >= 0
+                && !this.shouldRender(networkMapPayload.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
         }
-        if (bl) {
-            String string = String.valueOf(networkMapPayload.dimension()) + "@" + networkMapPayload.pos().asLong();
-            if (((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue() && string.equals(rememberedNetwork) && rememberedCamera != null) {
-                this.restoreCamera(rememberedCamera);
+
+        if (contextChanged) {
+            String snapshotKey = this.snapshotKey(networkMapPayload);
+            CameraState remembered = REMEMBERED_CAMERAS.get(snapshotKey);
+            if (ClientConfig.VALUES.mapRememberCamera.get() && remembered != null) {
+                this.restoreCamera(remembered);
             } else {
                 this.applyDefaultView();
             }
@@ -165,15 +193,56 @@ final class NetworkMapView {
         }
     }
 
-    void setSearch(String string) {
-        String string2;
-        String string3 = string2 = string == null ? "" : string.strip().toLowerCase(Locale.ROOT);
-        if (Objects.equals(this.search, string2)) {
+    void clearSnapshot() {
+        this.rememberCamera();
+        this.snapshot = null;
+        this.hoveredIndex = -1;
+        this.selectedIndex = -1;
+        this.searchCursor = -1;
+        this.followTarget = null;
+        this.dragButton = -1;
+        this.focusedOnBlock = false;
+        this.performanceCache.clear();
+        this.frameNodeIndices.clear();
+    }
+
+    void focusPosition(BlockPos target) {
+        if (this.snapshot == null || target == null) {
             return;
         }
-        this.search = string2;
+        int bestIndex = -1;
+        int bestDistance = Integer.MAX_VALUE;
+        for (int i = 0; i < this.snapshot.nodes().size(); ++i) {
+            MonitorNetwork.MapNode node = this.snapshot.nodes().get(i);
+            int dx = Math.abs(node.pos().getX() - target.getX());
+            int dy = Math.abs(node.pos().getY() - target.getY());
+            int dz = Math.abs(node.pos().getZ() - target.getZ());
+            int distance = Math.max(dx, Math.max(dy, dz));
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestIndex = i;
+                if (distance == 0) {
+                    break;
+                }
+            }
+        }
+        if (bestIndex >= 0 && bestDistance <= 1) {
+            this.selectedIndex = bestIndex;
+            this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
+            this.focusSelected();
+        }
+    }
+
+    void setSearch(String value) {
+        String normalized = value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
+        if (Objects.equals(this.search, normalized)) {
+            return;
+        }
+        this.search = normalized;
         this.searchCursor = -1;
-        if (this.selectedIndex >= 0 && this.snapshot != null && !this.shouldRender(this.snapshot.nodes().get(this.selectedIndex))) {
+        this.rebuildVisibilityCache();
+        if (this.selectedIndex >= 0 && this.snapshot != null
+                && !this.shouldRender(this.snapshot.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
         }
         this.focusedOnBlock = false;
@@ -181,19 +250,21 @@ final class NetworkMapView {
     }
 
     void focusNextSearchMatch() {
-        if (this.snapshot == null || this.snapshot.nodes().isEmpty()) {
+        if (this.snapshot == null || this.performanceCache.visibleNodeIndices().isEmpty()) {
             return;
         }
-        int n = this.snapshot.nodes().size();
-        for (int i = 1; i <= n; ++i) {
-            int n2 = Math.floorMod(this.searchCursor + i, n);
-            if (!this.shouldRender(this.snapshot.nodes().get(n2))) continue;
-            this.searchCursor = n2;
-            this.selectedIndex = n2;
-            this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
-            this.focusSelected();
-            return;
+        List<Integer> visible = this.performanceCache.visibleNodeIndices();
+        int nextIndex = visible.get(0);
+        for (int index : visible) {
+            if (index > this.searchCursor) {
+                nextIndex = index;
+                break;
+            }
         }
+        this.searchCursor = nextIndex;
+        this.selectedIndex = nextIndex;
+        this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
+        this.focusSelected();
     }
 
     private void applyDefaultView() {
@@ -240,6 +311,8 @@ final class NetworkMapView {
 
     void render(GuiGraphics guiGraphics, int n, int n2, float f) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
+        // Follow Path is only clickable in frames where its details button is actually drawn.
+        this.followTarget = null;
         int n3 = this.sceneRight();
         int detailLeft = this.detailLeft();
         int cameraLeft = this.cameraToolbarLeft();
@@ -264,6 +337,7 @@ final class NetworkMapView {
             this.drawClippedDetails(guiGraphics);
             return;
         }
+        this.prepareFrameNodeIndices();
         this.updateHover(n, n2);
         this.renderScene(guiGraphics, n3);
         this.drawToolbar(guiGraphics, n, n2, n3);
@@ -284,76 +358,129 @@ final class NetworkMapView {
         guiGraphics.disableScissor();
     }
 
-    private void renderScene(GuiGraphics guiGraphics, int n) {
-        int n2;
-                double d = this.scale();
-        double d2 = (double)(this.left + n) * 0.5 + this.panX;
-        double d3 = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY;
+    private void renderScene(GuiGraphics guiGraphics, int sceneRight) {
+        double scale = this.scale();
+        double centerScreenX = (double)(this.left + sceneRight) * 0.5 + this.panX;
+        double centerScreenY = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY;
+
         guiGraphics.flush();
-        guiGraphics.enableScissor(this.left + 1, this.sceneContentTop(), n - 1, this.sceneContentBottom());
-        RenderSystem.clearDepth((double)1.0);
-        RenderSystem.clear((int)256, (boolean)Minecraft.ON_OSX);
+        guiGraphics.enableScissor(this.left + 1, this.sceneContentTop(),
+                sceneRight - 1, this.sceneContentBottom());
+        RenderSystem.clearDepth(1.0);
+        RenderSystem.clear(256, Minecraft.ON_OSX);
         RenderSystem.enableDepthTest();
         Lighting.setupFor3DItems();
+
         PoseStack poseStack = guiGraphics.pose();
         poseStack.pushPose();
-        poseStack.translate(d2, d3, 180.0);
-        float f = (float)Math.min(d, 4096.0 / this.sceneDepthSpan);
-        poseStack.scale((float)d, (float)(-d), f);
+        poseStack.translate(centerScreenX, centerScreenY, 180.0);
+        float depthScale = (float)Math.min(scale, 4096.0 / this.sceneDepthSpan);
+        poseStack.scale((float)scale, (float)(-scale), depthScale);
         poseStack.mulPose(Axis.XP.rotationDegrees(this.pitch));
         poseStack.mulPose(Axis.YP.rotationDegrees(this.yaw));
         poseStack.translate(-this.centerX, -this.centerY, -this.centerZ);
+
         MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
-        List<MonitorNetwork.MapNode> list = this.snapshot.nodes();
-        HashSet<BlockPos> hashSet = new HashSet<BlockPos>();
-        for (MonitorNetwork.MapNode mapNode22 : list) {
-            if (!this.shouldRender(mapNode22)) continue;
-            hashSet.add(mapNode22.pos());
-        }
-        for (MonitorNetwork.MapNode mapNode22 : list) {
-            if (!this.shouldRender(mapNode22) || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.BLOCK) continue;
-            this.renderBlock(poseStack, bufferSource, mapNode22);
-        }
-        if (!this.heatmap) {
-            for (MonitorNetwork.MapNode mapNode22 : list) {
-                if (!this.shouldRender(mapNode22)
-                        || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART
-                        || !NetworkMapView.isCable(mapNode22.visualId().getPath())) {
-                    continue;
-                }
-                this.renderCableItemModels(poseStack, bufferSource, mapNode22, hashSet);
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+
+        for (int index : this.frameNodeIndices) {
+            MonitorNetwork.MapNode node = nodes.get(index);
+            if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.BLOCK) {
+                this.renderBlock(poseStack, bufferSource, node);
             }
         }
+
+        if (!this.heatmap) {
+            for (int index : this.frameNodeIndices) {
+                MonitorNetwork.MapNode node = nodes.get(index);
+                if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART
+                        && NetworkMapView.isCable(node.visualId().getPath())) {
+                    this.renderCableItemModels(
+                            poseStack, bufferSource, node,
+                            this.performanceCache.visiblePositions());
+                }
+            }
+        }
+
         bufferSource.endBatch();
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.debugQuads());
+        VertexConsumer faceConsumer = bufferSource.getBuffer(RenderType.debugQuads());
         VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
-        for (MonitorNetwork.MapNode object2 : list) {
-            if (!this.shouldRender(object2) || object2.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART) continue;
-            this.renderPartGeometry(poseStack, vertexConsumer, lineConsumer, object2, hashSet);
+        for (int index : this.frameNodeIndices) {
+            MonitorNetwork.MapNode node = nodes.get(index);
+            if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART) {
+                this.renderPartGeometry(
+                        poseStack, faceConsumer, lineConsumer, node,
+                        this.performanceCache.visiblePositions());
+            }
         }
         bufferSource.endBatch(RenderType.debugQuads());
         bufferSource.endBatch(RenderType.lines());
+
         if (this.heatmap) {
-            VertexConsumer vertexConsumer2 = bufferSource.getBuffer(RenderType.lines());
-            for (MonitorNetwork.MapNode mapNode : list) {
-                if (!this.shouldRender(mapNode)) continue;
-                float[] fArray = this.heatColor(mapNode);
-                LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)vertexConsumer2, (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.025), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)0.96f);
+            VertexConsumer heatLines = bufferSource.getBuffer(RenderType.lines());
+            for (int index : this.frameNodeIndices) {
+                MonitorNetwork.MapNode node = nodes.get(index);
+                float[] color = this.heatColor(node);
+                LevelRenderer.renderLineBox(
+                        poseStack, heatLines,
+                        NetworkMapView.boundsFor(node).inflate(0.025),
+                        color[0], color[1], color[2], 0.96f);
             }
             bufferSource.endBatch(RenderType.lines());
         }
-        int n3 = n2 = this.selectedIndex >= 0 ? this.selectedIndex : this.hoveredIndex;
-        if (n2 >= 0 && n2 < list.size() && this.shouldRender(list.get(n2))) {
-            MonitorNetwork.MapNode mapNode = list.get(n2);
-            float[] fArray = NetworkMapView.stateColor(mapNode.state());
+
+        int highlightedIndex = this.selectedIndex >= 0 ? this.selectedIndex : this.hoveredIndex;
+        if (highlightedIndex >= 0
+                && highlightedIndex < nodes.size()
+                && this.performanceCache.visibleNodeIndices().contains(highlightedIndex)) {
+            MonitorNetwork.MapNode node = nodes.get(highlightedIndex);
+            float[] color = NetworkMapView.stateColor(node.state());
             float selectionProgress = GuiMotion.progress(this.selectedAtNanos, 300L);
-            double pulse = GuiMotion.enabled() ? (Math.sin((double)GuiMotion.now() / 2.2E8) + 1.0) * 0.006 + (1.0 - GuiMotion.easeOut(selectionProgress)) * 0.028 : 0.0;
-            LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)bufferSource.getBuffer(RenderType.lines()), (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.035 + pulse), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)1.0f);
+            double pulse = GuiMotion.enabled()
+                    ? (Math.sin((double)GuiMotion.now() / 2.2E8) + 1.0) * 0.006
+                    + (1.0 - GuiMotion.easeOut(selectionProgress)) * 0.028
+                    : 0.0;
+            LevelRenderer.renderLineBox(
+                    poseStack,
+                    bufferSource.getBuffer(RenderType.lines()),
+                    NetworkMapView.boundsFor(node).inflate(0.035 + pulse),
+                    color[0], color[1], color[2], 1.0f);
             bufferSource.endBatch(RenderType.lines());
         }
+
         poseStack.popPose();
         RenderSystem.disableDepthTest();
         guiGraphics.disableScissor();
+    }
+
+    private void prepareFrameNodeIndices() {
+        this.frameNodeIndices.clear();
+        List<Integer> visible = this.performanceCache.visibleNodeIndices();
+        if (visible.size() <= 512) {
+            this.frameNodeIndices.addAll(visible);
+            return;
+        }
+
+        // Item/block rendering is the expensive part of very large maps. Once a map grows
+        // beyond a few hundred nodes, omit nodes whose projected centres are well outside
+        // the clipped scene. A generous margin keeps cables and large item models from
+        // visibly popping at the edge while avoiding thousands of off-screen draw calls.
+        double margin = Math.max(64.0, Math.min(512.0, this.scale() * 1.75));
+        double minX = this.left - margin;
+        double maxX = this.sceneRight() + margin;
+        double minY = this.sceneContentTop() - margin;
+        double maxY = this.sceneContentBottom() + margin;
+
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        ProjectionContext projection = this.projectionContext();
+        double[] projected = new double[2];
+        for (int index : visible) {
+            this.project(nodes.get(index), projection, projected);
+            if (projected[0] >= minX && projected[0] <= maxX
+                    && projected[1] >= minY && projected[1] <= maxY) {
+                this.frameNodeIndices.add(index);
+            }
+        }
     }
 
     private void renderBlock(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, MonitorNetwork.MapNode mapNode) {
@@ -690,6 +817,7 @@ final class NetworkMapView {
                 this.filter = mapFilter;
                 this.selectedIndex = -1;
                 this.focusedOnBlock = false;
+                this.rebuildVisibilityCache();
                 this.recomputeFit();
                 return true;
             }
@@ -787,6 +915,10 @@ final class NetworkMapView {
                 if (this.font.width(navigation) > available || this.font.width(selection) > available) {
                     navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.compact").getString();
                     selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.compact").getString();
+                }
+                if (this.font.width(navigation) > available || this.font.width(selection) > available) {
+                    navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.minimal").getString();
+                    selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.minimal").getString();
                 }
 
                 if (this.font.width(navigation) <= available && this.font.width(selection) <= available) {
@@ -889,8 +1021,69 @@ final class NetworkMapView {
                 Component.translatable("screen.forever_production_monitor.map.power"),
                 NetworkMapView.formatPower(selected.idlePower()), -14740);
 
+        int registryY = lineY + 24;
+        NetworkMapPathResolver.Target pathTarget =
+                NetworkMapPathResolver.resolve(this.snapshot, selected);
+        if (pathTarget != null) {
+            int pathY = lineY + 25;
+            Component linkTitle = Component.translatable(
+                    pathTarget.type() == NetworkMapPathResolver.Type.QUANTUM
+                            ? "screen.forever_production_monitor.map.quantum_bridge"
+                            : "screen.forever_production_monitor.map.wireless_connector");
+            guiGraphics.drawString(this.font,
+                    this.ellipsize(linkTitle.getString(), Math.max(40, right - left)),
+                    left, pathY, palette.accentB(), false);
+
+            String destination = pathTarget.type() == NetworkMapPathResolver.Type.QUANTUM
+                    ? NetworkMapView.dimensionName(pathTarget.dimension())
+                    : pathTarget.pos().toShortString();
+            guiGraphics.drawString(this.font,
+                    this.ellipsize(
+                            Component.translatable(
+                                    "screen.forever_production_monitor.map.destination",
+                                    destination).getString(),
+                            Math.max(40, right - left)),
+                    left, pathY + 11, palette.muted(), false);
+
+            this.followTarget = pathTarget;
+            this.followButtonX = left;
+            this.followButtonY = pathY + 24;
+            this.followButtonWidth = Math.max(40, right - left);
+            guiGraphics.fill(this.followButtonX, this.followButtonY,
+                    this.followButtonX + this.followButtonWidth,
+                    this.followButtonY + FOLLOW_BUTTON_HEIGHT,
+                    palette.rowOdd());
+            guiGraphics.fill(this.followButtonX, this.followButtonY,
+                    this.followButtonX + this.followButtonWidth,
+                    this.followButtonY + 1, palette.accentA());
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.follow_path"),
+                    this.followButtonX + this.followButtonWidth / 2,
+                    this.followButtonY + 4, palette.text());
+            registryY = this.followButtonY + FOLLOW_BUTTON_HEIGHT + 9;
+        }
+
         guiGraphics.drawWordWrap(this.font, Component.literal(selected.visualId().toString()),
-                left, lineY + 24, Math.max(40, right - left), palette.muted());
+                left, registryY, Math.max(40, right - left), palette.muted());
+    }
+
+    static String dimensionName(ResourceLocation dimension) {
+        if ("minecraft".equals(dimension.getNamespace())) {
+            if ("overworld".equals(dimension.getPath())) return "Overworld";
+            if ("the_nether".equals(dimension.getPath())) return "The Nether";
+            if ("the_end".equals(dimension.getPath())) return "The End";
+        }
+        String[] words = dimension.getPath().replace('/', ' ').replace('_', ' ').split(" ");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isBlank()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        if (!"minecraft".equals(dimension.getNamespace())) {
+            result.append(" (").append(dimension.getNamespace()).append(')');
+        }
+        return result.toString();
     }
 
     private String nodeDisplayName(MonitorNetwork.MapNode mapNode) {
@@ -923,7 +1116,7 @@ final class NetworkMapView {
         int titleX = this.detailLeft() + 17;
         Component eventTitle = Component.translatable("screen.forever_production_monitor.map.event_log");
         guiGraphics.drawString(this.font,
-                this.font.plainSubstrByWidth(eventTitle.getString(), Math.max(20, right - titleX)),
+                this.ellipsize(eventTitle.getString(), Math.max(20, right - titleX)),
                 titleX, this.top + 9, palette.accentB(), false);
         ArrayDeque<MapEvent> events = this.currentEvents();
         if (events.isEmpty()) {
@@ -938,14 +1131,38 @@ final class NetworkMapView {
             if (y + 27 > bottom) break;
             String time = EVENT_TIME.format(Instant.ofEpochMilli(event.time()).atZone(ZoneId.systemDefault()));
             guiGraphics.drawString(this.font, time, left, y, palette.muted(), false);
+
+            int nameWidth = Math.max(20, right - (left + 46));
             guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(event.name(), Math.max(30, right - left - 48)),
+                    this.ellipsize(event.name(), nameWidth),
                     left + 46, y, palette.text(), false);
+
+            String eventText = Component.translatable(
+                    "screen.forever_production_monitor.map.event."
+                            + event.type().name().toLowerCase(Locale.ROOT)).getString();
+            int eventWidth = Math.max(20, right - left);
             guiGraphics.drawString(this.font,
-                    Component.translatable("screen.forever_production_monitor.map.event." + event.type().name().toLowerCase(Locale.ROOT)),
+                    this.ellipsize(eventText, eventWidth),
                     left, y + 11, NetworkMapView.eventColor(event.type()), false);
             y += 27;
         }
+    }
+
+    private String ellipsize(String text, int maxWidth) {
+        if (text == null || text.isEmpty() || maxWidth <= 0) {
+            return "";
+        }
+        if (this.font.width(text) <= maxWidth) {
+            return text;
+        }
+
+        String suffix = "...";
+        if (this.font.width(suffix) > maxWidth) {
+            return this.font.plainSubstrByWidth(suffix, maxWidth);
+        }
+
+        int bodyWidth = Math.max(0, maxWidth - this.font.width(suffix));
+        return this.font.plainSubstrByWidth(text, bodyWidth) + suffix;
     }
 
     private void drawDetailLine(GuiGraphics guiGraphics, int n, int n2, int n3, Component component, String string, int n4) {
@@ -955,6 +1172,18 @@ final class NetworkMapView {
 
     private static String formatPower(double d) {
         return d < 1000.0 ? String.format(Locale.ROOT, "%.2f AE/t", d) : String.format(Locale.ROOT, "%.2fk AE/t", d / 1000.0);
+    }
+
+    private boolean clickFollowPath(double mouseX, double mouseY) {
+        if (this.followTarget == null
+                || mouseX < this.followButtonX
+                || mouseX >= this.followButtonX + this.followButtonWidth
+                || mouseY < this.followButtonY
+                || mouseY >= this.followButtonY + FOLLOW_BUTTON_HEIGHT) {
+            return false;
+        }
+        this.pathNavigator.accept(this.followTarget.dimension(), this.followTarget.pos());
+        return true;
     }
 
     private boolean clickDetailsToggle(double mouseX, double mouseY) {
@@ -973,6 +1202,9 @@ final class NetworkMapView {
     }
 
     boolean mouseClicked(double d, double d2, int n) {
+        if (n == 0 && this.clickFollowPath(d, d2)) {
+            return true;
+        }
         if (n == 0 && this.clickDetailsToggle(d, d2)) {
             return true;
         }
@@ -1096,90 +1328,136 @@ final class NetworkMapView {
         return false;
     }
 
-    private void updateHover(int n, int n2) {
+    private void updateHover(int mouseX, int mouseY) {
         this.hoveredIndex = -1;
-        if (this.snapshot == null || !this.insideScene(n, n2)) {
+        if (this.snapshot == null || !this.insideScene(mouseX, mouseY)) {
             return;
         }
-        double d = Double.MAX_VALUE;
-        double d2 = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
-        for (int i = 0; i < this.snapshot.nodes().size(); ++i) {
-            double d3;
-            double[] dArray;
-            double d4;
-            double d5;
-            if (!this.shouldRender(this.snapshot.nodes().get(i)) || !((d5 = (d4 = (double)n - (dArray = this.project(this.snapshot.nodes().get(i)))[0]) * d4 + (d3 = (double)n2 - dArray[1]) * d3) <= d2 * d2) || !(d5 < d)) continue;
-            d = d5;
-            this.hoveredIndex = i;
+
+        double bestDistance = Double.MAX_VALUE;
+        double hitRadius = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
+        double hitRadiusSquared = hitRadius * hitRadius;
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        ProjectionContext projection = this.projectionContext();
+        double[] projected = new double[2];
+
+        for (int index : this.frameNodeIndices) {
+            this.project(nodes.get(index), projection, projected);
+            double dx = (double)mouseX - projected[0];
+            double dy = (double)mouseY - projected[1];
+            double distance = dx * dx + dy * dy;
+            if (distance <= hitRadiusSquared && distance < bestDistance) {
+                bestDistance = distance;
+                this.hoveredIndex = index;
+            }
         }
     }
 
-    private double[] project(MonitorNetwork.MapNode mapNode) {
-        return this.project(mapNode.pos(), mapNode.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART ? mapNode.side() : -1);
+    private ProjectionContext projectionContext() {
+        double yawRadians = Math.toRadians(this.yaw);
+        double pitchRadians = Math.toRadians(this.pitch);
+        double scale = this.scale();
+        return new ProjectionContext(
+                Math.cos(yawRadians),
+                Math.sin(yawRadians),
+                Math.cos(pitchRadians),
+                Math.sin(pitchRadians),
+                scale,
+                (double)(this.left + this.sceneRight()) * 0.5 + this.panX,
+                (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY);
     }
 
-    private double[] project(BlockPos blockPos, int n) {
-        double d = 0.0;
-        double d2 = 0.0;
-        double d3 = 0.0;
-        if (n >= 0) {
-            Direction direction = Direction.from3DDataValue((int)n);
-            d = (double)direction.getStepX() * 0.38;
-            d2 = (double)direction.getStepY() * 0.38;
-            d3 = (double)direction.getStepZ() * 0.38;
+    private void project(MonitorNetwork.MapNode mapNode,
+                         ProjectionContext projection,
+                         double[] out) {
+        this.project(
+                mapNode.pos(),
+                mapNode.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART
+                        ? mapNode.side() : -1,
+                projection,
+                out);
+    }
+
+    private void project(BlockPos blockPos, int side,
+                         ProjectionContext projection,
+                         double[] out) {
+        double sideX = 0.0;
+        double sideY = 0.0;
+        double sideZ = 0.0;
+        if (side >= 0) {
+            Direction direction = Direction.from3DDataValue(side);
+            sideX = (double)direction.getStepX() * 0.38;
+            sideY = (double)direction.getStepY() * 0.38;
+            sideZ = (double)direction.getStepZ() * 0.38;
         }
-        double d4 = (double)blockPos.getX() + 0.5 + d - this.centerX;
-        double d5 = (double)blockPos.getY() + 0.5 + d2 - this.centerY;
-        double d6 = (double)blockPos.getZ() + 0.5 + d3 - this.centerZ;
-        double d7 = Math.toRadians(this.yaw);
-        double d8 = Math.toRadians(this.pitch);
-        double d9 = d4 * Math.cos(d7) + d6 * Math.sin(d7);
-        double d10 = -d4 * Math.sin(d7) + d6 * Math.cos(d7);
-        double d11 = d5 * Math.cos(d8) - d10 * Math.sin(d8);
-        return new double[]{(double)(this.left + this.sceneRight()) * 0.5 + this.panX + d9 * this.scale(), (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY - d11 * this.scale()};
+
+        double localX = (double)blockPos.getX() + 0.5 + sideX - this.centerX;
+        double localY = (double)blockPos.getY() + 0.5 + sideY - this.centerY;
+        double localZ = (double)blockPos.getZ() + 0.5 + sideZ - this.centerZ;
+        double rotatedX = localX * projection.cosYaw()
+                + localZ * projection.sinYaw();
+        double rotatedZ = -localX * projection.sinYaw()
+                + localZ * projection.cosYaw();
+        double projectedY = localY * projection.cosPitch()
+                - rotatedZ * projection.sinPitch();
+
+        out[0] = projection.centerScreenX() + rotatedX * projection.scale();
+        out[1] = projection.centerScreenY() - projectedY * projection.scale();
     }
 
     private void recomputeFit() {
-        if (this.snapshot == null || this.snapshot.nodes().isEmpty() || this.width <= this.detailsWidth() || this.height <= 0) {
+        if (this.snapshot == null
+                || this.performanceCache.visibleNodeIndices().isEmpty()
+                || this.width <= this.detailsWidth()
+                || this.height <= 0) {
             return;
         }
-        double d = this.centerX;
-        double d2 = this.centerY;
-        double d3 = this.centerZ;
-        int n = Integer.MAX_VALUE;
-        int n2 = Integer.MAX_VALUE;
-        int n3 = Integer.MAX_VALUE;
-        int n4 = Integer.MIN_VALUE;
-        int n5 = Integer.MIN_VALUE;
-        int n6 = Integer.MIN_VALUE;
-        for (MonitorNetwork.MapNode mapNode : this.snapshot.nodes()) {
-            if (!this.shouldRender(mapNode)) continue;
-            BlockPos blockPos = mapNode.pos();
-            n = Math.min(n, blockPos.getX());
-            n2 = Math.min(n2, blockPos.getY());
-            n3 = Math.min(n3, blockPos.getZ());
-            n4 = Math.max(n4, blockPos.getX());
-            n5 = Math.max(n5, blockPos.getY());
-            n6 = Math.max(n6, blockPos.getZ());
+
+        double previousCenterX = this.centerX;
+        double previousCenterY = this.centerY;
+        double previousCenterZ = this.centerZ;
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+
+        List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        for (int index : this.performanceCache.visibleNodeIndices()) {
+            BlockPos pos = nodes.get(index).pos();
+            minX = Math.min(minX, pos.getX());
+            minY = Math.min(minY, pos.getY());
+            minZ = Math.min(minZ, pos.getZ());
+            maxX = Math.max(maxX, pos.getX());
+            maxY = Math.max(maxY, pos.getY());
+            maxZ = Math.max(maxZ, pos.getZ());
         }
-        if (n == Integer.MAX_VALUE) {
-            return;
-        }
+
         if (this.focusedOnBlock) {
-            this.centerX = d;
-            this.centerY = d2;
-            this.centerZ = d3;
+            this.centerX = previousCenterX;
+            this.centerY = previousCenterY;
+            this.centerZ = previousCenterZ;
         } else {
-            this.centerX = (double)(n + n4 + 1) * 0.5;
-            this.centerY = (double)(n2 + n5 + 1) * 0.5;
-            this.centerZ = (double)(n3 + n6 + 1) * 0.5;
+            this.centerX = (double)(minX + maxX + 1) * 0.5;
+            this.centerY = (double)(minY + maxY + 1) * 0.5;
+            this.centerZ = (double)(minZ + maxZ + 1) * 0.5;
         }
-        this.sceneDepthSpan = Math.max(2.0, (double)(n4 - n) + 1.0 + ((double)(n5 - n2) + 1.0) + ((double)(n6 - n3) + 1.0));
-        double d4 = Math.max(2.0, (double)(n4 - n + n6 - n3) + 2.0);
-        double d5 = Math.max(2.0, (double)(n5 - n2) + d4 * 0.35 + 2.0);
-        double d6 = Math.max(80.0, (double)(this.sceneRight() - this.left) - 28.0);
-        double d7 = Math.max(80.0, (double)(this.sceneContentBottom() - this.sceneContentTop()) - 28.0);
-        this.fitScale = Math.max(0.2, Math.min(22.0, Math.min(d6 / d4, d7 / d5)));
+
+        this.sceneDepthSpan = Math.max(
+                2.0,
+                (double)(maxX - minX) + 1.0
+                        + ((double)(maxY - minY) + 1.0)
+                        + ((double)(maxZ - minZ) + 1.0));
+        double horizontalSpan = Math.max(2.0, (double)(maxX - minX + maxZ - minZ) + 2.0);
+        double verticalSpan = Math.max(2.0, (double)(maxY - minY) + horizontalSpan * 0.35 + 2.0);
+        double availableWidth = Math.max(80.0, (double)(this.sceneRight() - this.left) - 28.0);
+        double availableHeight = Math.max(
+                80.0,
+                (double)(this.sceneContentBottom() - this.sceneContentTop()) - 28.0);
+        this.fitScale = Math.max(
+                0.2,
+                Math.min(22.0, Math.min(availableWidth / horizontalSpan, availableHeight / verticalSpan)));
     }
 
     private double scale() {
@@ -1297,25 +1575,11 @@ final class NetworkMapView {
     }
 
     private int estimatedCableLoad(BlockPos blockPos) {
-        return this.cableLoads.getOrDefault(blockPos.asLong(), 0);
+        return this.performanceCache.cableLoad(blockPos);
     }
 
-    private void recomputeCableLoads() {
-        this.cableLoads.clear();
-        if (this.snapshot == null) {
-            return;
-        }
-        List<MonitorNetwork.MapNode> list = this.snapshot.nodes().stream().filter(mapNode -> mapNode.channels() > 0 && !NetworkMapView.isCable(mapNode.visualId().getPath())).toList();
-        for (MonitorNetwork.MapNode mapNode2 : this.snapshot.nodes()) {
-            if (!NetworkMapView.isCable(mapNode2.visualId().getPath())) continue;
-            int n = 0;
-            for (MonitorNetwork.MapNode mapNode3 : list) {
-                int n2 = Math.abs(mapNode3.pos().getX() - mapNode2.pos().getX()) + Math.abs(mapNode3.pos().getY() - mapNode2.pos().getY()) + Math.abs(mapNode3.pos().getZ() - mapNode2.pos().getZ());
-                if (n2 > 6) continue;
-                n += mapNode3.channels();
-            }
-            this.cableLoads.put(mapNode2.pos().asLong(), n);
-        }
+    private void rebuildVisibilityCache() {
+        this.performanceCache.rebuildVisibility(this.snapshot, this::shouldRender);
     }
 
     private CameraState[] cameraBookmarks() {
@@ -1336,12 +1600,22 @@ final class NetworkMapView {
     }
 
     private static void loadPersistedBookmarks() {
-        if (bookmarksLoaded) {
+        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
+        if (encoded == null) {
+            encoded = "";
+        }
+
+        // Client configs can finish loading after this screen class has already been
+        // initialized. The old one-shot boolean permanently cached the default empty value
+        // in that case, which made all three bookmark slots look erased after a restart.
+        // Re-sync whenever the actual config value changes instead.
+        if (Objects.equals(encoded, loadedBookmarksEncoded)) {
             return;
         }
-        bookmarksLoaded = true;
-        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
-        if (encoded == null || encoded.isBlank()) {
+        loadedBookmarksEncoded = encoded;
+        CAMERA_BOOKMARKS.clear();
+
+        if (encoded.isBlank()) {
             return;
         }
 
@@ -1391,8 +1665,10 @@ final class NetworkMapView {
                         .append(state.focused());
             }
         }
-        ClientConfig.VALUES.mapCameraBookmarks.set(encoded.toString());
+        String serialized = encoded.toString();
+        ClientConfig.VALUES.mapCameraBookmarks.set(serialized);
         ClientConfig.VALUES.mapCameraBookmarks.save();
+        loadedBookmarksEncoded = serialized;
     }
 
     private CameraState cameraState() {
@@ -1400,11 +1676,35 @@ final class NetworkMapView {
     }
 
     private String networkKey() {
-        return this.snapshot == null ? "none" : String.valueOf(this.snapshot.dimension()) + "@" + this.snapshot.pos().asLong();
+        return this.snapshot == null ? "none" : this.snapshotKey(this.snapshot);
+    }
+
+    private String snapshotKey(MonitorNetwork.NetworkMapPayload payload) {
+        return String.valueOf(payload.dimension()) + "@" + payload.pos().asLong()
+                + "#" + payload.viewDimension();
     }
 
     private ArrayDeque<MapEvent> currentEvents() {
-        return EVENT_LOGS.computeIfAbsent(this.networkKey(), string -> new ArrayDeque());
+        if (this.snapshot == null) {
+            return new ArrayDeque<>();
+        }
+        return EVENT_LOGS.computeIfAbsent(this.eventKey(this.snapshot), string -> new ArrayDeque());
+    }
+
+    private String eventKey(MonitorNetwork.NetworkMapPayload payload) {
+        Object currentConnection = this.minecraft == null ? null : this.minecraft.getConnection();
+        if (currentConnection != eventConnection) {
+            // Events and their comparison baselines are session-only by design. Clearing them
+            // when the client connection changes prevents stale world/server snapshots from
+            // accumulating for the lifetime of the Minecraft process.
+            EVENT_LOGS.clear();
+            LAST_EVENT_SNAPSHOTS.clear();
+            REMEMBERED_CAMERAS.clear();
+            eventConnection = currentConnection;
+        }
+
+        int connectionId = currentConnection == null ? 0 : System.identityHashCode(currentConnection);
+        return connectionId + "|" + this.snapshotKey(payload);
     }
 
     private void recordEvents(MonitorNetwork.NetworkMapPayload networkMapPayload, MonitorNetwork.NetworkMapPayload networkMapPayload2) {
@@ -1416,22 +1716,44 @@ final class NetworkMapView {
         for (MonitorNetwork.MapNode mapNode : networkMapPayload2.nodes()) {
             hashMap2.put(NodeKey.of(mapNode), mapNode);
         }
-        ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(String.valueOf(networkMapPayload2.dimension()) + "@" + networkMapPayload2.pos().asLong(), string -> new ArrayDeque());
+        ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(
+                this.eventKey(networkMapPayload2), string -> new ArrayDeque());
         long l = System.currentTimeMillis();
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
             MonitorNetwork.MapNode mapNode2 = (MonitorNetwork.MapNode)entry.getValue();
-            if (mapNode == null && mapNode2.device()) {
-                NetworkMapView.addEvent(arrayDeque, new MapEvent(l, mapNode2.name(), EventType.ADDED));
+
+            // Topology changes are network events too. The old implementation only recorded
+            // additions/removals for nodes marked as channel-requiring "devices", which meant
+            // cable edits, multipart changes and mapped external machines were silently ignored.
+            if (mapNode == null) {
+                NetworkMapView.addEvent(arrayDeque,
+                        new MapEvent(l, this.nodeDisplayName(mapNode2), EventType.ADDED));
                 continue;
             }
-            if (mapNode == null || mapNode.state() == mapNode2.state()) continue;
-            EventType eventType = mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_LOST : (mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_LOST : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_RESTORED : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_RESTORED : EventType.STATE_CHANGED)));
-            NetworkMapView.addEvent(arrayDeque, new MapEvent(l, mapNode2.name(), eventType));
+
+            if (mapNode.state() == mapNode2.state()) {
+                continue;
+            }
+            EventType eventType = mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL
+                    ? EventType.CHANNEL_LOST
+                    : (mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED
+                    ? EventType.POWER_LOST
+                    : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL
+                    ? EventType.CHANNEL_RESTORED
+                    : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED
+                    ? EventType.POWER_RESTORED
+                    : EventType.STATE_CHANGED)));
+            NetworkMapView.addEvent(arrayDeque,
+                    new MapEvent(l, this.nodeDisplayName(mapNode2), eventType));
         }
+
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap.entrySet()) {
-            if (hashMap2.containsKey(entry.getKey()) || !((MonitorNetwork.MapNode)entry.getValue()).device()) continue;
-            NetworkMapView.addEvent(arrayDeque, new MapEvent(l, ((MonitorNetwork.MapNode)entry.getValue()).name(), EventType.REMOVED));
+            if (hashMap2.containsKey(entry.getKey())) {
+                continue;
+            }
+            NetworkMapView.addEvent(arrayDeque,
+                    new MapEvent(l, this.nodeDisplayName(entry.getValue()), EventType.REMOVED));
         }
     }
 
@@ -1455,8 +1777,7 @@ final class NetworkMapView {
         if (this.snapshot == null || !((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue()) {
             return;
         }
-        rememberedNetwork = String.valueOf(this.snapshot.dimension()) + "@" + this.snapshot.pos().asLong();
-        rememberedCamera = this.cameraState();
+        REMEMBERED_CAMERAS.put(this.snapshotKey(this.snapshot), this.cameraState());
     }
 
     private void restoreCamera(CameraState cameraState) {
@@ -1521,6 +1842,12 @@ final class NetworkMapView {
         PARTS,
         ERRORS;
 
+    }
+
+    private record ProjectionContext(double cosYaw, double sinYaw,
+                                     double cosPitch, double sinPitch,
+                                     double scale,
+                                     double centerScreenX, double centerScreenY) {
     }
 
     private record CameraState(float yaw, float pitch, double zoom, double panX, double panY, double centerX, double centerY, double centerZ, boolean focused) {
