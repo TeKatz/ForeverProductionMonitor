@@ -93,6 +93,7 @@ final class NetworkMapView {
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
     private static String loadedBookmarksEncoded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
+    private static final Map<String, MonitorNetwork.NetworkMapPayload> LAST_EVENT_SNAPSHOTS = new HashMap<>();
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
     private final Font font;
@@ -156,9 +157,19 @@ final class NetworkMapView {
                 || !this.snapshot.dimension().equals((Object)networkMapPayload.dimension())
                 || !this.snapshot.pos().equals((Object)networkMapPayload.pos())
                 || !this.snapshot.viewDimension().equals((Object)networkMapPayload.viewDimension());
-        if (!bl && this.snapshot != null) {
-            this.recordEvents(this.snapshot, networkMapPayload);
+
+        // Most real map edits require closing the tablet first. Keep the last snapshot for
+        // each network/dimension outside the screen instance so reopening the tablet can still
+        // diff "before" and "after" and produce session events.
+        String eventKey = this.eventKey(networkMapPayload);
+        MonitorNetwork.NetworkMapPayload previousForEvents = !bl && this.snapshot != null
+                ? this.snapshot
+                : LAST_EVENT_SNAPSHOTS.get(eventKey);
+        if (previousForEvents != null) {
+            this.recordEvents(previousForEvents, networkMapPayload);
         }
+        LAST_EVENT_SNAPSHOTS.put(eventKey, networkMapPayload);
+
         this.snapshot = networkMapPayload;
         this.recomputeCableLoads();
         if (this.selectedIndex >= networkMapPayload.nodes().size()) {
@@ -1578,7 +1589,18 @@ final class NetworkMapView {
     }
 
     private ArrayDeque<MapEvent> currentEvents() {
-        return EVENT_LOGS.computeIfAbsent(this.networkKey(), string -> new ArrayDeque());
+        if (this.snapshot == null) {
+            return new ArrayDeque<>();
+        }
+        return EVENT_LOGS.computeIfAbsent(this.eventKey(this.snapshot), string -> new ArrayDeque());
+    }
+
+    private String eventKey(MonitorNetwork.NetworkMapPayload payload) {
+        // Connection identity scopes events to the current play session/world connection.
+        // Bookmark keys intentionally remain stable across restarts; event keys should not.
+        int connectionId = this.minecraft == null || this.minecraft.getConnection() == null
+                ? 0 : System.identityHashCode(this.minecraft.getConnection());
+        return connectionId + "|" + this.snapshotKey(payload);
     }
 
     private void recordEvents(MonitorNetwork.NetworkMapPayload networkMapPayload, MonitorNetwork.NetworkMapPayload networkMapPayload2) {
@@ -1591,7 +1613,7 @@ final class NetworkMapView {
             hashMap2.put(NodeKey.of(mapNode), mapNode);
         }
         ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(
-                this.snapshotKey(networkMapPayload2), string -> new ArrayDeque());
+                this.eventKey(networkMapPayload2), string -> new ArrayDeque());
         long l = System.currentTimeMillis();
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
