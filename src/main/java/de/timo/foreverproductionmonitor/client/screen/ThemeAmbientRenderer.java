@@ -1,5 +1,6 @@
 package de.timo.foreverproductionmonitor.client.screen;
 
+import com.mojang.math.Axis;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -84,12 +85,16 @@ final class ThemeAmbientRenderer {
                 int split = x + width * 3 / 5;
                 graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 84));
                 graphics.fill(split, bottom, x + width - 3, bottom + 1, alpha(b, 84));
-                int breathe = GuiMotion.ambientMotionEnabled()
-                        ? 1 + (int)Math.round((0.5 + 0.5 * Math.sin(phase(9000L, 0.25f) * Math.PI * 2.0)) * 2.0)
-                        : 2;
-                corner(graphics, x + 4, y + 3, 4 + breathe, alpha(a, 60), true, true);
-                corner(graphics, x + width - 5, y + height - 4, 4 + breathe, alpha(b, 60), false, false);
+                float breathe = 0.5f + 0.5f * (float)Math.sin(phase(9000L, 0.25f) * Math.PI * 2.0);
+                float scale = 0.94f + breathe * 0.06f;
+                graphics.pose().pushPose();
+                graphics.pose().translate(x + width / 2.0f, y + height / 2.0f, 0.0f);
+                graphics.pose().scale(scale, scale, 1.0f);
+                graphics.pose().translate(-(x + width / 2.0f), -(y + height / 2.0f), 0.0f);
+                corner(graphics, x + 4, y + 3, 6, alpha(a, 60), true, true);
+                corner(graphics, x + width - 5, y + height - 4, 6, alpha(b, 60), false, false);
                 diamond(graphics, split, y + height / 2, 1, alpha(palette.text(), 74));
+                graphics.pose().popPose();
             }
             case AE2 -> {
                 int cy = y + height / 2;
@@ -194,11 +199,11 @@ final class ThemeAmbientRenderer {
             }
             case REDSTONE -> {
                 int cy = y + height / 2;
-                boolean powered = phase(6800L, 0.2f) < 0.56f;
-                int dust = alpha(powered ? palette.accentA() : palette.border(), powered ? 108 : 52);
+                float power = signalWindow(phase(6800L, 0.2f), 0.08f, 0.18f, 0.58f, 0.72f);
+                int dust = alpha(lerpColor(palette.border(), palette.accentA(), power), Math.round(52 + power * 56));
                 graphics.fill(x + 3, cy, x + width - 12, cy + 1, dust);
-                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, powered, palette);
-                redstoneLamp(graphics, x + width - 9, cy - 3, powered, palette);
+                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, power, palette);
+                redstoneLamp(graphics, x + width - 9, cy - 3, power, palette);
             }
             case FROST -> {
                 crystal(graphics, x + 4, y + height / 2, 4, subtle);
@@ -333,11 +338,11 @@ final class ThemeAmbientRenderer {
             }
             case REDSTONE -> {
                 int cy = y + height / 2;
-                boolean powered = phase(7600L, 0.2f) < 0.52f;
-                int dust = alpha(powered ? palette.accentA() : palette.border(), powered ? 88 : 40);
+                float power = signalWindow(phase(7600L, 0.2f), 0.08f, 0.18f, 0.54f, 0.70f);
+                int dust = alpha(lerpColor(palette.border(), palette.accentA(), power), Math.round(40 + power * 48));
                 graphics.fill(x + 3, cy, right - 12, cy + 1, dust);
-                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, powered, palette);
-                redstoneLamp(graphics, right - 9, cy - 3, powered, palette);
+                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, power, palette);
+                redstoneLamp(graphics, right - 9, cy - 3, power, palette);
             }
             case FROST -> {
                 crystal(graphics, x + 5, y + 7, 4, a);
@@ -385,11 +390,15 @@ final class ThemeAmbientRenderer {
         int cx = l + width * 3 / 5;
         int cy = t + height / 2;
 
-        // Forever's own visual language: paired geometric frames that slowly breathe,
-        // with no data packets or matrix-like sweeps.
-        int maxInset = Math.max(8, Math.min(28, Math.min(width, height) / 7));
         float breathe = 0.5f + 0.5f * (float)Math.sin(phase(18000L, 0.28f) * Math.PI * 2.0);
-        int inset = 6 + (int)(maxInset * breathe * 0.45f);
+        float scale = 0.965f + breathe * 0.035f;
+
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0.0f);
+        g.pose().scale(scale, scale, 1.0f);
+        g.pose().translate(-cx, -cy, 0.0f);
+
+        int inset = Math.max(9, Math.min(18, Math.min(width, height) / 9));
         corner(g, l + inset, t + inset, 13, alpha(p.accentA(), 50), true, true);
         corner(g, r - inset - 1, b - inset - 1, 13, alpha(p.accentB(), 50), false, false);
         corner(g, r - inset - 1, t + inset, 8, alpha(p.accentB(), 30), false, true);
@@ -401,11 +410,12 @@ final class ThemeAmbientRenderer {
         rectFrame(g, cx - ringW / 2, cy - ringH / 2, cx + ringW / 2, cy + ringH / 2, alpha(p.accentA(), 34));
         diamond(g, cx, cy, 3, alpha(p.accentB(), 68));
 
-        // Slow symmetric shutters open and close around the central mark.
-        int travel = Math.max(5, ringW / 2);
-        int shutter = (int)(travel * (0.25f + 0.75f * breathe));
-        g.fill(cx - ringW - 7, cy - 1, cx - ringW - 7 + shutter, cy + 2, alpha(p.accentA(), 42));
-        g.fill(cx + ringW + 7 - shutter, cy - 1, cx + ringW + 7, cy + 2, alpha(p.accentB(), 42));
+        // Shutters stay geometrically fixed; their glow breathes smoothly instead of stepping by pixels.
+        int shutterAlpha = 24 + Math.round(breathe * 30.0f);
+        int shutter = Math.max(7, ringW / 2);
+        g.fill(cx - ringW - 7, cy - 1, cx - ringW - 7 + shutter, cy + 2, alpha(p.accentA(), shutterAlpha));
+        g.fill(cx + ringW + 7 - shutter, cy - 1, cx + ringW + 7, cy + 2, alpha(p.accentB(), shutterAlpha));
+        g.pose().popPose();
 
         for (int x = l + 9; x < r - 9; x += 26) {
             g.fill(x, b - 6, Math.min(x + 12, r - 7), b - 5, alpha(x < cx ? p.accentA() : p.accentB(), 24));
@@ -415,16 +425,12 @@ final class ThemeAmbientRenderer {
     private static void ae2Panel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-
-        // Closer to AE2: neutral machine surfaces, Fluix-colored smart-cable backbone,
-        // channel indicators and a recognizable 10-cell ME Drive bank.
         int cableY = t + Math.max(18, height / 3);
         int cableLeft = l + 9;
         int driveLeft = l + width * 3 / 5;
         g.fill(cableLeft, cableY - 2, driveLeft - 8, cableY + 3, alpha(0xFF24272D, 170));
         g.fill(cableLeft, cableY - 1, driveLeft - 8, cableY + 2, alpha(AE2_FLUIX_DARK, 105));
 
-        // Smart-cable channel bars, based on Fluix bright/medium variants.
         int channelCount = Math.max(4, Math.min(8, (driveLeft - cableLeft - 10) / 18));
         for (int i = 0; i < channelCount; ++i) {
             int px = cableLeft + 7 + i * Math.max(12, (driveLeft - cableLeft - 16) / channelCount);
@@ -433,7 +439,6 @@ final class ThemeAmbientRenderer {
             g.fill(px, cableY - 5 - h, px + 4, cableY - 5, alpha(channelColor, 72));
         }
 
-        // Terminal-like attached panels.
         int termY = cableY + 11;
         for (int i = 0; i < 3; ++i) {
             int tx = cableLeft + i * 31;
@@ -444,8 +449,6 @@ final class ThemeAmbientRenderer {
             g.fill(tx + 4, termY + 9, tx + 14, termY + 10, alpha(AE2_FLUIX_BRIGHT, 40));
         }
 
-        // ME Drive silhouette: 10 slots, with official LED state colors:
-        // green empty, blue used, orange types full, red bytes full.
         int driveTop = t + 7;
         int driveRight = r - 8;
         int driveWidth = Math.max(34, driveRight - driveLeft);
@@ -454,6 +457,11 @@ final class ThemeAmbientRenderer {
 
         int slotW = Math.max(11, (driveWidth - 10) / 2);
         int slotH = Math.max(9, Math.min(18, (height - 30) / 5));
+        float activity = phase(18000L, 0.3f) * 10.0f;
+        int active = Math.floorMod((int)Math.floor(activity), 10);
+        int next = (active + 1) % 10;
+        float blend = smoothstep(activity - (float)Math.floor(activity));
+
         for (int i = 0; i < 10; ++i) {
             int col = i % 2;
             int row = i / 2;
@@ -463,19 +471,15 @@ final class ThemeAmbientRenderer {
             int led = ae2CellColor(i);
             g.fill(sx, sy, sx + slotW, sy + slotH, alpha(0xFF292C32, 188));
             g.fill(sx + 2, sy + 2, sx + slotW - 2, sy + 3, alpha(AE2_FLUIX_DARK, 52));
-            g.fill(sx + 2, sy + slotH - 4, sx + slotW - 2, sy + slotH - 2, alpha(led, 116));
-        }
 
-        // Very subtle activity: one drive LED briefly brightens; no moving blob.
-        if (GuiMotion.ambientMotionEnabled()) {
-            int active = Math.floorMod((int)(phase(12000L, 0.3f) * 10.0f), 10);
-            int col = active % 2;
-            int row = active / 2;
-            int sx = driveLeft + 4 + col * (slotW + 2);
-            int sy = driveTop + 4 + row * (slotH + 2);
-            if (sx + slotW < driveRight - 2 && sy + slotH < b - 10) {
-                int led = ae2CellColor(active);
-                g.fill(sx + 2, sy + slotH - 5, sx + slotW - 2, sy + slotH - 1, alpha(led, motionAlpha(72, 145)));
+            float glow = 0.0f;
+            if (i == active) glow = 1.0f - blend;
+            if (i == next) glow = Math.max(glow, blend);
+            int ledAlpha = 108 + Math.round(glow * 42.0f * GuiMotion.ambientMotionIntensity());
+            g.fill(sx + 2, sy + slotH - 4, sx + slotW - 2, sy + slotH - 2, alpha(led, ledAlpha));
+            if (glow > 0.01f) {
+                g.fill(sx + 2, sy + slotH - 5, sx + slotW - 2, sy + slotH - 1,
+                        alpha(led, 34 + Math.round(glow * 58.0f)));
             }
         }
     }
@@ -532,16 +536,13 @@ final class ThemeAmbientRenderer {
         int cx = l + width / 2;
         int cy = t + height / 2;
 
-        // Mekanism as an industrial process machine, not a digital network.
         segmentedRail(g, leftRail, t + 7, b - 7, p.accentA(), p.border());
         segmentedRail(g, rightRail, t + 7, b - 7, p.accentB(), p.border());
 
-        // Central contained power core with slow reactor-like breathing.
         g.fill(leftRail + 3, cy, cx - 12, cy + 1, alpha(p.border(), 38));
         g.fill(cx + 12, cy, rightRail - 2, cy + 1, alpha(p.border(), 38));
         energyCore(g, cx, cy, 10, p, phase(18000L, 0.24f), 86);
 
-        // Process tanks with slowly changing levels.
         int tankTop = t + 10;
         int tankBottom = Math.min(b - 11, tankTop + Math.max(30, height / 2));
         int[] tankXs = {l + width / 4, l + width * 3 / 4};
@@ -551,18 +552,14 @@ final class ThemeAmbientRenderer {
             g.fill(tx - 7, tankTop, tx + 8, tankBottom, alpha(p.border(), 64));
             g.fill(tx - 6, tankTop + 1, tx + 7, tankBottom - 1, alpha(p.tableOuter(), 100));
             float tankPhase = phase(26000L + i * 7000L, 0.21f + i * 0.28f);
-            int innerH = Math.max(4, tankBottom - tankTop - 5);
-            int fill = 4 + (int)(innerH * (0.28f + 0.46f * (0.5f + 0.5f * (float)Math.sin(tankPhase * Math.PI * 2.0))));
-            g.fill(tx - 5, tankBottom - 2 - fill, tx + 6, tankBottom - 2, alpha(fluid, 56));
+            float level = 0.28f + 0.46f * (0.5f + 0.5f * (float)Math.sin(tankPhase * Math.PI * 2.0));
+            tankFill(g, tx - 5, tankTop + 2, tx + 6, tankBottom - 2, level, alpha(fluid, 56));
             g.fill(tx - 4, tankTop + 5, tx + 5, tankTop + 6, alpha(p.text(), 22));
         }
 
-        // Pressure / process gauge with a rotating needle, not a moving packet.
         int gaugeX = cx;
         int gaugeY = Math.min(b - 18, t + 18);
         gauge(g, gaugeX, gaugeY, 7, p, phase(21000L, 0.33f));
-
-        // Fixed pipe joints.
         pipeJoint(g, leftRail, cy, alpha(p.accentA(), 70), alpha(p.border(), 76));
         pipeJoint(g, rightRail - 1, cy, alpha(p.accentB(), 70), alpha(p.border(), 76));
     }
@@ -789,7 +786,6 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Copper is material-first: plate seams, rivets and static patina.
         g.fill(l + width / 3, t + 4, l + width / 3 + 1, b - 4, alpha(p.border(), 40));
         g.fill(l + width * 2 / 3, t + 4, l + width * 2 / 3 + 1, b - 4, alpha(p.border(), 40));
         g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 32));
@@ -803,18 +799,17 @@ final class ThemeAmbientRenderer {
             int px = l + 12 + mod(hash(4021 + i * 43), Math.max(1, width - 24));
             int py = t + 10 + mod(hash(5099 + i * 37), Math.max(1, height - 20));
             g.fill(px, py, px + 5 + i % 3, py + 2, patina);
-            if ((i & 1) == 0) {
-                g.fill(px + 2, py - 2, px + 4, py + 4, alpha(p.accentB(), 16));
-            }
+            if ((i & 1) == 0) g.fill(px + 2, py - 2, px + 4, py + 4, alpha(p.accentB(), 16));
         }
 
-        // Replaces the previous particle-like diagonal sheen with a broad heat/reflection band.
-        float warm = 0.5f + 0.5f * (float)Math.sin(phase(26000L, 0.31f) * Math.PI * 2.0);
-        int bandAlpha = motionAlpha(5, 18 + (int)(warm * 12));
+        float travel = 0.5f + 0.5f * (float)Math.sin(phase(28000L, 0.31f) * Math.PI * 2.0);
+        float bandX = l + width * 0.18f + travel * width * 0.44f;
         int bandWidth = Math.max(20, width / 5);
-        int bandX = l + (width - bandWidth) / 2;
-        g.fill(bandX, t + 5, bandX + bandWidth, b - 5, alpha(p.accentA(), bandAlpha));
-        g.fill(bandX + 3, t + 7, bandX + bandWidth - 3, t + 8, alpha(p.text(), Math.max(3, bandAlpha / 2)));
+        g.pose().pushPose();
+        g.pose().translate(bandX, 0.0f, 0.0f);
+        g.fill(-bandWidth / 2, t + 5, bandWidth / 2, b - 5, alpha(p.accentA(), motionAlpha(5, 22)));
+        g.fill(-bandWidth / 2 + 3, t + 7, bandWidth / 2 - 3, t + 8, alpha(p.text(), motionAlpha(3, 11)));
+        g.pose().popPose();
     }
 
     private static void auroraPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -849,78 +844,76 @@ final class ThemeAmbientRenderer {
         int upperY = t + height / 3;
         int lowerY = t + height * 2 / 3;
 
-        // Discrete Minecraft-like redstone circuit states. Nothing travels like a data packet.
         float cycle = phase(12000L, 0.18f);
-        boolean inputOn = cycle < 0.62f;
-        boolean branchOn = cycle > 0.18f && cycle < 0.76f;
-        boolean outputOn = cycle > 0.34f && cycle < 0.90f;
+        float input = signalWindow(cycle, 0.04f, 0.14f, 0.56f, 0.69f);
+        float branch = signalWindow(cycle, 0.18f, 0.29f, 0.70f, 0.82f);
+        float output = signalWindow(cycle, 0.33f, 0.43f, 0.83f, 0.94f);
 
-        int dustOff = alpha(p.border(), 52);
-        int dustOn = alpha(p.accentA(), 112);
+        int dustOff = alpha(p.border(), 48);
+        int inputDust = alpha(lerpColor(p.border(), p.accentA(), input), Math.round(48 + input * 66));
+        int branchDust = alpha(lerpColor(p.border(), p.accentA(), branch), Math.round(48 + branch * 66));
+        int outputDust = alpha(lerpColor(p.border(), p.accentA(), output), Math.round(48 + output * 66));
 
-        // Main dust line.
-        g.fill(l + 7, midY, r - 14, midY + 1, inputOn ? dustOn : dustOff);
-        redstoneRepeater(g, l + width / 3 - 4, midY - 4, inputOn, p);
-        redstoneRepeater(g, l + width * 2 / 3 - 4, midY - 4, branchOn, p);
+        g.fill(l + 7, midY, r - 14, midY + 1, input > 0.01f ? inputDust : dustOff);
+        redstoneRepeater(g, l + width / 3 - 4, midY - 4, input, p);
+        redstoneRepeater(g, l + width * 2 / 3 - 4, midY - 4, branch, p);
 
-        // Two branches with torch/repeater style logic.
         int branchX = l + width / 2;
-        g.fill(branchX, upperY, branchX + 1, midY, branchOn ? dustOn : dustOff);
-        g.fill(branchX, midY, branchX + 1, lowerY, outputOn ? dustOn : dustOff);
-        g.fill(branchX, upperY, r - 15, upperY + 1, branchOn ? dustOn : dustOff);
-        g.fill(branchX, lowerY, r - 15, lowerY + 1, outputOn ? dustOn : dustOff);
-        redstoneTorch(g, branchX - 1, upperY - 4, branchOn, p);
-        redstoneTorch(g, branchX - 1, lowerY + 2, outputOn, p);
+        g.fill(branchX, upperY, branchX + 1, midY, branch > 0.01f ? branchDust : dustOff);
+        g.fill(branchX, midY, branchX + 1, lowerY, output > 0.01f ? outputDust : dustOff);
+        g.fill(branchX, upperY, r - 15, upperY + 1, branch > 0.01f ? branchDust : dustOff);
+        g.fill(branchX, lowerY, r - 15, lowerY + 1, output > 0.01f ? outputDust : dustOff);
 
-        // Lamps turn on/off as circuit states change.
-        redstoneLamp(g, r - 11, midY - 4, outputOn, p);
-        redstoneLamp(g, r - 11, upperY - 4, branchOn, p);
-        redstoneLamp(g, r - 11, lowerY - 4, outputOn && inputOn, p);
-
-        // Lever-like input switch at the left.
-        redstoneLever(g, l + 9, midY - 5, inputOn, p);
+        redstoneTorch(g, branchX - 1, upperY - 4, branch, p);
+        redstoneTorch(g, branchX - 1, lowerY + 2, output, p);
+        redstoneLamp(g, r - 11, midY - 4, output, p);
+        redstoneLamp(g, r - 11, upperY - 4, branch, p);
+        redstoneLamp(g, r - 11, lowerY - 4, Math.min(output, input), p);
+        redstoneLever(g, l + 9, midY - 5, input, p);
     }
 
     private static void frostPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
 
-        // Growing ice veins remain the main animation.
         float grow = growthCycle(phase(34000L, 0.74f));
-        int reachX = Math.max(6, (int)(width * 0.42f * grow));
-        int reachY = Math.max(6, (int)(height * 0.56f * grow));
+        int fullX = Math.max(10, (int)(width * 0.42f));
+        int fullY = Math.max(10, Math.min((int)(height * 0.56f), height / 2));
         int leftBaseX = l + 5;
         int leftBaseY = t + 7;
-        diagonal(g, leftBaseX, leftBaseY, leftBaseX + reachX, leftBaseY + Math.min(reachY, height / 2), alpha(p.accentB(), 54));
+        growingDiagonal(g, leftBaseX, leftBaseY, fullX, fullY, grow, alpha(p.accentB(), 54));
         if (grow > 0.28f) {
-            int bx = leftBaseX + reachX / 2;
-            int by = leftBaseY + Math.min(reachY, height / 2) / 2;
-            diagonal(g, bx, by, bx + Math.max(4, reachX / 4), by - Math.max(3, reachY / 5), alpha(p.text(), 34));
-            crystal(g, bx, by, Math.max(3, Math.min(6, 2 + (int)(grow * 5))), alpha(p.accentA(), 46));
+            float branchProgress = smoothstep(Math.min(1.0f, (grow - 0.28f) / 0.28f));
+            int bx = leftBaseX + fullX / 2;
+            int by = leftBaseY + fullY / 2;
+            growingDiagonal(g, bx, by, Math.max(4, fullX / 4), -Math.max(3, fullY / 5), branchProgress, alpha(p.text(), 34));
+            drawScaledCrystal(g, bx, by, 6, branchProgress, alpha(p.accentA(), 46));
         }
 
         float grow2 = growthCycle(phase(41000L, 0.37f));
-        int reachX2 = Math.max(6, (int)(width * 0.36f * grow2));
-        int reachY2 = Math.max(6, (int)(height * 0.48f * grow2));
+        int fullX2 = -Math.max(10, (int)(width * 0.36f));
+        int fullY2 = -Math.max(10, Math.min((int)(height * 0.48f), height / 2));
         int rightBaseX = r - 6;
         int rightBaseY = b - 8;
-        diagonal(g, rightBaseX, rightBaseY, rightBaseX - reachX2, rightBaseY - Math.min(reachY2, height / 2), alpha(p.accentA(), 52));
+        growingDiagonal(g, rightBaseX, rightBaseY, fullX2, fullY2, grow2, alpha(p.accentA(), 52));
         if (grow2 > 0.35f) {
-            int bx = rightBaseX - reachX2 / 2;
-            int by = rightBaseY - Math.min(reachY2, height / 2) / 2;
-            diagonal(g, bx, by, bx - Math.max(4, reachX2 / 4), by + Math.max(3, reachY2 / 5), alpha(p.accentB(), 34));
-            crystal(g, bx, by, Math.max(3, Math.min(6, 2 + (int)(grow2 * 5))), alpha(p.text(), 38));
+            float branchProgress = smoothstep(Math.min(1.0f, (grow2 - 0.35f) / 0.30f));
+            int bx = rightBaseX + fullX2 / 2;
+            int by = rightBaseY + fullY2 / 2;
+            growingDiagonal(g, bx, by, fullX2 / 4, -fullY2 / 5, branchProgress, alpha(p.accentB(), 34));
+            drawScaledCrystal(g, bx, by, 6, branchProgress, alpha(p.text(), 38));
         }
 
-        // Proper lightweight snowfall with deterministic wrap inside the clipped panel.
         if (GuiMotion.ambientMotionEnabled()) {
             for (int i = 0; i < 10; ++i) {
-                int px = l + 7 + mod(hash(13007 + i * 83), Math.max(1, width - 14));
-                long duration = 18000L + i * 1700L;
-                float fall = phase(duration, i / 10.0f);
-                int py = t - 5 + (int)(fall * (height + 12));
-                int drift = (int)Math.round(Math.sin((fall + i * 0.17f) * Math.PI * 2.0) * (1 + i % 3));
-                snowflake(g, px + drift, py, i % 4 == 0 ? 2 : 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 38 + (i % 4) * 8));
+                float fall = phase(18000L + i * 1700L, i / 10.0f);
+                float px = l + 7 + mod(hash(13007 + i * 83), Math.max(1, width - 14));
+                float py = t - 5.0f + fall * (height + 12.0f);
+                float drift = (float)Math.sin((fall + i * 0.17f) * Math.PI * 2.0) * (1 + i % 3);
+                g.pose().pushPose();
+                g.pose().translate(px + drift, py, 0.0f);
+                snowflake(g, 0, 0, i % 4 == 0 ? 2 : 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 38 + (i % 4) * 8));
+                g.pose().popPose();
             }
         } else {
             for (int i = 0; i < 6; ++i) {
@@ -930,7 +923,6 @@ final class ThemeAmbientRenderer {
             }
         }
 
-        // Small scenic details, intentionally tucked into the lower edge.
         int snowY = b - 8;
         g.fill(l + 5, snowY, r - 5, b - 5, alpha(p.text(), 18));
         if (width > 150 && height > 90) {
@@ -942,85 +934,86 @@ final class ThemeAmbientRenderer {
     private static void naturePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        float cycle = phase(46000L, 0.76f);
-        float growth = growthCycle(cycle);
+        float growth = growthCycle(phase(46000L, 0.76f));
         float swayPhase = phase(17000L, 0.31f);
-        int sway = GuiMotion.ambientMotionEnabled() ? (int)Math.round(Math.sin(swayPhase * Math.PI * 2.0) * 2.0) : 0;
+        float sway = GuiMotion.ambientMotionEnabled() ? (float)Math.sin(swayPhase * Math.PI * 2.0) * 2.0f : 0.0f;
 
-        // Main vine grows down the left edge.
         int vineX = l + 10;
         int maxVine = Math.max(10, height - 12);
-        int grown = Math.max(3, (int)(maxVine * growth));
-        g.fill(vineX, t + 5, vineX + 1, Math.min(b - 6, t + 5 + grown), alpha(p.accentA(), 56));
+        growingStem(g, vineX, t + 5, maxVine, growth, alpha(p.accentA(), 56));
 
         int leafStep = Math.max(14, maxVine / 7);
         for (int i = 0; i < 7; ++i) {
             int localY = 10 + i * leafStep;
-            if (localY > grown) break;
+            float threshold = localY / (float)maxVine;
+            float leafProgress = smoothstep(clamp01((growth - threshold) / 0.11f));
+            if (leafProgress <= 0.001f) continue;
             int py = t + 5 + localY;
             boolean right = (i & 1) == 0;
             int branch = right ? 11 : -7;
-            int ex = vineX + branch + (right ? sway : -sway);
-            g.fill(Math.min(vineX, ex), py, Math.max(vineX, ex) + 1, py + 1, alpha(p.accentA(), 48));
-            leaf(g, ex, py - 1, alpha(i % 3 == 0 ? p.accentB() : p.accentA(), 72), right);
-            if ((i == 2 || i == 5) && growth > 0.58f) {
-                float bloom = Math.min(1.0f, (growth - 0.58f) / 0.22f);
-                flower(g, ex + (right ? 3 : -2), py - 4,
-                        alpha(p.accentB(), 36 + (int)(bloom * 68)),
-                        alpha(p.text(), 28 + (int)(bloom * 58)));
+            float ex = vineX + branch + (right ? sway : -sway);
+            growingHorizontal(g, vineX, py, (int)Math.round(ex - vineX), leafProgress, alpha(p.accentA(), 48));
+            animatedLeaf(g, ex, py - 1, leafProgress,
+                    alpha(i % 3 == 0 ? p.accentB() : p.accentA(), 72), right);
+            if (i == 2 || i == 5) {
+                float bloom = smoothstep(clamp01((leafProgress - 0.55f) / 0.45f));
+                if (bloom > 0.01f) {
+                    animatedFlower(g, ex + (right ? 3 : -2), py - 4, bloom,
+                            alpha(p.accentB(), 104), alpha(p.text(), 86));
+                }
             }
         }
 
-        // Independent hanging vine on the opposite side.
         float hangingGrowth = growthCycle(phase(53000L, 0.41f));
         int rightVine = r - 13;
-        int hangingLength = Math.max(4, (int)(Math.min(height * 2 / 3, 96) * hangingGrowth));
-        g.fill(rightVine, t + 4, rightVine + 1, Math.min(b - 8, t + 4 + hangingLength), alpha(p.accentA(), 44));
+        int hangingMax = Math.min(height * 2 / 3, 96);
+        growingStem(g, rightVine, t + 4, hangingMax, hangingGrowth, alpha(p.accentA(), 44));
         for (int i = 0; i < 5; ++i) {
             int localY = 9 + i * 17;
-            if (localY > hangingLength) break;
+            float threshold = localY / (float)Math.max(1, hangingMax);
+            float leafProgress = smoothstep(clamp01((hangingGrowth - threshold) / 0.12f));
+            if (leafProgress <= 0.001f) continue;
             int py = t + 4 + localY;
             boolean right = (i & 1) != 0;
-            leaf(g, rightVine + (right ? 4 + sway : -3 - sway), py, alpha(p.accentA(), 58), right);
+            float lx = rightVine + (right ? 4 + sway : -3 - sway);
+            animatedLeaf(g, lx, py, leafProgress, alpha(p.accentA(), 58), right);
         }
-        if (hangingGrowth > 0.72f) {
-            float bloom = Math.min(1.0f, (hangingGrowth - 0.72f) / 0.18f);
-            flower(g, rightVine, Math.min(t + 7 + hangingLength, b - 8),
-                    alpha(p.accentB(), 42 + (int)(bloom * 70)),
-                    alpha(p.text(), 34 + (int)(bloom * 54)));
+        float hangingBloom = smoothstep(clamp01((hangingGrowth - 0.72f) / 0.18f));
+        if (hangingBloom > 0.01f) {
+            animatedFlower(g, rightVine, Math.min(t + 7 + hangingMax, b - 8), hangingBloom,
+                    alpha(p.accentB(), 112), alpha(p.text(), 88));
         }
 
-        // Ground cover spreads only after the main vine has established itself.
-        float groundGrowth = Math.max(0.0f, Math.min(1.0f, (growth - 0.35f) / 0.55f));
+        float groundGrowth = smoothstep(clamp01((growth - 0.35f) / 0.55f));
         int groundY = b - 7;
-        int groundEnd = l + 8 + (int)((width - 16) * groundGrowth);
-        g.fill(l + 8, groundY, groundEnd, groundY + 1, alpha(p.accentA(), 44));
+        growingHorizontal(g, l + 8, groundY, width - 16, groundGrowth, alpha(p.accentA(), 44));
         for (int i = 0; i < 7; ++i) {
             int px = l + 18 + i * Math.max(18, (width - 36) / 7);
-            if (px >= groundEnd || px >= r - 12) break;
+            float threshold = (px - (l + 8)) / (float)Math.max(1, width - 16);
+            float leafProgress = smoothstep(clamp01((groundGrowth - threshold) / 0.12f));
+            if (leafProgress <= 0.001f || px >= r - 12) continue;
             boolean right = (i & 1) == 0;
-            leaf(g, px + (right ? sway : -sway), groundY - 1 - (i % 2), alpha(p.accentA(), 56), right);
-            if ((i == 2 || i == 5) && growth > 0.72f) {
-                flower(g, px, groundY - 5, alpha(p.accentB(), 78), alpha(p.text(), 62));
+            animatedLeaf(g, px + (right ? sway : -sway), groundY - 1 - (i % 2), leafProgress,
+                    alpha(p.accentA(), 56), right);
+            if (i == 2 || i == 5) {
+                float bloom = smoothstep(clamp01((leafProgress - 0.58f) / 0.42f));
+                if (bloom > 0.01f) animatedFlower(g, px, groundY - 5, bloom, alpha(p.accentB(), 78), alpha(p.text(), 62));
             }
         }
 
-        // A small tree now grows through a full trunk -> branches -> crown cycle.
         if (width > 150 && height > 100) {
             float treeGrowth = growthCycle(phase(72000L, 0.18f));
-            int treeX = l + width * 2 / 3;
-            int treeBase = b - 9;
-            growingTree(g, treeX, treeBase, Math.min(48, Math.max(28, height / 3)), treeGrowth, sway, p);
+            growingTree(g, l + width * 2 / 3, b - 9, Math.min(48, Math.max(28, height / 3)), treeGrowth, sway, p);
         }
 
-        // One larger flower opens/closes independently.
         float bloomCycle = phase(28000L, 0.36f);
         float bloomSize = 0.45f + 0.55f * (0.5f + 0.5f * (float)Math.sin(bloomCycle * Math.PI * 2.0));
         int bx = l + width / 2;
-        int by = t + height * 2 / 3 + sway;
+        int by = t + height * 2 / 3 + Math.round(sway);
         if (growth > 0.64f) {
             if (bloomSize > 0.62f) {
-                flower(g, bx, by, alpha(p.accentB(), 78 + (int)(bloomSize * 28)), alpha(p.text(), 66));
+                animatedFlower(g, bx, by, smoothstep((bloomSize - 0.62f) / 0.38f),
+                        alpha(p.accentB(), 106), alpha(p.text(), 66));
             } else {
                 bud(g, bx, by, alpha(p.accentB(), 72));
             }
@@ -1071,10 +1064,12 @@ final class ThemeAmbientRenderer {
         g.fill(cx, cy - r, cx + 1, cy + 2, alpha(p.border(), 42));
         diagonal(g, cx - r + 2, cy - 2, cx, cy - r + 2, alpha(p.accentA(), 40));
         diagonal(g, cx, cy - r + 2, cx + r - 2, cy - 2, alpha(p.accentB(), 40));
-        double angle = Math.PI * (1.1 + 0.8 * (0.5 + 0.5 * Math.sin(turn * Math.PI * 2.0)));
-        int nx = cx + (int)Math.round(Math.cos(angle) * (r - 2));
-        int ny = cy + (int)Math.round(Math.sin(angle) * (r - 2));
-        diagonal(g, cx, cy, nx, ny, alpha(p.text(), 72));
+        float needle = 198.0f + 144.0f * (0.5f + 0.5f * (float)Math.sin(turn * Math.PI * 2.0));
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0.0f);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(needle));
+        g.fill(0, -1, r - 1, 1, alpha(p.text(), 72));
+        g.pose().popPose();
         g.fill(cx - 1, cy - 1, cx + 2, cy + 2, alpha(p.accentB(), 70));
     }
 
@@ -1083,32 +1078,32 @@ final class ThemeAmbientRenderer {
         g.fill(cx - 1, cy - 1, cx + 2, cy + 2, accent);
     }
 
-    private static void redstoneRepeater(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+    private static void redstoneRepeater(GuiGraphics g, int x, int y, float power, InterfaceTheme.Palette p) {
         g.fill(x, y, x + 9, y + 7, alpha(0xFF6E6E6E, 110));
         g.fill(x + 1, y + 1, x + 8, y + 6, alpha(0xFFB9B9B9, 92));
-        int torch = alpha(powered ? p.accentA() : p.border(), powered ? 124 : 58);
+        int torch = alpha(lerpColor(p.border(), p.accentA(), power), Math.round(58 + power * 66.0f));
         g.fill(x + 2, y + 2, x + 4, y + 4, torch);
         g.fill(x + 6, y + 3, x + 8, y + 5, torch);
     }
 
-    private static void redstoneTorch(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+    private static void redstoneTorch(GuiGraphics g, int x, int y, float power, InterfaceTheme.Palette p) {
         g.fill(x, y + 2, x + 2, y + 7, alpha(0xFF6B3B22, 130));
-        g.fill(x - 1, y, x + 3, y + 3, alpha(powered ? p.accentA() : p.border(), powered ? 128 : 54));
+        g.fill(x - 1, y, x + 3, y + 3, alpha(lerpColor(p.border(), p.accentA(), power), Math.round(54 + power * 74.0f)));
     }
 
-    private static void redstoneLamp(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+    private static void redstoneLamp(GuiGraphics g, int x, int y, float power, InterfaceTheme.Palette p) {
         g.fill(x, y, x + 8, y + 8, alpha(0xFF3A1B14, 140));
-        int lamp = powered ? 0xFFFF7A24 : 0xFF5B241C;
-        g.fill(x + 2, y + 2, x + 6, y + 6, alpha(lamp, powered ? 132 : 76));
-        if (powered) {
-            g.fill(x + 3, y + 1, x + 5, y + 7, alpha(p.accentB(), 36));
-            g.fill(x + 1, y + 3, x + 7, y + 5, alpha(p.accentB(), 30));
+        int lamp = lerpColor(0xFF5B241C, 0xFFFF7A24, power);
+        g.fill(x + 2, y + 2, x + 6, y + 6, alpha(lamp, Math.round(76 + power * 56.0f)));
+        if (power > 0.01f) {
+            g.fill(x + 3, y + 1, x + 5, y + 7, alpha(p.accentB(), Math.round(power * 36.0f)));
+            g.fill(x + 1, y + 3, x + 7, y + 5, alpha(p.accentB(), Math.round(power * 30.0f)));
         }
     }
 
-    private static void redstoneLever(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+    private static void redstoneLever(GuiGraphics g, int x, int y, float power, InterfaceTheme.Palette p) {
         g.fill(x - 2, y + 5, x + 5, y + 8, alpha(0xFF6E6E6E, 110));
-        if (powered) {
+        if (power >= 0.5f) {
             diagonal(g, x, y + 5, x + 4, y, alpha(0xFF7A5135, 150));
             g.fill(x + 3, y - 1, x + 5, y + 1, alpha(p.accentA(), 94));
         } else {
@@ -1150,29 +1145,46 @@ final class ThemeAmbientRenderer {
         g.fill(cx - 2, groundY - 8, cx + 3, groundY + 1, alpha(0xFF101A22, 130));
     }
 
-    private static void growingTree(GuiGraphics g, int x, int baseY, int maxHeight, float growth, int sway,
+    private static void growingTree(GuiGraphics g, int x, int baseY, int maxHeight, float growth, float sway,
                                     InterfaceTheme.Palette p) {
-        float clamped = Math.max(0.0f, Math.min(1.0f, growth));
-        int trunkHeight = Math.max(2, (int)(maxHeight * Math.min(1.0f, clamped / 0.58f)));
+        float clamped = clamp01(growth);
+        float trunkProgress = smoothstep(clamp01(clamped / 0.46f));
         int trunkColor = alpha(0xFF6A4728, 92);
-        g.fill(x - 1, baseY - trunkHeight, x + 2, baseY, trunkColor);
 
-        if (clamped > 0.28f) {
-            int branchY = baseY - trunkHeight * 2 / 3;
-            int branch = Math.max(4, trunkHeight / 4);
-            diagonal(g, x, branchY, x - branch, branchY - branch / 2, trunkColor);
-            diagonal(g, x, branchY - 3, x + branch + sway, branchY - branch / 2 - 3, trunkColor);
+        g.pose().pushPose();
+        g.pose().translate(x, baseY, 0.0f);
+        g.pose().scale(1.0f, Math.max(0.001f, trunkProgress), 1.0f);
+        g.fill(-1, -maxHeight, 2, 0, trunkColor);
+        g.pose().popPose();
+
+        float branchProgress = smoothstep(clamp01((clamped - 0.28f) / 0.28f));
+        if (branchProgress > 0.001f) {
+            int branchY = baseY - maxHeight * 2 / 3;
+            int branch = Math.max(4, maxHeight / 4);
+            g.pose().pushPose();
+            g.pose().translate(x, branchY, 0.0f);
+            g.pose().scale(branchProgress, branchProgress, 1.0f);
+            diagonal(g, 0, 0, -branch, -branch / 2, trunkColor);
+            diagonal(g, 0, -3, branch + Math.round(sway), -branch / 2 - 3, trunkColor);
+            g.pose().popPose();
         }
-        if (clamped > 0.48f) {
-            int topY = baseY - trunkHeight;
-            int crown = Math.max(4, (int)(10 * Math.min(1.0f, (clamped - 0.48f) / 0.30f)));
-            leafCluster(g, x + sway, topY, crown, alpha(p.accentA(), 74));
-            leafCluster(g, x - crown + sway / 2, topY + crown / 2, Math.max(3, crown - 2), alpha(p.accentA(), 62));
-            leafCluster(g, x + crown - sway / 2, topY + crown / 2, Math.max(3, crown - 2), alpha(p.accentA(), 66));
-            if (clamped > 0.78f) {
-                flower(g, x + crown - 2, topY + 1, alpha(p.accentB(), 78), alpha(p.text(), 58));
-                flower(g, x - crown + 3, topY + crown / 2, alpha(p.accentB(), 68), alpha(p.text(), 52));
+
+        float crownProgress = smoothstep(clamp01((clamped - 0.48f) / 0.30f));
+        if (crownProgress > 0.001f) {
+            int topY = baseY - maxHeight;
+            int crown = 10;
+            g.pose().pushPose();
+            g.pose().translate(x + sway, topY, 0.0f);
+            g.pose().scale(crownProgress, crownProgress, 1.0f);
+            leafCluster(g, 0, 0, crown, alpha(p.accentA(), 74));
+            leafCluster(g, -crown, crown / 2, crown - 2, alpha(p.accentA(), 62));
+            leafCluster(g, crown, crown / 2, crown - 2, alpha(p.accentA(), 66));
+            float bloom = smoothstep(clamp01((clamped - 0.78f) / 0.16f));
+            if (bloom > 0.001f) {
+                animatedFlower(g, crown - 2, 1, bloom, alpha(p.accentB(), 78), alpha(p.text(), 58));
+                animatedFlower(g, -crown + 3, crown / 2, bloom, alpha(p.accentB(), 68), alpha(p.text(), 52));
             }
+            g.pose().popPose();
         }
     }
 
@@ -1180,6 +1192,105 @@ final class ThemeAmbientRenderer {
         int r = Math.max(2, radius);
         g.fill(cx - r, cy - r / 2, cx + r + 1, cy + r / 2 + 1, color);
         g.fill(cx - r / 2, cy - r, cx + r / 2 + 1, cy + r + 1, alpha(color, Math.max(24, (color >>> 24) - 8)));
+    }
+
+    private static float clamp01(float value) {
+        return Math.max(0.0f, Math.min(1.0f, value));
+    }
+
+    private static float smoothstep(float value) {
+        float x = clamp01(value);
+        return x * x * (3.0f - 2.0f * x);
+    }
+
+    private static float signalWindow(float phase, float onStart, float fullStart, float fullEnd, float offEnd) {
+        float p = clamp01(phase);
+        if (p <= onStart || p >= offEnd) return 0.0f;
+        if (p < fullStart) return smoothstep((p - onStart) / Math.max(0.0001f, fullStart - onStart));
+        if (p <= fullEnd) return 1.0f;
+        return 1.0f - smoothstep((p - fullEnd) / Math.max(0.0001f, offEnd - fullEnd));
+    }
+
+    private static int lerpColor(int from, int to, float amount) {
+        float a = clamp01(amount);
+        int r = Math.round(((from >> 16) & 0xFF) + (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)) * a);
+        int g = Math.round(((from >> 8) & 0xFF) + (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)) * a);
+        int b = Math.round((from & 0xFF) + ((to & 0xFF) - (from & 0xFF)) * a);
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
+    private static void tankFill(GuiGraphics g, int left, int top, int right, int bottom, float level, int color) {
+        float amount = clamp01(level);
+        int height = Math.max(1, bottom - top);
+        g.pose().pushPose();
+        g.pose().translate(0.0f, bottom, 0.0f);
+        g.pose().scale(1.0f, Math.max(0.001f, amount), 1.0f);
+        g.fill(left, -height, right, 0, color);
+        g.pose().popPose();
+    }
+
+    private static void growingDiagonal(GuiGraphics g, int x, int y, int dx, int dy, float progress, int color) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(amount, amount, 1.0f);
+        diagonal(g, 0, 0, dx, dy, color);
+        g.pose().popPose();
+    }
+
+    private static void drawScaledCrystal(GuiGraphics g, float x, float y, int radius, float progress, int color) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(amount, amount, 1.0f);
+        crystal(g, 0, 0, radius, color);
+        g.pose().popPose();
+    }
+
+    private static void growingStem(GuiGraphics g, int x, int y, int length, float progress, int color) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(1.0f, amount, 1.0f);
+        g.fill(0, 0, 1, Math.max(1, length), color);
+        g.pose().popPose();
+    }
+
+    private static void growingHorizontal(GuiGraphics g, int x, int y, int length, float progress, int color) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        int direction = length < 0 ? -1 : 1;
+        int abs = Math.max(1, Math.abs(length));
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(amount * direction, 1.0f, 1.0f);
+        g.fill(0, 0, abs, 1, color);
+        g.pose().popPose();
+    }
+
+    private static void animatedLeaf(GuiGraphics g, float x, float y, float progress, int color, boolean right) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(amount, amount, 1.0f);
+        leaf(g, 0, 0, alpha(color, Math.round((color >>> 24) * amount)), right);
+        g.pose().popPose();
+    }
+
+    private static void animatedFlower(GuiGraphics g, float x, float y, float progress, int petal, int center) {
+        float amount = smoothstep(progress);
+        if (amount <= 0.001f) return;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0f);
+        g.pose().scale(amount, amount, 1.0f);
+        flower(g, 0, 0,
+                alpha(petal, Math.round((petal >>> 24) * amount)),
+                alpha(center, Math.round((center >>> 24) * amount)));
+        g.pose().popPose();
     }
 
     private static float growthCycle(float phase) {
@@ -1241,31 +1352,49 @@ final class ThemeAmbientRenderer {
 
     private static void rotor(GuiGraphics g, int cx, int cy, int radius, int body, int accent, float turn) {
         int r = Math.max(3, radius);
-        int phase = Math.floorMod((int)(turn * 8.0f), 8);
         g.fill(cx - r + 1, cy - r + 1, cx + r, cy + r, alpha(body, Math.max(18, (body >>> 24) / 2)));
         g.fill(cx - 2, cy - 2, cx + 3, cy + 3, alpha(0xFF000000, 138));
-        if ((phase & 1) == 0) {
-            g.fill(cx - r, cy - 1, cx + r + 1, cy + 2, accent);
-            g.fill(cx - 1, cy - r, cx + 2, cy + r + 1, accent);
-        } else {
-            diagonal(g, cx - r, cy - r, cx + r, cy + r, accent);
-            diagonal(g, cx - r, cy + r, cx + r, cy - r, accent);
-        }
+
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0.0f);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(turn * 360.0f));
+        g.fill(-r, -1, r + 1, 2, accent);
+        g.fill(-1, -r, 2, r + 1, accent);
+        g.fill(-r + 2, -r + 2, r - 1, r - 1, alpha(body, Math.max(18, (body >>> 24) / 3)));
+        g.pose().popPose();
+
         g.fill(cx - 1, cy - 1, cx + 2, cy + 2, alpha(body, Math.min(180, (body >>> 24) + 45)));
     }
 
     private static void piston(GuiGraphics g, int x, int y, int travel, boolean horizontal,
                                int body, int head, float position) {
         int range = Math.max(4, travel);
-        int extension = Math.max(2, (int)(range * (0.25f + 0.65f * (0.5f + 0.5f * (float)Math.sin(position * Math.PI * 2.0)))));
+        float extension = range * (0.25f + 0.65f * (0.5f + 0.5f * (float)Math.sin(position * Math.PI * 2.0)));
+
         if (horizontal) {
             g.fill(x, y, x + range + 4, y + 3, alpha(body, 46));
-            g.fill(x + 2, y + 1, x + extension + 2, y + 2, head);
-            g.fill(x + extension, y - 2, x + extension + 4, y + 5, alpha(head, Math.min(150, (head >>> 24) + 28)));
+            g.pose().pushPose();
+            g.pose().translate(x + 2.0f, y + 1.0f, 0.0f);
+            g.pose().scale(Math.max(0.02f, extension / range), 1.0f, 1.0f);
+            g.fill(0, 0, range, 1, head);
+            g.pose().popPose();
+
+            g.pose().pushPose();
+            g.pose().translate(x + 2.0f + extension, y, 0.0f);
+            g.fill(-2, -2, 2, 5, alpha(head, Math.min(150, (head >>> 24) + 28)));
+            g.pose().popPose();
         } else {
             g.fill(x, y, x + 3, y + range + 4, alpha(body, 46));
-            g.fill(x + 1, y + 2, x + 2, y + extension + 2, head);
-            g.fill(x - 2, y + extension, x + 5, y + extension + 4, alpha(head, Math.min(150, (head >>> 24) + 28)));
+            g.pose().pushPose();
+            g.pose().translate(x + 1.0f, y + 2.0f, 0.0f);
+            g.pose().scale(1.0f, Math.max(0.02f, extension / range), 1.0f);
+            g.fill(0, 0, 1, range, head);
+            g.pose().popPose();
+
+            g.pose().pushPose();
+            g.pose().translate(x, y + 2.0f + extension, 0.0f);
+            g.fill(-2, -2, 5, 2, alpha(head, Math.min(150, (head >>> 24) + 28)));
+            g.pose().popPose();
         }
     }
 
@@ -1284,17 +1413,20 @@ final class ThemeAmbientRenderer {
         diamond(g, cx, cy, r, alpha(p.border(), 36));
         diamond(g, cx, cy, Math.max(2, r - 3), outer);
         diamond(g, cx, cy, Math.max(1, r - 5), inner);
-        int phase = Math.floorMod((int)(turn * 8.0f), 8);
+
         int arm = r + 3;
-        if ((phase & 1) == 0) {
-            g.fill(cx - arm, cy - 1, cx - r, cy + 1, alpha(p.accentB(), 54));
-            g.fill(cx + r + 1, cy - 1, cx + arm + 1, cy + 1, alpha(p.accentA(), 54));
-        } else {
-            g.fill(cx - 1, cy - arm, cx + 1, cy - r, alpha(p.accentA(), 54));
-            g.fill(cx - 1, cy + r + 1, cx + 1, cy + arm + 1, alpha(p.accentB(), 54));
-        }
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0.0f);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(turn * 360.0f));
+        g.fill(-arm, -1, -r, 1, alpha(p.accentB(), 54));
+        g.fill(r + 1, -1, arm + 1, 1, alpha(p.accentA(), 54));
+        g.fill(-1, -arm, 1, -r, alpha(p.accentA(), 46));
+        g.fill(-1, r + 1, 1, arm + 1, alpha(p.accentB(), 46));
+        g.pose().popPose();
+
         g.fill(cx, cy, cx + 1, cy + 1, alpha(p.text(), Math.min(190, strength + 42)));
     }
+
 
     private static void flower(GuiGraphics g, int cx, int cy, int petal, int center) {
         g.fill(cx - 1, cy - 3, cx + 2, cy, petal);
