@@ -619,7 +619,7 @@ extends AENetworkedBlockEntity {
         }
 
         LinkedHashMap<ResourceLocation, ServerLevel> levels = new LinkedHashMap<>();
-        LinkedHashMap<ResourceLocation, List<MapNodeSource>> sourcesByDimension = new LinkedHashMap<>();
+        ArrayList<MapNodeSource> viewSources = new ArrayList<>();
         HashMap<Long, List<QuantumBridgeEndpoint>> quantumEndpoints = new HashMap<>();
         LinkedHashMap<WirelessConnectorEndpoint, BlockPos> wirelessEndpoints = new LinkedHashMap<>();
 
@@ -642,8 +642,12 @@ extends AENetworkedBlockEntity {
 
             ResourceLocation dimension = nodeLevel.dimension().location();
             levels.putIfAbsent(dimension, nodeLevel);
-            sourcesByDimension.computeIfAbsent(dimension, ignored -> new ArrayList<>())
-                    .add(new MapNodeSource(node, owner, location));
+            if (dimension.equals(viewDimension)) {
+                // Only the requested dimension is rendered. Keep global dimension/link
+                // discovery network-wide, but avoid retaining MapNodeSource objects for
+                // dimensions that cannot contribute to this snapshot.
+                viewSources.add(new MapNodeSource(node, owner, location));
+            }
 
             // Only a real, formed ME Quantum Link Chamber can become a navigable map link.
             // This intentionally excludes WAPs/wireless terminals and unrelated "quantum"
@@ -723,10 +727,9 @@ extends AENetworkedBlockEntity {
                     viewDimension, dimensions, quantumLinks, wirelessLinks, List.of(), false);
         }
 
-        List<MapNodeSource> sources = sourcesByDimension.getOrDefault(viewDimension, List.of());
         ArrayList<MapNodeSource> mapSources = new ArrayList<>();
         HashSet<BlockPos> networkPositions = new HashSet<>();
-        for (MapNodeSource source : sources) {
+        for (MapNodeSource source : viewSources) {
             BlockPos pos = source.location().pos();
             if (!level.hasChunkAt(pos)) {
                 continue;
