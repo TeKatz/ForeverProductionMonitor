@@ -472,9 +472,10 @@ final class NetworkMapView {
         double maxY = this.sceneContentBottom() + margin;
 
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        ProjectionContext projection = this.projectionContext();
         double[] projected = new double[2];
         for (int index : visible) {
-            this.project(nodes.get(index), projected);
+            this.project(nodes.get(index), projection, projected);
             if (projected[0] >= minX && projected[0] <= maxX
                     && projected[1] >= minY && projected[1] <= maxY) {
                 this.frameNodeIndices.add(index);
@@ -1337,10 +1338,11 @@ final class NetworkMapView {
         double hitRadius = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
         double hitRadiusSquared = hitRadius * hitRadius;
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        ProjectionContext projection = this.projectionContext();
         double[] projected = new double[2];
 
         for (int index : this.frameNodeIndices) {
-            this.project(nodes.get(index), projected);
+            this.project(nodes.get(index), projection, projected);
             double dx = (double)mouseX - projected[0];
             double dy = (double)mouseY - projected[1];
             double distance = dx * dx + dy * dy;
@@ -1351,15 +1353,34 @@ final class NetworkMapView {
         }
     }
 
-    private void project(MonitorNetwork.MapNode mapNode, double[] out) {
+    private ProjectionContext projectionContext() {
+        double yawRadians = Math.toRadians(this.yaw);
+        double pitchRadians = Math.toRadians(this.pitch);
+        double scale = this.scale();
+        return new ProjectionContext(
+                Math.cos(yawRadians),
+                Math.sin(yawRadians),
+                Math.cos(pitchRadians),
+                Math.sin(pitchRadians),
+                scale,
+                (double)(this.left + this.sceneRight()) * 0.5 + this.panX,
+                (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY);
+    }
+
+    private void project(MonitorNetwork.MapNode mapNode,
+                         ProjectionContext projection,
+                         double[] out) {
         this.project(
                 mapNode.pos(),
                 mapNode.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART
                         ? mapNode.side() : -1,
+                projection,
                 out);
     }
 
-    private void project(BlockPos blockPos, int side, double[] out) {
+    private void project(BlockPos blockPos, int side,
+                         ProjectionContext projection,
+                         double[] out) {
         double sideX = 0.0;
         double sideY = 0.0;
         double sideZ = 0.0;
@@ -1373,16 +1394,15 @@ final class NetworkMapView {
         double localX = (double)blockPos.getX() + 0.5 + sideX - this.centerX;
         double localY = (double)blockPos.getY() + 0.5 + sideY - this.centerY;
         double localZ = (double)blockPos.getZ() + 0.5 + sideZ - this.centerZ;
-        double yawRadians = Math.toRadians(this.yaw);
-        double pitchRadians = Math.toRadians(this.pitch);
-        double rotatedX = localX * Math.cos(yawRadians) + localZ * Math.sin(yawRadians);
-        double rotatedZ = -localX * Math.sin(yawRadians) + localZ * Math.cos(yawRadians);
-        double projectedY = localY * Math.cos(pitchRadians) - rotatedZ * Math.sin(pitchRadians);
+        double rotatedX = localX * projection.cosYaw()
+                + localZ * projection.sinYaw();
+        double rotatedZ = -localX * projection.sinYaw()
+                + localZ * projection.cosYaw();
+        double projectedY = localY * projection.cosPitch()
+                - rotatedZ * projection.sinPitch();
 
-        out[0] = (double)(this.left + this.sceneRight()) * 0.5
-                + this.panX + rotatedX * this.scale();
-        out[1] = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5
-                + this.panY - projectedY * this.scale();
+        out[0] = projection.centerScreenX() + rotatedX * projection.scale();
+        out[1] = projection.centerScreenY() - projectedY * projection.scale();
     }
 
     private void recomputeFit() {
@@ -1822,6 +1842,12 @@ final class NetworkMapView {
         PARTS,
         ERRORS;
 
+    }
+
+    private record ProjectionContext(double cosYaw, double sinYaw,
+                                     double cosPitch, double sinPitch,
+                                     double scale,
+                                     double centerScreenX, double centerScreenY) {
     }
 
     private record CameraState(float yaw, float pitch, double zoom, double panX, double panY, double centerX, double centerY, double centerZ, boolean focused) {
