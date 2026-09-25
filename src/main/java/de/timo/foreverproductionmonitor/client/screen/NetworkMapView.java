@@ -1596,17 +1596,38 @@ final class NetworkMapView {
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
             MonitorNetwork.MapNode mapNode2 = (MonitorNetwork.MapNode)entry.getValue();
-            if (mapNode == null && mapNode2.device()) {
-                NetworkMapView.addEvent(arrayDeque, new MapEvent(l, mapNode2.name(), EventType.ADDED));
+
+            // Topology changes are network events too. The old implementation only recorded
+            // additions/removals for nodes marked as channel-requiring "devices", which meant
+            // cable edits, multipart changes and mapped external machines were silently ignored.
+            if (mapNode == null) {
+                NetworkMapView.addEvent(arrayDeque,
+                        new MapEvent(l, this.nodeDisplayName(mapNode2), EventType.ADDED));
                 continue;
             }
-            if (mapNode == null || mapNode.state() == mapNode2.state()) continue;
-            EventType eventType = mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_LOST : (mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_LOST : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL ? EventType.CHANNEL_RESTORED : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED ? EventType.POWER_RESTORED : EventType.STATE_CHANGED)));
-            NetworkMapView.addEvent(arrayDeque, new MapEvent(l, mapNode2.name(), eventType));
+
+            if (mapNode.state() == mapNode2.state()) {
+                continue;
+            }
+            EventType eventType = mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL
+                    ? EventType.CHANNEL_LOST
+                    : (mapNode2.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED
+                    ? EventType.POWER_LOST
+                    : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.MISSING_CHANNEL
+                    ? EventType.CHANNEL_RESTORED
+                    : (mapNode.state() == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED
+                    ? EventType.POWER_RESTORED
+                    : EventType.STATE_CHANGED)));
+            NetworkMapView.addEvent(arrayDeque,
+                    new MapEvent(l, this.nodeDisplayName(mapNode2), eventType));
         }
+
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap.entrySet()) {
-            if (hashMap2.containsKey(entry.getKey()) || !((MonitorNetwork.MapNode)entry.getValue()).device()) continue;
-            NetworkMapView.addEvent(arrayDeque, new MapEvent(l, ((MonitorNetwork.MapNode)entry.getValue()).name(), EventType.REMOVED));
+            if (hashMap2.containsKey(entry.getKey())) {
+                continue;
+            }
+            NetworkMapView.addEvent(arrayDeque,
+                    new MapEvent(l, this.nodeDisplayName(entry.getValue()), EventType.REMOVED));
         }
     }
 
