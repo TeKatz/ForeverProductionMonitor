@@ -6,6 +6,15 @@ Forever Production Monitor turns a large AE2 network into something you can insp
 
 > Forever Production Monitor is an unofficial third-party addon for Applied Energistics 2. It is not affiliated with or endorsed by the Applied Energistics 2 development team.
 
+## Downloads
+
+Official release files will be published through:
+
+- [GitHub Releases](https://github.com/TeKatz/ForeverProductionMonitor/releases)
+- CurseForge (project link will be added when the public listing is approved)
+
+Release changes are documented in [CHANGELOG.md](CHANGELOG.md). For safety and reproducibility, use the official project pages rather than third-party mirrors.
+
 ## Highlights
 
 - **Production monitoring** for items, fluids and energy with configurable rate units.
@@ -67,20 +76,10 @@ The Network Map periodically requests a fresh snapshot while its tab is open. La
 
 If a device reports **Missing Channel**, use the locator from the diagnostics view to identify its actual position. On multidimensional AE2 grids, the locator retains the device's real dimension instead of assuming the dimension of the linked monitor.
 
-## Screenshots
-
-Public release screenshots will be added here before launch. The project page is intended to use real in-game captures rather than generated promotional images.
-
-Recommended gallery coverage:
-
-- Dashboard / production overview
-- Storage Capacity and NBT Items
-- Device and Missing Channel diagnostics
-- Large 3D Network Map
-- Quantum Bridge dimension navigation
-- ExtendedAE Wireless Connector Follow Path
-- Network Events / heatmap
-- Themes and settings
+<!--
+A real in-game screenshot gallery will be inserted here before the public launch.
+No generated promotional screenshots are intended for the project page.
+-->
 
 ## Development and AI disclosure
 
