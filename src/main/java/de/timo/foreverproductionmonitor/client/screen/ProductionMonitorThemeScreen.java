@@ -227,7 +227,7 @@ extends Screen {
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, interfaceStyle, palette);
         guiGraphics.drawCenteredString(this.font, this.title, this.left + this.panelWidth / 2, this.top + 13, palette.text());
-        String version = "Forever Production Monitor 3.1.1";
+        String version = "Forever Production Monitor 3.1.2";
         guiGraphics.drawString(this.font, version, this.left + this.panelWidth - 18 - this.font.width(version), this.footerY - 14, palette.muted(), false);
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);

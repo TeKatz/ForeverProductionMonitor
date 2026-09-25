@@ -117,12 +117,19 @@ final class ThemeAmbientRenderer {
                 graphics.fill(x + width - 5, rightPulseY, x + width - 2, Math.min(y + height - 3, rightPulseY + 2), alpha(palette.accentA(), motionAlpha(42, 104)));
             }
             case QUANTUM -> {
-                float p = phase(2600L, 0.2f);
                 int cx = x + width / 2;
                 int cy = y + height / 2;
-                int dx = (int)Math.round(Math.cos(p * Math.PI * 2.0) * Math.min(8, width / 6));
-                graphics.fill(cx + dx, cy - 1, cx + dx + 2, cy + 1, subtle);
-                graphics.fill(cx - dx - 1, cy, cx - dx + 1, cy + 2, bright);
+                rectFrame(graphics, cx - 8, cy - 5, cx + 8, cy + 5, alpha(palette.border(), 58));
+                rectFrame(graphics, cx - 5, cy - 3, cx + 5, cy + 3, subtle);
+                int phaseStep = Math.floorMod((int)(phase(7000L, 0.24f) * 4.0f), 4);
+                if ((phaseStep & 1) == 0) {
+                    graphics.fill(cx - 8, cy - 5, cx - 1, cy - 4, bright);
+                    graphics.fill(cx + 1, cy + 5, cx + 9, cy + 6, bright);
+                } else {
+                    graphics.fill(cx - 8, cy - 5, cx - 7, cy + 1, bright);
+                    graphics.fill(cx + 8, cy - 1, cx + 9, cy + 6, bright);
+                }
+                diamond(graphics, cx, cy, 1, alpha(palette.text(), 118));
             }
             case HOLOGRAPHIC -> {
                 corner(graphics, x + 2, y + 2, 5, subtle, true, true);
@@ -161,15 +168,16 @@ final class ThemeAmbientRenderer {
             case COPPER -> {
                 rivet(graphics, x + 4, y + 4, subtle);
                 rivet(graphics, x + width - 6, y + height - 6, bright);
-                int px = x + 7 + (int)((width - 15) * phase(3100L, 0.3f));
-                graphics.fill(px, bottom, Math.min(px + 8, x + width - 4), bottom + 1, alpha(palette.text(), 45));
+                int sheen = x - 8 + (int)((width + 16) * phase(12000L, 0.3f));
+                graphics.fill(sheen, y + 2, Math.min(sheen + 12, x + width - 2), y + 3, alpha(palette.text(), motionAlpha(3, 16)));
+                graphics.fill(x + 6, bottom, x + width - 6, bottom + 1, alpha(palette.border(), 46));
             }
             case AURORA -> {
                 int split = x + width / 2;
-                graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 88));
-                graphics.fill(split, bottom, x + width - 3, bottom + 1, alpha(b, 88));
-                int px = x + 4 + (int)((width - 9) * phase(2700L, 0.55f));
-                graphics.fill(px, bottom - 1, Math.min(px + 3, x + width - 3), bottom + 1, alpha(palette.text(), 65));
+                int wave = GuiMotion.ambientMotionEnabled() ? (int)Math.round(Math.sin(phase(7600L, 0.35f) * Math.PI * 2.0)) : 0;
+                graphics.fill(x + 3, bottom - 1 + wave, split, bottom + wave, alpha(a, 72));
+                graphics.fill(split, bottom - wave, x + width - 3, bottom + 1 - wave, alpha(b, 72));
+                graphics.fill(x + width / 4, y + 3, x + width * 3 / 4, y + 4, alpha(palette.text(), 18));
             }
             case REDSTONE -> {
                 int cy = y + height / 2;
@@ -261,7 +269,11 @@ final class ThemeAmbientRenderer {
             case QUANTUM -> {
                 int cx = x + width / 2;
                 int cy = y + height / 2;
-                orbit(graphics, cx, cy, Math.min(18, width / 7), Math.min(7, height / 4), a, b, phase(4200L, 0.18f));
+                int hw = Math.min(24, Math.max(10, width / 8));
+                int hh = Math.min(8, Math.max(4, height / 4));
+                rectFrame(graphics, cx - hw, cy - hh, cx + hw, cy + hh, alpha(palette.border(), 38));
+                rectFrame(graphics, cx - hw / 2, cy - Math.max(2, hh / 2), cx + hw / 2, cy + Math.max(2, hh / 2), a);
+                diamond(graphics, cx, cy, 1, alpha(palette.accentB(), 84));
             }
             case HOLOGRAPHIC -> {
                 for (int py = y + 4; py < bottom - 3; py += 9) {
@@ -330,30 +342,52 @@ final class ThemeAmbientRenderer {
     }
 
     private static void standardPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        for (int x = l + 28; x < r; x += 52) {
-            g.fill(x, t, x + 1, b, alpha(p.border(), 13));
+        int width = r - l;
+        int height = b - t;
+        for (int x = l + 24; x < r; x += 48) {
+            g.fill(x, t + 4, x + 1, b - 4, alpha(p.border(), 12));
         }
-        for (int y = t + 24; y < b; y += 34) {
-            g.fill(l, y, r, y + 1, alpha(p.border(), 11));
+        for (int y = t + 20; y < b; y += 32) {
+            g.fill(l + 4, y, r - 4, y + 1, alpha(p.border(), 10));
         }
-        int sweep = l + (int)((r - l - 1) * phase(5200L, 0.32f));
-        g.fill(sweep, t + 3, sweep + 1, b - 3, alpha(p.accentA(), motionAlpha(12, 26)));
-        for (int i = 0; i < 4; ++i) {
-            node(g, l + 5, t + 10 + i * 24, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 34));
+        for (int i = 0; i < 5; ++i) {
+            int tickX = l + 8 + i * Math.max(18, (width - 16) / 5);
+            g.fill(tickX, t + 5, tickX + 8, t + 6, alpha(p.accentA(), 34));
+        }
+        if (GuiMotion.ambientMotionEnabled()) {
+            int sweep = l + 5 + (int)((width - 11) * phase(14000L, 0.42f));
+            g.fill(sweep, t + 3, sweep + 1, b - 3, alpha(p.accentA(), motionAlpha(8, 22)));
         }
     }
 
     private static void foreverPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int mid = l + (r - l) * 3 / 5;
-        for (int x = l + 6; x < r - 6; x += 22) {
-            int color = x < mid ? p.accentA() : p.accentB();
-            g.fill(x, b - 4, Math.min(x + 10, r - 4), b - 3, alpha(color, 40));
+        int width = r - l;
+        int height = b - t;
+        int split = l + width * 3 / 5;
+
+        // Signature segmented rails: geometric rather than free-floating particles.
+        for (int x = l + 7; x < r - 7; x += 24) {
+            int color = x < split ? p.accentA() : p.accentB();
+            g.fill(x, t + 7, Math.min(x + 12, r - 6), t + 8, alpha(color, 34));
+            g.fill(x + 5, b - 8, Math.min(x + 17, r - 6), b - 7, alpha(color, 30));
         }
-        g.fill(l + 5, t + 5, l + 6, b - 7, alpha(p.accentA(), 24));
-        g.fill(r - 6, t + 5, r - 5, b - 7, alpha(p.accentB(), 24));
-        int px = l + 8 + (int)((r - l - 17) * phase(3600L, 0.44f));
-        g.fill(px, b - 6, Math.min(px + 8, r - 6), b - 4, alpha(px < mid ? p.accentA() : p.accentB(), motionAlpha(32, 80)));
-        node(g, mid - 1, t + 9, alpha(p.accentB(), 55));
+        g.fill(l + 6, t + 8, l + 7, b - 8, alpha(p.accentA(), 25));
+        g.fill(r - 7, t + 8, r - 6, b - 8, alpha(p.accentB(), 25));
+
+        // Two long, slow data sweeps with opposite directions.
+        if (GuiMotion.ambientMotionEnabled()) {
+            float a = phase(9800L, 0.22f);
+            float c = 1.0f - phase(12700L, 0.64f);
+            int x1 = l + 8 + (int)((width - 17) * a);
+            int x2 = l + 8 + (int)((width - 17) * c);
+            g.fill(x1, t + 5, Math.min(x1 + 18, r - 7), t + 7, alpha(x1 < split ? p.accentA() : p.accentB(), motionAlpha(24, 64)));
+            g.fill(x2, b - 7, Math.min(x2 + 13, r - 7), b - 5, alpha(x2 < split ? p.accentA() : p.accentB(), motionAlpha(20, 54)));
+        }
+
+        // Fixed geometric anchor marks.
+        corner(g, l + 6, t + 6, 8, alpha(p.accentA(), 58), true, true);
+        corner(g, r - 7, b - 7, 8, alpha(p.accentB(), 58), false, false);
+        diamond(g, split, t + height / 2, 2, alpha(p.accentB(), 62));
     }
 
     private static void ae2Panel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -365,32 +399,37 @@ final class ThemeAmbientRenderer {
         int dx = Math.max(22, (networkRight - l - 18) / Math.max(1, cols - 1));
         int dy = Math.max(20, (height - 18) / Math.max(1, rows - 1));
 
+        // Explicit ME-like network topology. Motion is constrained to actual paths.
         for (int row = 0; row < rows; ++row) {
             int y = t + 9 + row * dy;
             for (int col = 0; col < cols; ++col) {
                 int x = l + 9 + col * dx;
                 if (x >= networkRight - 3 || y >= b - 3) continue;
                 if (col + 1 < cols && x + dx < networkRight) {
-                    g.fill(x + 3, y, x + dx, y + 1, alpha(p.border(), 24));
+                    g.fill(x + 3, y, x + dx, y + 1, alpha(p.border(), 26));
                 }
                 if (row + 1 < rows && y + dy < b) {
-                    g.fill(x, y + 3, x + 1, y + dy, alpha(p.border(), 21));
+                    g.fill(x, y + 3, x + 1, y + dy, alpha(p.border(), 22));
                 }
-                diamond(g, x, y, 2, alpha((row + col & 1) == 0 ? p.accentA() : p.accentB(), 56));
+                diamond(g, x, y, 2, alpha((row + col & 1) == 0 ? p.accentA() : p.accentB(), 58));
             }
         }
 
-        int pathIndex = (int)(phase(3200L, 0.28f) * (cols * rows - 1));
+        // A packet changes node-to-node, rather than drifting freely across the screen.
+        int routeLength = cols * rows;
+        float routePhase = phase(7200L, 0.28f);
+        int pathIndex = Math.min(routeLength - 1, (int)(routePhase * routeLength));
         int pathCol = pathIndex % cols;
         int pathRow = pathIndex / cols;
         int pulseX = l + 9 + pathCol * dx;
         int pulseY = t + 9 + pathRow * dy;
         if (pulseX < networkRight - 2 && pulseY < b - 2) {
-            diamond(g, pulseX, pulseY, 3, alpha(p.text(), motionAlpha(52, 128)));
+            diamond(g, pulseX, pulseY, 3, alpha(p.text(), motionAlpha(52, 126)));
         }
 
+        // Storage-cell bay gives AE2 a recognizable storage-system silhouette.
         int bayLeft = networkRight + 8;
-        g.fill(bayLeft - 5, t + 5, bayLeft - 4, b - 5, alpha(p.accentA(), 30));
+        g.fill(bayLeft - 5, t + 5, bayLeft - 4, b - 5, alpha(p.accentA(), 32));
         int cellW = Math.max(14, (r - bayLeft - 12) / 2);
         int cellH = Math.max(14, Math.min(24, (height - 24) / 3));
         for (int row = 0; row < 3; ++row) {
@@ -409,105 +448,171 @@ final class ThemeAmbientRenderer {
     private static void oritechPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-
-        // Heavy plate seams and bolt pattern.
         int seamA = l + width / 3;
         int seamB = l + width * 2 / 3;
-        g.fill(seamA, t + 4, seamA + 1, b - 4, alpha(p.border(), 42));
-        g.fill(seamB, t + 4, seamB + 1, b - 4, alpha(p.border(), 42));
-        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 34));
-        rivet(g, l + 6, t + 6, alpha(p.accentB(), 68));
-        rivet(g, r - 8, t + 6, alpha(p.accentA(), 62));
-        rivet(g, l + 6, b - 8, alpha(p.accentA(), 62));
-        rivet(g, r - 8, b - 8, alpha(p.accentB(), 68));
 
-        // Two counter-rotating machine rotors make the theme read as machinery,
-        // not generic moving lights.
-        float turnA = phase(4200L, 0.14f);
-        float turnB = 1.0f - phase(5600L, 0.67f);
-        rotor(g, l + width / 4, t + height / 3, 8, alpha(p.accentA(), 62), alpha(p.accentB(), 74), turnA);
-        rotor(g, l + width / 2, t + height * 2 / 3, 6, alpha(p.accentB(), 58), alpha(p.accentA(), 70), turnB);
+        // Heavy metal plate construction.
+        g.fill(seamA, t + 4, seamA + 1, b - 4, alpha(p.border(), 44));
+        g.fill(seamB, t + 4, seamB + 1, b - 4, alpha(p.border(), 44));
+        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 36));
+        rivet(g, l + 6, t + 6, alpha(p.accentB(), 70));
+        rivet(g, r - 8, t + 6, alpha(p.accentA(), 64));
+        rivet(g, l + 6, b - 8, alpha(p.accentA(), 64));
+        rivet(g, r - 8, b - 8, alpha(p.accentB(), 70));
 
-        // Linear actuator / piston assembly.
-        int pistonY = t + height / 2 + 10;
+        // Actual mechanical movement only: rotors, shafts and actuator.
+        float turnA = phase(8400L, 0.14f);
+        float turnB = 1.0f - phase(11200L, 0.67f);
+        rotor(g, l + width / 4, t + height / 3, 9, alpha(p.accentA(), 64), alpha(p.accentB(), 76), turnA);
+        rotor(g, l + width / 2, t + height * 2 / 3, 7, alpha(p.accentB(), 60), alpha(p.accentA(), 72), turnB);
+
+        int shaftY = t + height / 3;
+        g.fill(l + width / 4 + 10, shaftY - 1, seamB - 4, shaftY + 2, alpha(p.border(), 54));
+        for (int x = l + width / 4 + 16; x < seamB - 6; x += 13) {
+            g.fill(x, shaftY - 2, x + 2, shaftY + 3, alpha(p.accentA(), 34));
+        }
+
+        int pistonY = t + height / 2 + 11;
         piston(g, seamB + 7, pistonY, Math.max(12, r - seamB - 18), true,
-               alpha(p.border(), 70), alpha(p.accentB(), 88), phase(2700L, 0.42f));
+               alpha(p.border(), 72), alpha(p.accentB(), 90), phase(6200L, 0.42f));
 
-        // Segmented lower machine rail.
+        // Fixed machine rail, no matrix-style particles.
         for (int x = l + 10; x < r - 10; x += 18) {
-            g.fill(x, b - 6, Math.min(x + 11, r - 8), b - 4, alpha((x / 18 & 1) == 0 ? p.accentA() : p.border(), 40));
+            g.fill(x, b - 6, Math.min(x + 11, r - 8), b - 4,
+                    alpha((x / 18 & 1) == 0 ? p.accentA() : p.border(), 42));
         }
     }
 
     private static void mekanismPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int leftRail = l + 10;
-        int rightRail = r - 11;
+        int leftRail = l + 11;
+        int rightRail = r - 12;
+        int cx = l + width / 2;
         int cy = t + height / 2;
 
-        segmentedRail(g, leftRail, t + 5, b - 5, p.accentA(), p.border());
-        segmentedRail(g, rightRail, t + 5, b - 5, p.accentB(), p.border());
+        // Enclosed energy conduits and machine rails.
+        segmentedRail(g, leftRail, t + 6, b - 6, p.accentA(), p.border());
+        segmentedRail(g, rightRail, t + 6, b - 6, p.accentB(), p.border());
+        g.fill(leftRail + 3, cy, cx - 11, cy + 1, alpha(p.accentA(), 46));
+        g.fill(cx + 11, cy, rightRail - 2, cy + 1, alpha(p.accentB(), 46));
+        g.fill(cx, t + 8, cx + 1, cy - 10, alpha(p.border(), 32));
+        g.fill(cx, cy + 10, cx + 1, b - 8, alpha(p.border(), 32));
 
-        // Symmetric machine conduits leading into a central energy core.
-        int coreX = l + width / 2;
-        g.fill(leftRail + 3, cy, coreX - 10, cy + 1, alpha(p.accentA(), 42));
-        g.fill(coreX + 10, cy, rightRail - 2, cy + 1, alpha(p.accentB(), 42));
-        g.fill(coreX, t + 7, coreX + 1, cy - 9, alpha(p.border(), 30));
-        g.fill(coreX, cy + 9, coreX + 1, b - 7, alpha(p.border(), 30));
-        energyCore(g, coreX, cy, 9, p, phase(6400L, 0.24f), 92);
+        // Central reactor-like core; its animation is a contained power cycle.
+        energyCore(g, cx, cy, 10, p, phase(12800L, 0.24f), 94);
 
-        // Energy packets stay constrained to conduits rather than floating freely.
-        int leftPulse = leftRail + 4 + (int)((Math.max(1, coreX - leftRail - 16)) * phase(2200L, 0.18f));
-        int rightPulse = coreX + 10 + (int)((Math.max(1, rightRail - coreX - 16)) * phase(2800L, 0.61f));
-        g.fill(leftPulse, cy - 2, Math.min(leftPulse + 6, coreX - 7), cy + 3, alpha(p.accentB(), motionAlpha(36, 102)));
-        g.fill(rightPulse, cy - 2, Math.min(rightPulse + 6, rightRail - 2), cy + 3, alpha(p.accentA(), motionAlpha(34, 92)));
+        // Power packets remain inside conduits and are deliberately slow.
+        int leftPulse = leftRail + 4 + (int)((Math.max(1, cx - leftRail - 17)) * phase(6800L, 0.18f));
+        int rightPulse = cx + 11 + (int)((Math.max(1, rightRail - cx - 17)) * phase(8200L, 0.61f));
+        g.fill(leftPulse, cy - 2, Math.min(leftPulse + 7, cx - 8), cy + 3, alpha(p.accentB(), motionAlpha(34, 96)));
+        g.fill(rightPulse, cy - 2, Math.min(rightPulse + 7, rightRail - 2), cy + 3, alpha(p.accentA(), motionAlpha(32, 88)));
 
-        // Reactor / chemical-machine style status cells.
-        int cellY = t + 9;
-        for (int i = -2; i <= 2; ++i) {
-            if (i == 0) continue;
-            int cellX = coreX + i * 24 - 6;
-            if (cellX < l + 16 || cellX + 12 > r - 16) continue;
-            g.fill(cellX, cellY, cellX + 12, cellY + 7, alpha(p.tableHeader(), 100));
-            g.fill(cellX + 1, cellY + 1, cellX + 11, cellY + 2, alpha(i < 0 ? p.accentA() : p.accentB(), 68));
-            g.fill(cellX + 3, cellY + 4, cellX + 9, cellY + 5, alpha(p.text(), 26));
+        // Tank / process gauges: fixed machinery with gently changing fill levels.
+        int gaugeTop = t + 10;
+        int gaugeBottom = Math.min(b - 10, gaugeTop + 30);
+        int[] gaugeXs = {l + width / 4, l + width * 3 / 4};
+        for (int i = 0; i < gaugeXs.length; ++i) {
+            int gx = gaugeXs[i];
+            int gc = i == 0 ? p.accentA() : p.accentB();
+            g.fill(gx - 5, gaugeTop, gx + 6, gaugeBottom, alpha(p.border(), 54));
+            g.fill(gx - 4, gaugeTop + 1, gx + 5, gaugeBottom - 1, alpha(p.tableOuter(), 80));
+            float gaugePhase = phase(17000L + i * 4200L, 0.34f + i * 0.18f);
+            int fill = 4 + (int)((gaugeBottom - gaugeTop - 7) * (0.35f + 0.45f * (0.5f + 0.5f * (float)Math.sin(gaugePhase * Math.PI * 2.0))));
+            g.fill(gx - 3, gaugeBottom - 2 - fill, gx + 4, gaugeBottom - 2, alpha(gc, 58));
+            g.fill(gx - 2, gaugeTop + 4, gx + 3, gaugeTop + 5, alpha(p.text(), 24));
         }
     }
 
     private static void quantumPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int cx = l + (r - l) / 2;
-        int cy = t + (b - t) / 2;
-        int rx = Math.min(38, Math.max(15, (r - l) / 8));
-        int ry = Math.min(16, Math.max(7, (b - t) / 9));
-        orbit(g, cx, cy, rx, ry, alpha(p.accentA(), 56), alpha(p.accentB(), 62), phase(5400L, 0.12f));
-        orbit(g, cx, cy, Math.max(8, rx * 2 / 3), Math.max(5, ry * 2), alpha(p.accentB(), 34), alpha(p.accentA(), 42), phase(4100L, 0.58f));
-        node(g, cx - 1, cy - 1, alpha(p.text(), 78));
-        for (int i = 0; i < 7; ++i) {
-            int px = l + 6 + mod(hash(37 + i * 61), Math.max(1, r - l - 12));
-            int baseY = t + 5 + mod(hash(91 + i * 79), Math.max(1, b - t - 10));
-            int py = baseY + (GuiMotion.ambientMotionEnabled() ? (int)(Math.sin(phase(3700L + i * 113L, i / 7.0f) * Math.PI * 2.0) * 4.0) : 0);
-            star(g, px, py, 1, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 38 + i * 3));
+        int width = r - l;
+        int height = b - t;
+        int cx = l + width / 2;
+        int cy = t + height / 2;
+
+        // Quantum Computer inspired: large symmetric multiblock frame, nested cells,
+        // central core and phase-shifting modules instead of generic orbiting dots.
+        int outerHalfW = Math.min(70, Math.max(28, width / 4));
+        int outerHalfH = Math.min(46, Math.max(22, height / 3));
+        rectFrame(g, cx - outerHalfW, cy - outerHalfH, cx + outerHalfW, cy + outerHalfH, alpha(p.border(), 44));
+
+        int midHalfW = Math.max(18, outerHalfW - 15);
+        int midHalfH = Math.max(14, outerHalfH - 11);
+        rectFrame(g, cx - midHalfW, cy - midHalfH, cx + midHalfW, cy + midHalfH, alpha(p.accentA(), 36));
+
+        int innerHalfW = Math.max(10, midHalfW - 14);
+        int innerHalfH = Math.max(8, midHalfH - 10);
+        rectFrame(g, cx - innerHalfW, cy - innerHalfH, cx + innerHalfW, cy + innerHalfH, alpha(p.accentB(), 48));
+
+        // Corner compute modules.
+        int moduleW = 12;
+        int moduleH = 9;
+        quantumModule(g, cx - outerHalfW - 2, cy - outerHalfH - 2, moduleW, moduleH, p.accentA(), p.border(), 0);
+        quantumModule(g, cx + outerHalfW - moduleW + 2, cy - outerHalfH - 2, moduleW, moduleH, p.accentB(), p.border(), 1);
+        quantumModule(g, cx - outerHalfW - 2, cy + outerHalfH - moduleH + 2, moduleW, moduleH, p.accentB(), p.border(), 2);
+        quantumModule(g, cx + outerHalfW - moduleW + 2, cy + outerHalfH - moduleH + 2, moduleW, moduleH, p.accentA(), p.border(), 3);
+
+        // Phase cycle changes whole frame segments, not particle positions.
+        float phaseA = phase(18000L, 0.18f);
+        int phaseStep = Math.floorMod((int)(phaseA * 8.0f), 8);
+        int phaseColor = alpha(phaseStep < 4 ? p.accentA() : p.accentB(), motionAlpha(42, 92));
+        if ((phaseStep & 1) == 0) {
+            g.fill(cx - outerHalfW + 8, cy - outerHalfH - 1, cx - 5, cy - outerHalfH + 2, phaseColor);
+            g.fill(cx + 5, cy + outerHalfH - 1, cx + outerHalfW - 8, cy + outerHalfH + 2, phaseColor);
+        } else {
+            g.fill(cx - outerHalfW - 1, cy - outerHalfH + 8, cx - outerHalfW + 2, cy - 5, phaseColor);
+            g.fill(cx + outerHalfW - 1, cy + 5, cx + outerHalfW + 2, cy + outerHalfH - 8, phaseColor);
         }
+
+        // Central computation core slowly breathes between two states.
+        float breathe = 0.5f + 0.5f * (float)Math.sin(phase(9600L, 0.27f) * Math.PI * 2.0);
+        int coreRadius = 4 + (int)(breathe * 3.0f);
+        diamond(g, cx, cy, coreRadius + 3, alpha(p.border(), 34));
+        diamond(g, cx, cy, coreRadius, alpha(p.accentA(), 48 + (int)(breathe * 30.0f)));
+        diamond(g, cx, cy, Math.max(2, coreRadius - 3), alpha(p.accentB(), 72 + (int)(breathe * 36.0f)));
+        g.fill(cx, cy, cx + 1, cy + 1, alpha(p.text(), 150));
     }
 
     private static void holographicPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
+        // Hologram = scan + projection instability, not travelling particles.
         for (int y = t + 3; y < b - 2; y += 7) {
             g.fill(l + 2, y, r - 2, y + 1, alpha(p.accentA(), 15));
         }
-        int scanY = t + (int)((b - t - 2) * phase(3000L, 0.42f));
-        g.fill(l + 3, scanY, r - 3, Math.min(scanY + 2, b - 2), alpha(p.accentB(), motionAlpha(24, 62)));
+        int scanY = t + (int)((b - t - 2) * phase(7200L, 0.42f));
+        g.fill(l + 3, scanY, r - 3, Math.min(scanY + 2, b - 2), alpha(p.accentB(), motionAlpha(22, 58)));
         corner(g, l + 5, t + 5, 9, alpha(p.accentA(), 68), true, true);
         corner(g, r - 6, b - 6, 9, alpha(p.accentB(), 62), false, false);
-        int glitchX = l + 10 + mod((int)(phase(1300L, 0.3f) * 997), Math.max(1, r - l - 30));
-        g.fill(glitchX, t + 14, Math.min(glitchX + 18, r - 6), t + 15, alpha(p.text(), motionAlpha(12, 32)));
+
+        if (GuiMotion.ambientMotionEnabled()) {
+            int glitchStep = Math.floorMod((int)(phase(5300L, 0.3f) * 12.0f), 12);
+            if (glitchStep == 2 || glitchStep == 7) {
+                int gy = t + 14 + glitchStep * Math.max(3, (b - t - 28) / 12);
+                int gx = l + 10 + mod(hash(glitchStep * 73 + 19), Math.max(1, r - l - 48));
+                g.fill(gx, gy, Math.min(gx + 28, r - 8), gy + 1, alpha(p.text(), 34));
+                g.fill(Math.max(l + 6, gx - 8), gy + 3, Math.min(gx + 14, r - 8), gy + 4, alpha(p.accentB(), 28));
+            }
+        }
     }
 
     private static void monochromePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        for (int x = l + 20; x < r; x += 40) g.fill(x, t, x + 1, b, alpha(p.text(), 10));
-        for (int y = t + 18; y < b; y += 28) g.fill(l, y, r, y + 1, alpha(p.text(), 9));
-        int scanY = t + (int)((b - t - 1) * phase(6200L, 0.46f));
-        g.fill(l + 3, scanY, r - 3, scanY + 1, alpha(p.text(), motionAlpha(12, 35)));
+        // Old diagnostic display: fixed phosphor grid, waveform and slow refresh bar.
+        for (int y = t + 5; y < b - 3; y += 5) {
+            g.fill(l + 3, y, r - 3, y + 1, alpha(p.text(), 7));
+        }
+        int mid = t + (b - t) / 2;
+        int prevX = l + 7;
+        int prevY = mid;
+        for (int x = l + 8; x < r - 8; x += 5) {
+            double wave = Math.sin((x - l) * 0.065) * 4.0 + Math.sin((x - l) * 0.021) * 3.0;
+            int y = mid + (int)Math.round(wave);
+            diagonal(g, prevX, prevY, x, y, alpha(p.text(), 34));
+            prevX = x;
+            prevY = y;
+        }
+        if (GuiMotion.ambientMotionEnabled()) {
+            int scanY = t + 3 + (int)((b - t - 7) * phase(15000L, 0.46f));
+            g.fill(l + 4, scanY, r - 4, scanY + 1, alpha(p.text(), motionAlpha(8, 26)));
+        }
         for (int i = 0; i < 8; ++i) {
             int h = 3 + mod(hash(120 + i * 13), 12);
             g.fill(r - 8 - i * 3, b - 5 - h, r - 7 - i * 3, b - 5, alpha(p.muted(), 25 + i * 2));
@@ -515,12 +620,13 @@ final class ThemeAmbientRenderer {
     }
 
     private static void minimalPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
+        // Deliberately almost motionless. Its identity is the absence of ambient clutter.
         int cy = t + (b - t) / 2;
-        g.fill(l + (r - l) / 4, cy, r - (r - l) / 4, cy + 1, alpha(p.accentA(), 16));
-        g.fill(l + 8, t + 8, l + 18, t + 9, alpha(p.accentA(), 34));
-        g.fill(r - 18, b - 9, r - 8, b - 8, alpha(p.accentB(), 34));
-        int px = l + (r - l) / 4 + (int)((r - l) / 2 * phase(4400L, 0.4f));
-        g.fill(px, cy - 1, Math.min(px + 4, r - 8), cy + 2, alpha(p.text(), motionAlpha(18, 48)));
+        int width = r - l;
+        g.fill(l + width / 4, cy, r - width / 4, cy + 1, alpha(p.accentA(), 16));
+        g.fill(l + 8, t + 8, l + 20, t + 9, alpha(p.accentA(), 34));
+        g.fill(r - 20, b - 9, r - 8, b - 8, alpha(p.accentB(), 34));
+        g.fill(l + width / 2, cy - 2, l + width / 2 + 1, cy + 3, alpha(p.text(), 26));
     }
 
     private static void carbonPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -528,6 +634,8 @@ final class ThemeAmbientRenderer {
         int height = b - t;
         int rowStep = Math.max(18, height / 8);
         int columnStep = Math.max(28, width / 9);
+
+        // Material weave only.
         for (int row = 0; row < 8; ++row) {
             int y = t + 7 + row * rowStep;
             if (y >= b - 5) break;
@@ -539,27 +647,31 @@ final class ThemeAmbientRenderer {
                 }
             }
         }
-        int sheen = l - 24 + (int)((width + 48) * phase(6800L, 0.28f));
-        diagonal(g, sheen, t + 5, sheen + Math.min(54, height), Math.min(b - 5, t + 59), alpha(p.accentA(), motionAlpha(8, 25)));
+
+        // Slow reflective sheen behaves like light on a material surface.
+        int sheen = l - 36 + (int)((width + 72) * phase(22000L, 0.28f));
+        diagonal(g, sheen, t + 5, sheen + Math.min(62, height), Math.min(b - 5, t + 67), alpha(p.accentA(), motionAlpha(5, 20)));
+        diagonal(g, sheen + 5, t + 5, sheen + 5 + Math.min(62, height), Math.min(b - 5, t + 67), alpha(p.text(), motionAlpha(3, 10)));
         rivet(g, l + 6, t + 6, alpha(p.accentA(), 50));
         rivet(g, r - 8, b - 8, alpha(p.accentB(), 42));
     }
 
     private static void terminalPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
+        // This is intentionally the one strongly "matrix-like" theme.
         for (int y = t + 4; y < b - 3; y += 8) {
-            g.fill(l + 2, y, r - 2, y + 1, alpha(p.accentA(), 13));
+            g.fill(l + 2, y, r - 2, y + 1, alpha(p.accentA(), 12));
         }
         int width = r - l;
         int height = b - t;
-        for (int i = 0; i < 14; ++i) {
+        for (int i = 0; i < 16; ++i) {
             int x = l + 6 + mod(hash(301 + i * 47), Math.max(1, width - 12));
-            int base = t + 5 + mod(hash(707 + i * 31), Math.max(1, height - 16));
-            int drift = GuiMotion.ambientMotionEnabled() ? (int)(phase(4300L + i * 89L, i / 14.0f) * 20.0f) : 0;
-            int y = t + mod(base - t + drift, Math.max(1, height - 8));
-            int len = 2 + mod(hash(900 + i * 17), 7);
-            g.fill(x, y, x + 1, Math.min(b - 3, y + len), alpha(i % 3 == 0 ? p.accentB() : p.accentA(), 24 + (i % 4) * 7));
+            int base = mod(hash(707 + i * 31), Math.max(1, height - 14));
+            int drift = GuiMotion.ambientMotionEnabled() ? (int)(phase(8200L + i * 173L, i / 16.0f) * (height + 18)) : 0;
+            int y = t + mod(base + drift, Math.max(1, height - 8));
+            int len = 2 + mod(hash(900 + i * 17), 8);
+            g.fill(x, y, x + 1, Math.min(b - 3, y + len), alpha(i % 4 == 0 ? p.accentB() : p.accentA(), 24 + (i % 4) * 7));
         }
-        if (!GuiMotion.ambientMotionEnabled() || phase(850L, 0.2f) < 0.58f) {
+        if (!GuiMotion.ambientMotionEnabled() || phase(1100L, 0.2f) < 0.58f) {
             g.fill(l + 8, b - 9, l + 15, b - 7, alpha(p.accentB(), 82));
         }
     }
@@ -567,19 +679,43 @@ final class ThemeAmbientRenderer {
     private static void deepSpacePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        float twinklePhase = phase(5100L, 0.23f);
-        for (int i = 0; i < 28; ++i) {
-            int sx = l + 3 + mod(hash(1103 + i * 97), Math.max(1, width - 6));
-            int sy = t + 3 + mod(hash(2039 + i * 131), Math.max(1, height - 6));
-            double twinkle = 0.5 + 0.5 * Math.sin((twinklePhase * Math.PI * 2.0) + i * 1.73);
-            int starAlpha = 28 + (int)(twinkle * (GuiMotion.ambientMotionEnabled() ? 76 : 28));
-            int color = i % 5 == 0 ? p.accentB() : (i % 3 == 0 ? p.accentA() : p.text());
-            star(g, sx, sy, i % 9 == 0 ? 2 : 1, alpha(color, starAlpha));
+
+        // Three star layers with very slow parallax drift.
+        float twinkle = phase(13000L, 0.23f);
+        int[] counts = {18, 13, 9};
+        long[] speeds = {90000L, 65000L, 43000L};
+        int[] alphas = {34, 48, 68};
+        for (int layer = 0; layer < 3; ++layer) {
+            int drift = GuiMotion.ambientMotionEnabled() ? (int)(phase(speeds[layer], 0.17f * (layer + 1)) * width) : 0;
+            for (int i = 0; i < counts[layer]; ++i) {
+                int seed = 1103 + layer * 1009 + i * 97;
+                int sx = l + mod(hash(seed) + drift, Math.max(1, width));
+                int sy = t + 3 + mod(hash(seed + 811), Math.max(1, height - 6));
+                double shimmer = 0.5 + 0.5 * Math.sin(twinkle * Math.PI * 2.0 + i * 1.37 + layer);
+                int starAlpha = alphas[layer] + (int)(shimmer * (GuiMotion.ambientMotionEnabled() ? 42 : 18));
+                int color = i % 5 == 0 ? p.accentB() : (i % 3 == 0 ? p.accentA() : p.text());
+                star(g, sx, sy, layer == 2 && i % 4 == 0 ? 2 : 1, alpha(color, starAlpha));
+            }
         }
 
+        // A recognizable constellation drifts as one object instead of independent blobs.
+        int constellationX = l + mod((int)(phase(76000L, 0.36f) * (width + 70)) - 35, Math.max(1, width));
+        int constellationY = t + Math.max(16, height / 4);
+        int[][] pts = {{0, 4}, {13, 0}, {25, 8}, {39, 3}, {52, 12}};
+        for (int i = 0; i < pts.length - 1; ++i) {
+            int x1 = constellationX + pts[i][0];
+            int y1 = constellationY + pts[i][1];
+            int x2 = constellationX + pts[i + 1][0];
+            int y2 = constellationY + pts[i + 1][1];
+            diagonal(g, x1, y1, x2, y2, alpha(p.accentA(), 22));
+            star(g, x1, y1, 1, alpha(p.text(), 86));
+        }
+        star(g, constellationX + pts[pts.length - 1][0], constellationY + pts[pts.length - 1][1], 1, alpha(p.text(), 86));
+
+        // Very slow galaxy.
         int gx = l + width * 3 / 4;
         int gy = t + height / 3;
-        float galaxyTurn = phase(16000L, 0.11f) * 0.45f;
+        float galaxyTurn = phase(52000L, 0.11f) * 0.45f;
         for (int arm = 0; arm < 2; ++arm) {
             for (int i = 0; i < 18; ++i) {
                 double angle = i * 0.47 + arm * Math.PI + galaxyTurn * Math.PI * 2.0;
@@ -592,9 +728,10 @@ final class ThemeAmbientRenderer {
         }
         star(g, gx, gy, 2, alpha(p.text(), 90));
 
+        // Black hole with slow accretion rotation.
         int bx = l + Math.max(20, width / 5);
         int by = t + height * 2 / 3;
-        float blackHoleTurn = phase(12000L, 0.36f);
+        float blackHoleTurn = phase(36000L, 0.36f);
         for (int i = 0; i < 18; ++i) {
             double angle = i * Math.PI * 2.0 / 18.0 + blackHoleTurn * Math.PI * 2.0;
             int px = bx + (int)Math.round(Math.cos(angle) * 12.0);
@@ -603,166 +740,277 @@ final class ThemeAmbientRenderer {
             g.fill(px, py, px + 2, py + 1, alpha(color, 56 + (i % 3) * 9));
         }
         g.fill(bx - 4, by - 4, bx + 5, by + 5, 0xD9000000);
-        g.fill(bx - 6, by - 1, bx - 3, by + 1, alpha(p.accentB(), 42));
-        g.fill(bx + 4, by - 1, bx + 7, by + 1, alpha(p.accentA(), 42));
     }
 
     private static void copperPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int w = r - l;
-        int h = b - t;
-        g.fill(l + w / 3, t + 4, l + w / 3 + 1, b - 4, alpha(p.border(), 35));
-        g.fill(l + w * 2 / 3, t + 4, l + w * 2 / 3 + 1, b - 4, alpha(p.border(), 35));
-        g.fill(l + 4, t + h / 2, r - 4, t + h / 2 + 1, alpha(p.border(), 28));
-        rivet(g, l + 6, t + 6, alpha(p.accentA(), 75));
-        rivet(g, r - 8, t + 6, alpha(p.accentA(), 62));
-        rivet(g, l + 6, b - 8, alpha(p.accentB(), 58));
-        rivet(g, r - 8, b - 8, alpha(p.accentB(), 70));
-        for (int i = 0; i < 9; ++i) {
-            int px = l + 8 + mod(hash(4021 + i * 43), Math.max(1, w - 16));
-            int py = t + 8 + mod(hash(5099 + i * 37), Math.max(1, h - 16));
-            star(g, px, py, 1, alpha(p.accentB(), 22 + (i % 3) * 7));
+        int width = r - l;
+        int height = b - t;
+
+        // Physical copper plate seams and rivets.
+        g.fill(l + width / 3, t + 4, l + width / 3 + 1, b - 4, alpha(p.border(), 38));
+        g.fill(l + width * 2 / 3, t + 4, l + width * 2 / 3 + 1, b - 4, alpha(p.border(), 38));
+        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 30));
+        rivet(g, l + 6, t + 6, alpha(p.accentA(), 76));
+        rivet(g, r - 8, t + 6, alpha(p.accentA(), 64));
+        rivet(g, l + 6, b - 8, alpha(p.accentB(), 60));
+        rivet(g, r - 8, b - 8, alpha(p.accentB(), 72));
+
+        // Patina patches are static material detail.
+        int patina = alpha(p.accentB(), 26);
+        for (int i = 0; i < 7; ++i) {
+            int px = l + 12 + mod(hash(4021 + i * 43), Math.max(1, width - 24));
+            int py = t + 10 + mod(hash(5099 + i * 37), Math.max(1, height - 20));
+            g.fill(px, py, px + 4 + i % 3, py + 2, patina);
+            if ((i & 1) == 0) g.fill(px + 2, py - 2, px + 4, py + 4, alpha(p.accentB(), 18));
         }
-        int sheen = l - 18 + (int)((w + 36) * phase(7200L, 0.31f));
-        diagonal(g, sheen, t + 5, sheen + 30, b - 5, alpha(p.text(), motionAlpha(6, 24)));
+
+        // Only a broad, slow material reflection moves.
+        int sheen = l - 36 + (int)((width + 72) * phase(24000L, 0.31f));
+        diagonal(g, sheen, t + 5, sheen + 36, b - 5, alpha(p.text(), motionAlpha(4, 18)));
+        diagonal(g, sheen + 4, t + 5, sheen + 40, b - 5, alpha(p.accentA(), motionAlpha(5, 20)));
     }
 
     private static void auroraPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        float phase = phase(11000L, 0.16f);
-        for (int ribbon = 0; ribbon < 3; ++ribbon) {
-            int baseY = t + height * (ribbon + 1) / 4;
-            int color = ribbon == 1 ? p.accentB() : p.accentA();
-            int alpha = 22 + ribbon * 7;
-            for (int px = l + 3; px < r - 4; px += 5) {
+        float flow = phase(26000L, 0.16f);
+
+        // Large continuous curtains only: no particle field.
+        for (int ribbon = 0; ribbon < 4; ++ribbon) {
+            int baseY = t + height * (ribbon + 1) / 5;
+            int color = ribbon % 2 == 0 ? p.accentA() : p.accentB();
+            int opacity = 16 + ribbon * 5;
+            for (int px = l + 2; px < r - 3; px += 4) {
                 float u = (float)(px - l) / Math.max(1, width);
-                double wave = Math.sin(u * Math.PI * (2.0 + ribbon * 0.45) + phase * Math.PI * 2.0 + ribbon * 1.7);
-                int py = baseY + (int)Math.round(wave * (5 + ribbon * 2));
-                g.fill(px, py, Math.min(px + 5, r - 3), py + 2, alpha(color, alpha));
+                double wave = Math.sin(u * Math.PI * (1.8 + ribbon * 0.33) + flow * Math.PI * 2.0 + ribbon * 1.55);
+                double wave2 = Math.sin(u * Math.PI * 0.72 - flow * Math.PI * 1.4 + ribbon) * 0.45;
+                int py = baseY + (int)Math.round((wave + wave2) * (5 + ribbon));
+                g.fill(px, py, Math.min(px + 5, r - 2), py + 2, alpha(color, opacity));
+                if (ribbon == 1 || ribbon == 2) {
+                    g.fill(px, py + 2, Math.min(px + 5, r - 2), py + 3, alpha(color, Math.max(5, opacity - 8)));
+                }
             }
         }
-        for (int i = 0; i < 8; ++i) {
-            int px = l + 5 + mod(hash(6101 + i * 59), Math.max(1, width - 10));
-            int pyBase = t + 5 + mod(hash(7103 + i * 41), Math.max(1, height - 10));
-            int drift = GuiMotion.ambientMotionEnabled() ? (int)(Math.sin((phase + i * 0.13f) * Math.PI * 2.0) * 5.0) : 0;
-            star(g, px, pyBase + drift, 1, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 38));
-        }
-        g.fill(l + 3, b - 4, l + width / 2, b - 3, alpha(p.accentA(), 38));
-        g.fill(l + width / 2, b - 4, r - 3, b - 3, alpha(p.accentB(), 38));
+        g.fill(l + 3, b - 4, l + width / 2, b - 3, alpha(p.accentA(), 34));
+        g.fill(l + width / 2, b - 4, r - 3, b - 3, alpha(p.accentB(), 34));
     }
 
     private static void redstonePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
+        int x1 = l + width / 4;
+        int x2 = l + width / 2;
+        int x3 = l + width * 3 / 4;
         int y1 = t + height / 3;
         int y2 = t + height * 2 / 3;
-        int x1 = l + width / 3;
-        int x2 = l + width * 2 / 3;
-        g.fill(l + 5, y1, x1, y1 + 1, alpha(p.accentA(), 42));
-        g.fill(x1, y1, x1 + 1, y2, alpha(p.accentA(), 42));
-        g.fill(x1, y2, r - 6, y2 + 1, alpha(p.accentA(), 42));
-        g.fill(x2, t + 6, x2 + 1, y1 + 1, alpha(p.accentB(), 32));
+
+        // Fixed circuit board routes.
+        g.fill(l + 6, y1, x1, y1 + 1, alpha(p.accentA(), 38));
+        g.fill(x1, y1, x1 + 1, y2, alpha(p.accentA(), 38));
+        g.fill(x1, y2, x3, y2 + 1, alpha(p.accentA(), 38));
+        g.fill(x2, t + 7, x2 + 1, y1, alpha(p.accentB(), 32));
         g.fill(x2, y1, r - 7, y1 + 1, alpha(p.accentB(), 32));
-        node(g, x1 - 1, y1 - 1, alpha(p.accentB(), 84));
-        node(g, x1 - 1, y2 - 1, alpha(p.accentA(), 80));
-        node(g, x2 - 1, y1 - 1, alpha(p.accentB(), 72));
-        float p1 = phase(2600L, 0.2f);
-        int px = l + 5 + (int)((x1 - l - 5) * p1);
-        g.fill(px, y1 - 2, Math.min(px + 4, x1 + 1), y1 + 3, alpha(p.accentB(), motionAlpha(45, 110)));
-        int px2 = x1 + (int)((r - 6 - x1) * phase(3400L, 0.65f));
-        g.fill(px2, y2 - 2, Math.min(px2 + 4, r - 5), y2 + 3, alpha(p.accentA(), motionAlpha(38, 96)));
+        g.fill(x3, y2, x3 + 1, b - 8, alpha(p.accentA(), 30));
+
+        node(g, x1 - 1, y1 - 1, alpha(p.accentB(), 78));
+        node(g, x1 - 1, y2 - 1, alpha(p.accentA(), 74));
+        node(g, x2 - 1, y1 - 1, alpha(p.accentB(), 68));
+        node(g, x3 - 1, y2 - 1, alpha(p.accentA(), 68));
+
+        // Pulses travel only along defined traces.
+        float p1 = phase(6400L, 0.18f);
+        int route1 = (x1 - (l + 6)) + (y2 - y1) + (x3 - x1);
+        int d1 = (int)(p1 * Math.max(1, route1));
+        if (d1 < x1 - (l + 6)) {
+            int px = l + 6 + d1;
+            g.fill(px, y1 - 2, px + 4, y1 + 3, alpha(p.accentB(), motionAlpha(38, 98)));
+        } else if (d1 < x1 - (l + 6) + y2 - y1) {
+            int py = y1 + d1 - (x1 - (l + 6));
+            g.fill(x1 - 2, py, x1 + 3, py + 4, alpha(p.accentB(), motionAlpha(38, 98)));
+        } else {
+            int px = x1 + d1 - (x1 - (l + 6)) - (y2 - y1);
+            g.fill(px, y2 - 2, Math.min(px + 4, x3 + 1), y2 + 3, alpha(p.accentB(), motionAlpha(38, 98)));
+        }
+
+        // Lamp-like endpoints blink only when a trace completes.
+        int lampAlpha = phase(6400L, 0.18f) > 0.9f ? motionAlpha(52, 122) : 34;
+        g.fill(x3 - 3, b - 12, x3 + 4, b - 7, alpha(p.accentB(), lampAlpha));
+        g.fill(x3 - 1, b - 11, x3 + 2, b - 8, alpha(p.text(), Math.max(18, lampAlpha - 28)));
     }
 
     private static void frostPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        crystal(g, l + 9, t + 12, 8, alpha(p.accentB(), 62));
-        crystal(g, r - 10, b - 13, 9, alpha(p.accentA(), 58));
         int width = r - l;
         int height = b - t;
-        float drift = phase(7000L, 0.24f);
-        for (int i = 0; i < 15; ++i) {
-            int px = l + 4 + mod(hash(8011 + i * 73), Math.max(1, width - 8));
-            int base = mod(hash(9109 + i * 53), Math.max(1, height - 6));
-            int py = t + 3 + mod(base + (GuiMotion.ambientMotionEnabled() ? (int)(drift * height * (0.55f + (i % 4) * 0.12f)) : 0), Math.max(1, height - 6));
-            star(g, px, py, i % 7 == 0 ? 2 : 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 28 + (i % 4) * 8));
+        float grow = growthCycle(phase(34000L, 0.74f));
+        int reachX = Math.max(6, (int)(width * 0.42f * grow));
+        int reachY = Math.max(6, (int)(height * 0.56f * grow));
+
+        // Ice veins visibly grow from opposite corners.
+        int leftBaseX = l + 5;
+        int leftBaseY = t + 7;
+        diagonal(g, leftBaseX, leftBaseY, leftBaseX + reachX, leftBaseY + Math.min(reachY, height / 2), alpha(p.accentB(), 54));
+        if (grow > 0.28f) {
+            int bx = leftBaseX + reachX / 2;
+            int by = leftBaseY + Math.min(reachY, height / 2) / 2;
+            diagonal(g, bx, by, bx + Math.max(4, reachX / 4), by - Math.max(3, reachY / 5), alpha(p.text(), 34));
+            crystal(g, bx, by, Math.max(3, Math.min(6, 2 + (int)(grow * 5))), alpha(p.accentA(), 46));
         }
-        int shimmer = l + 6 + (int)((width - 13) * phase(5900L, 0.41f));
-        g.fill(shimmer, t + 4, Math.min(shimmer + 10, r - 4), t + 5, alpha(p.text(), motionAlpha(10, 34)));
+
+        float grow2 = growthCycle(phase(41000L, 0.37f));
+        int reachX2 = Math.max(6, (int)(width * 0.36f * grow2));
+        int reachY2 = Math.max(6, (int)(height * 0.48f * grow2));
+        int rightBaseX = r - 6;
+        int rightBaseY = b - 8;
+        diagonal(g, rightBaseX, rightBaseY, rightBaseX - reachX2, rightBaseY - Math.min(reachY2, height / 2), alpha(p.accentA(), 52));
+        if (grow2 > 0.35f) {
+            int bx = rightBaseX - reachX2 / 2;
+            int by = rightBaseY - Math.min(reachY2, height / 2) / 2;
+            diagonal(g, bx, by, bx - Math.max(4, reachX2 / 4), by + Math.max(3, reachY2 / 5), alpha(p.accentB(), 34));
+            crystal(g, bx, by, Math.max(3, Math.min(6, 2 + (int)(grow2 * 5))), alpha(p.text(), 38));
+        }
+
+        // Sparse static frost specks, not a continuous falling particle loop.
+        for (int i = 0; i < 8; ++i) {
+            int px = l + 8 + mod(hash(8011 + i * 73), Math.max(1, width - 16));
+            int py = t + 8 + mod(hash(9109 + i * 53), Math.max(1, height - 16));
+            star(g, px, py, 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 22 + (i % 3) * 5));
+        }
     }
 
     private static void naturePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        float slow = phase(7600L, 0.31f);
-        int sway = GuiMotion.ambientMotionEnabled() ? (int)Math.round(Math.sin(slow * Math.PI * 2.0) * 2.0) : 0;
+        float cycle = phase(46000L, 0.76f);
+        float growth = growthCycle(cycle);
+        float swayPhase = phase(17000L, 0.31f);
+        int sway = GuiMotion.ambientMotionEnabled() ? (int)Math.round(Math.sin(swayPhase * Math.PI * 2.0) * 2.0) : 0;
 
-        // Main climbing vine on the left.
+        // Main vine grows down the left edge over tens of seconds.
         int vineX = l + 10;
-        g.fill(vineX, t + 5, vineX + 1, b - 5, alpha(p.accentA(), 54));
-        int step = Math.max(15, (height - 24) / 6);
-        for (int i = 0; i < 6; ++i) {
-            int py = t + 12 + i * step;
-            if (py >= b - 7) break;
+        int maxVine = Math.max(10, height - 12);
+        int grown = Math.max(3, (int)(maxVine * growth));
+        g.fill(vineX, t + 5, vineX + 1, Math.min(b - 6, t + 5 + grown), alpha(p.accentA(), 56));
+
+        int leafStep = Math.max(14, maxVine / 7);
+        for (int i = 0; i < 7; ++i) {
+            int localY = 10 + i * leafStep;
+            if (localY > grown) break;
+            int py = t + 5 + localY;
             boolean right = (i & 1) == 0;
             int branch = right ? 11 : -7;
-            int ex = vineX + branch + ((i & 1) == 0 ? sway : -sway);
+            int ex = vineX + branch + (right ? sway : -sway);
             g.fill(Math.min(vineX, ex), py, Math.max(vineX, ex) + 1, py + 1, alpha(p.accentA(), 48));
             leaf(g, ex, py - 1, alpha(i % 3 == 0 ? p.accentB() : p.accentA(), 72), right);
-            if (i == 1 || i == 4) {
-                flower(g, ex + (right ? 3 : -2), py - 4, alpha(p.accentB(), 92), alpha(p.text(), 74));
+            if ((i == 2 || i == 5) && growth > 0.58f) {
+                float bloom = Math.min(1.0f, (growth - 0.58f) / 0.22f);
+                flower(g, ex + (right ? 3 : -2), py - 4,
+                        alpha(p.accentB(), 36 + (int)(bloom * 68)),
+                        alpha(p.text(), 28 + (int)(bloom * 58)));
             }
         }
 
-        // A second hanging vine from the upper-right corner.
+        // Hanging vine grows from the opposite top corner on a different cycle.
+        float hangingGrowth = growthCycle(phase(53000L, 0.41f));
         int rightVine = r - 13;
-        int hangingEnd = t + Math.min(height * 2 / 3, 90);
-        g.fill(rightVine, t + 4, rightVine + 1, hangingEnd, alpha(p.accentA(), 42));
-        for (int i = 0; i < 4; ++i) {
-            int py = t + 11 + i * 17;
-            if (py >= hangingEnd) break;
+        int hangingLength = Math.max(4, (int)(Math.min(height * 2 / 3, 96) * hangingGrowth));
+        g.fill(rightVine, t + 4, rightVine + 1, Math.min(b - 8, t + 4 + hangingLength), alpha(p.accentA(), 44));
+        for (int i = 0; i < 5; ++i) {
+            int localY = 9 + i * 17;
+            if (localY > hangingLength) break;
+            int py = t + 4 + localY;
             boolean right = (i & 1) != 0;
             leaf(g, rightVine + (right ? 4 + sway : -3 - sway), py, alpha(p.accentA(), 58), right);
         }
-        flower(g, rightVine, Math.min(hangingEnd + 2, b - 8), alpha(p.accentB(), 102), alpha(p.text(), 82));
+        if (hangingGrowth > 0.72f) {
+            float bloom = Math.min(1.0f, (hangingGrowth - 0.72f) / 0.18f);
+            flower(g, rightVine, Math.min(t + 7 + hangingLength, b - 8),
+                    alpha(p.accentB(), 42 + (int)(bloom * 70)),
+                    alpha(p.text(), 34 + (int)(bloom * 54)));
+        }
 
-        // Ground-cover vine along the lower frame with leaves and small flowers.
+        // Ground-cover spreads horizontally after the main vine is established.
+        float groundGrowth = Math.max(0.0f, Math.min(1.0f, (growth - 0.35f) / 0.55f));
         int groundY = b - 7;
-        g.fill(l + 8, groundY, r - 8, groundY + 1, alpha(p.accentA(), 44));
+        int groundEnd = l + 8 + (int)((width - 16) * groundGrowth);
+        g.fill(l + 8, groundY, groundEnd, groundY + 1, alpha(p.accentA(), 44));
         for (int i = 0; i < 7; ++i) {
             int px = l + 18 + i * Math.max(18, (width - 36) / 7);
-            if (px >= r - 12) break;
+            if (px >= groundEnd || px >= r - 12) break;
             boolean right = (i & 1) == 0;
-            leaf(g, px + (right ? sway : -sway), groundY - 1 - (i % 2), alpha(p.accentA(), 54 + (i % 3) * 6), right);
-            if (i == 2 || i == 5) {
-                flower(g, px, groundY - 5, alpha(p.accentB(), 84), alpha(p.text(), 68));
+            leaf(g, px + (right ? sway : -sway), groundY - 1 - (i % 2), alpha(p.accentA(), 56), right);
+            if ((i == 2 || i == 5) && growth > 0.72f) {
+                flower(g, px, groundY - 5, alpha(p.accentB(), 78), alpha(p.text(), 62));
             }
         }
 
-        // Flowers breathe gently instead of generic particles moving around.
-        int bloomAlpha = motionAlpha(54, 106);
-        int bloomX = l + width * 2 / 3;
-        int bloomY = t + height / 2 + sway;
-        flower(g, bloomX, bloomY, alpha(p.accentB(), bloomAlpha), alpha(p.text(), Math.max(42, bloomAlpha - 18)));
-        bud(g, bloomX + 16, bloomY + 7, alpha(p.accentB(), 66));
+        // One larger bloom slowly opens and closes; no free-floating light particles.
+        float bloomCycle = phase(28000L, 0.36f);
+        float bloomSize = 0.45f + 0.55f * (0.5f + 0.5f * (float)Math.sin(bloomCycle * Math.PI * 2.0));
+        int bx = l + width * 2 / 3;
+        int by = t + height / 2 + sway;
+        if (growth > 0.64f) {
+            if (bloomSize > 0.62f) {
+                flower(g, bx, by, alpha(p.accentB(), 78 + (int)(bloomSize * 28)), alpha(p.text(), 66));
+            } else {
+                bud(g, bx, by, alpha(p.accentB(), 72));
+            }
+        }
     }
 
     private static void customPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
+
+        // Neutral geometry so custom colors remain the visual focus.
         for (int i = 1; i < 5; ++i) {
             int x = l + width * i / 5;
-            g.fill(x, t + 5, x + 1, b - 5, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 14));
+            g.fill(x, t + 5, x + 1, b - 5, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 12));
         }
         for (int i = 1; i < 4; ++i) {
             int y = t + height * i / 4;
-            g.fill(l + 5, y, r - 5, y + 1, alpha(i % 2 == 0 ? p.accentB() : p.accentA(), 12));
+            g.fill(l + 5, y, r - 5, y + 1, alpha(i % 2 == 0 ? p.accentB() : p.accentA(), 10));
         }
-        int edge = l + 5 + (int)((width - 11) * phase(4600L, 0.48f));
-        g.fill(edge, b - 5, Math.min(edge + 10, r - 5), b - 3, alpha(p.accentB(), motionAlpha(26, 64)));
-        for (int i = 0; i < 6; ++i) {
-            int px = l + 8 + mod(hash(12101 + i * 59), Math.max(1, width - 16));
-            int py = t + 8 + mod(hash(13109 + i * 71), Math.max(1, height - 16));
-            node(g, px, py, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 34));
+        corner(g, l + 7, t + 7, 9, alpha(p.accentA(), 42), true, true);
+        corner(g, r - 8, b - 8, 9, alpha(p.accentB(), 42), false, false);
+        g.fill(l + width / 2, t + height / 2 - 3, l + width / 2 + 1, t + height / 2 + 4, alpha(p.text(), 22));
+        g.fill(l + width / 2 - 3, t + height / 2, l + width / 2 + 4, t + height / 2 + 1, alpha(p.text(), 22));
+    }
+
+    private static float growthCycle(float phase) {
+        float p = Math.max(0.0f, Math.min(1.0f, phase));
+        if (p < 0.58f) {
+            return p / 0.58f;
         }
+        if (p < 0.86f) {
+            return 1.0f;
+        }
+        return Math.max(0.0f, 1.0f - (p - 0.86f) / 0.14f);
+    }
+
+    private static void rectFrame(GuiGraphics g, int left, int top, int right, int bottom, int color) {
+        if (right <= left || bottom <= top) return;
+        g.fill(left, top, right + 1, top + 1, color);
+        g.fill(left, bottom, right + 1, bottom + 1, color);
+        g.fill(left, top, left + 1, bottom + 1, color);
+        g.fill(right, top, right + 1, bottom + 1, color);
+    }
+
+    private static void quantumModule(GuiGraphics g, int x, int y, int width, int height,
+                                      int accent, int border, int phaseOffset) {
+        int w = Math.max(8, width);
+        int h = Math.max(7, height);
+        g.fill(x, y, x + w, y + h, alpha(border, 54));
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, alpha(0xFF050714, 86));
+        float p = phase(15000L + phaseOffset * 1300L, 0.2f + phaseOffset * 0.13f);
+        int step = Math.floorMod((int)(p * 6.0f), 6);
+        if (step < 4) {
+            g.fill(x + 2, y + 2, x + w - 2, y + 3, alpha(accent, 72));
+            g.fill(x + 2, y + h - 3, x + w - 2, y + h - 2, alpha(accent, 42));
+        } else {
+            g.fill(x + 2, y + 2, x + 3, y + h - 2, alpha(accent, 64));
+            g.fill(x + w - 3, y + 2, x + w - 2, y + h - 2, alpha(accent, 48));
+        }
+        diamond(g, x + w / 2, y + h / 2, 1, alpha(accent, 92));
     }
 
     private static void diamond(GuiGraphics g, int cx, int cy, int radius, int color) {
