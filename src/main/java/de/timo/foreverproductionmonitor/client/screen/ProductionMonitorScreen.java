@@ -411,6 +411,7 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
+        this.drawAmbientFrameAccent(guiGraphics, palette);
         float transition = GuiMotion.progress(this.contentTransitionStartedNanos, 160L);
         float easedTransition = GuiMotion.easeOut(transition);
         float transitionOffset = transition < 1.0f ? (1.0f - easedTransition) * 8.0f * (float)this.contentTransitionDirection : 0.0f;
@@ -424,9 +425,11 @@ extends Screen {
             int alpha = (int)((1.0f - easedTransition) * 72.0f);
             guiGraphics.fill(this.contentLeft, this.contentY, this.contentRight, this.contentBottom, GuiMotion.alpha(InterfaceTheme.current().panel(), alpha));
         }
-        float dataPulse = GuiMotion.progress(this.dataPulseStartedNanos, 420L);
-        if (dataPulse < 1.0f) {
-            guiGraphics.renderOutline(this.contentLeft, this.contentY, Math.max(1, this.contentRight - this.contentLeft), Math.max(1, this.contentBottom - this.contentY), GuiMotion.alpha(palette.accentB(), (int)((1.0f - dataPulse) * 180.0f)));
+        float dataPulse = GuiMotion.progress(this.dataPulseStartedNanos, GuiMotion.updatePulseDurationMillis());
+        float pulseIntensity = GuiMotion.updatePulseIntensity();
+        if (dataPulse < 1.0f && pulseIntensity > 0.0f) {
+            int pulseAlpha = Math.round((1.0f - GuiMotion.easeOut(dataPulse)) * 72.0f * pulseIntensity);
+            guiGraphics.renderOutline(this.contentLeft, this.contentY, Math.max(1, this.contentRight - this.contentLeft), Math.max(1, this.contentBottom - this.contentY), GuiMotion.alpha(palette.accentB(), pulseAlpha));
         }
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
@@ -439,6 +442,22 @@ extends Screen {
 
     private void drawPanel(GuiGraphics guiGraphics) {
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, (ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get()), InterfaceTheme.current());
+    }
+
+    private void drawAmbientFrameAccent(GuiGraphics guiGraphics, InterfaceTheme.Palette palette) {
+        if (!GuiMotion.ambientMotionEnabled()) {
+            return;
+        }
+        float intensity = GuiMotion.ambientMotionIntensity();
+        int inset = 20;
+        int available = this.panelWidth - inset * 2;
+        int length = Math.min(36, Math.max(12, 16 + Math.round(intensity * 20.0f)));
+        if (available <= length) {
+            return;
+        }
+        int accentX = this.left + inset + Math.round(GuiMotion.cycle(7200L) * (float)(available - length));
+        int alpha = Math.round(46.0f * intensity);
+        guiGraphics.fill(accentX, this.top + 2, accentX + length, this.top + 3, GuiMotion.alpha(palette.accentB(), alpha));
     }
 
     private void drawTitle(GuiGraphics guiGraphics) {

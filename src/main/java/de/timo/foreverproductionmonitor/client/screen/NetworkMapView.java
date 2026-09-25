@@ -77,7 +77,8 @@ final class NetworkMapView {
     private static final int MAX_DETAILS_WIDTH = 150;
     private static final int VIEW_BUTTON_HEIGHT = 14;
     private static final int VIEW_BUTTON_GAP = 2;
-    private static final int CAMERA_TOOLBAR_WIDTH = 48;
+    private static final int CAMERA_TOOLBAR_WIDTH = 56;
+    private static final int CAMERA_BUTTON_MARGIN = 6;
     private static final int ZONE_GAP = 4;
     private static final int VIEW_TOOLBAR_HEIGHT = 42;
     private static final int HELP_AREA_HEIGHT = 30;
@@ -241,7 +242,7 @@ final class NetworkMapView {
         guiGraphics.fill(this.left, this.top, this.left + this.width, this.top + this.height, palette.tableOuter());
         guiGraphics.fill(this.left + 1, this.top + 1, n3 - 1, this.top + this.height - 1, -15723491);
         if (this.showViewButtons()) {
-            guiGraphics.fill(cameraLeft, this.top + 1, detailLeft - ZONE_GAP, this.top + this.height - 1, palette.summary());
+            guiGraphics.fill(cameraLeft, this.top + 1, this.cameraToolbarRight(), this.top + this.height - 1, palette.summary());
             guiGraphics.fill(cameraLeft - 1, this.top, cameraLeft, this.top + this.height, palette.accentB());
         }
         if (((Boolean)ClientConfig.VALUES.mapShowDetails.get()).booleanValue()) {
@@ -524,9 +525,9 @@ final class NetworkMapView {
         if (this.showViewButtons()) {
             String[] stringArray = new String[]{"fit", "iso", "top", "front"};
             int n11 = this.top + 5;
-            int n12 = CAMERA_TOOLBAR_WIDTH - 6;
+            int n12 = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
             for (n5 = 0; n5 < stringArray.length; ++n5) {
-                n4 = this.cameraToolbarLeft() + 3;
+                n4 = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
                 this.drawToolbarButton(guiGraphics, n, n2, n4, n11, n12, (Component)Component.translatable((String)("screen.forever_production_monitor.map.view." + stringArray[n5])), false, ToolbarGroup.CAMERA);
                 n11 += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
             }
@@ -592,9 +593,9 @@ final class NetworkMapView {
         }
         if (this.showViewButtons()) {
             int n8 = this.top + 5;
-            int n9 = CAMERA_TOOLBAR_WIDTH - 6;
+            int n9 = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
             for (n2 = 0; n2 < 4; ++n2) {
-                int n10 = this.cameraToolbarLeft() + 3;
+                int n10 = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
                 int n13 = n8 + n2 * (VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP);
                 if (!NetworkMapView.insideButton(d, d2, n10, n13, n9)) continue;
                 if (n != 0) {
@@ -939,11 +940,15 @@ final class NetworkMapView {
     }
 
     private int sceneRight() {
-        return Math.max(this.left + 80, this.cameraToolbarLeft() - ZONE_GAP);
+        return Math.max(this.left + 1, this.cameraToolbarLeft() - ZONE_GAP);
     }
 
     private int cameraToolbarLeft() {
-        return this.detailLeft() - (this.showViewButtons() ? CAMERA_TOOLBAR_WIDTH : 0);
+        return this.cameraToolbarRight() - (this.showViewButtons() ? CAMERA_TOOLBAR_WIDTH : 0);
+    }
+
+    private int cameraToolbarRight() {
+        return this.detailLeft() - (this.showViewButtons() ? ZONE_GAP : 0);
     }
 
     private int detailLeft() {
@@ -951,7 +956,9 @@ final class NetworkMapView {
     }
 
     private boolean showViewButtons() {
-        return (Boolean)ClientConfig.VALUES.mapShowViewButtons.get();
+        int minimumSceneWidth = 120;
+        int reservedDetails = (Boolean)ClientConfig.VALUES.mapShowDetails.get() != false ? this.detailsWidth() : 0;
+        return (Boolean)ClientConfig.VALUES.mapShowViewButtons.get() && this.width >= minimumSceneWidth + reservedDetails + CAMERA_TOOLBAR_WIDTH + ZONE_GAP * 2;
     }
 
     private int detailsWidth() {
