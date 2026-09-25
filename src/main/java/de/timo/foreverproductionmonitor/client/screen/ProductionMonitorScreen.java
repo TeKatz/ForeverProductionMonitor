@@ -161,7 +161,7 @@ extends Screen {
         this.search.setValue(string2);
         this.addRenderableWidget(this.search);
         if (this.networkMapView == null) {
-            this.networkMapView = new NetworkMapView(this.minecraft, this.font, this::followQuantumPath);
+            this.networkMapView = new NetworkMapView(this.minecraft, this.font, this::followNetworkPath);
         }
         if (this.viewMode == ViewMode.MAP && !this.mapAutoInitialized) {
             this.prepareMapForCurrentDimension();
@@ -438,7 +438,7 @@ extends Screen {
         }
     }
 
-    private void followQuantumPath(ResourceLocation dimension, BlockPos pos) {
+    private void followNetworkPath(ResourceLocation dimension, BlockPos pos) {
         this.switchMapDimension(dimension, pos == null ? null : pos.immutable(), true);
     }
 
