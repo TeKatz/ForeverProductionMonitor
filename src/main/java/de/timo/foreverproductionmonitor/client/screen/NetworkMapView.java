@@ -829,6 +829,10 @@ final class NetworkMapView {
                     navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.compact").getString();
                     selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.compact").getString();
                 }
+                if (this.font.width(navigation) > available || this.font.width(selection) > available) {
+                    navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.minimal").getString();
+                    selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.minimal").getString();
+                }
 
                 if (this.font.width(navigation) <= available && this.font.width(selection) <= available) {
                     int center = textLeft + available / 2;

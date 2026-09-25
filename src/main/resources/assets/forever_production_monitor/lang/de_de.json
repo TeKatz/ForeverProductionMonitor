@@ -186,8 +186,8 @@
   ,"screen.forever_production_monitor.map.controls": "Ziehen drehen  ·  Rechts bewegen  ·  Rad zoomen  ·  Klick wählen  ·  Doppelklick Fokus  ·  R zurück"
   ,"screen.forever_production_monitor.map.controls.navigation": "Ziehen: drehen  ·  Rechts: bewegen  ·  Rad: zoomen"
   ,"screen.forever_production_monitor.map.controls.selection": "Klick: wählen  ·  Doppelklick: Fokus  ·  R: zurück"
-  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Ziehen · Rechts · Rad"
-  ,"screen.forever_production_monitor.map.controls.selection.compact": "Klick · 2× Klick · R"
+  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Drehen: Ziehen · Bewegen: RMB · Zoom: Rad"
+  ,"screen.forever_production_monitor.map.controls.selection.compact": "Wählen: Klick · Fokus: 2× · Reset: R"
   ,"screen.forever_production_monitor.map.view.fit": "Alles"
   ,"screen.forever_production_monitor.map.view.iso": "Iso"
   ,"screen.forever_production_monitor.map.view.top": "Oben"
@@ -293,4 +293,6 @@
   ,"screen.forever_production_monitor.map.destination": "Ziel: %s"
   ,"screen.forever_production_monitor.map.follow_path": "Pfad folgen"
   ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s Netzwerkdimensionen"
+  ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Ziehen=Drehen · Rad=Zoom"
+  ,"screen.forever_production_monitor.map.controls.selection.minimal": "Klick=Wählen · R=Reset"
 }

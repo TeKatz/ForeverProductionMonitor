@@ -186,8 +186,8 @@
   ,"screen.forever_production_monitor.map.controls": "Drag rotate  ·  RMB move  ·  Wheel zoom  ·  Click select  ·  Double-click focus  ·  R reset"
   ,"screen.forever_production_monitor.map.controls.navigation": "Drag: rotate  ·  RMB: move  ·  Wheel: zoom"
   ,"screen.forever_production_monitor.map.controls.selection": "Click: select  ·  Double-click: focus  ·  R: reset"
-  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Drag · RMB · Wheel"
-  ,"screen.forever_production_monitor.map.controls.selection.compact": "Click · 2× click · R"
+  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Rotate: drag · Move: RMB · Zoom: wheel"
+  ,"screen.forever_production_monitor.map.controls.selection.compact": "Select: click · Focus: 2× · Reset: R"
   ,"screen.forever_production_monitor.map.view.fit": "Fit"
   ,"screen.forever_production_monitor.map.view.iso": "Iso"
   ,"screen.forever_production_monitor.map.view.top": "Top"
@@ -293,4 +293,6 @@
   ,"screen.forever_production_monitor.map.destination": "Destination: %s"
   ,"screen.forever_production_monitor.map.follow_path": "Follow Path"
   ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s network dimensions"
+  ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Drag=rotate · Wheel=zoom"
+  ,"screen.forever_production_monitor.map.controls.selection.minimal": "Click=select · R=reset"
 }

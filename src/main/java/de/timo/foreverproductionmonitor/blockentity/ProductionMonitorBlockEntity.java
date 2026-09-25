@@ -650,8 +650,11 @@ extends AENetworkedBlockEntity {
             if (owner instanceof QuantumBridgeBlockEntity bridge
                     && bridge.getBlockState().is(AEBlocks.QUANTUM_LINK.block())
                     && bridge.isFormed()
-                    && bridge.hasQES()
                     && bridge.isPowered()) {
+                // On the dedicated/server side, hasQES() reflects a synchronization flag in
+                // the formed-state byte and is not authoritative for the chamber inventory.
+                // The real entangled-singularity identity is the non-zero frequency stored
+                // on the QES itself, which is also what AE2's QuantumCluster pairs on.
                 long frequency = bridge.getQEFrequency();
                 if (frequency != 0L) {
                     QuantumBridgeEndpoint endpoint = new QuantumBridgeEndpoint(

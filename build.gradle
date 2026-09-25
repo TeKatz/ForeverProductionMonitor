@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'de.timo.foreverproductionmonitor'
-version = '3.4.0'
+version = '3.4.1'
 base.archivesName = 'ForeverProductionMonitor-1.21.1-NeoForge'
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
