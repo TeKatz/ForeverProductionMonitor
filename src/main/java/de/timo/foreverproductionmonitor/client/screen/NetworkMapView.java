@@ -1667,6 +1667,7 @@ final class NetworkMapView {
             // accumulating for the lifetime of the Minecraft process.
             EVENT_LOGS.clear();
             LAST_EVENT_SNAPSHOTS.clear();
+            REMEMBERED_CAMERAS.clear();
             eventConnection = currentConnection;
         }
 
