@@ -1076,7 +1076,7 @@ final class NetworkMapView {
         int titleX = this.detailLeft() + 17;
         Component eventTitle = Component.translatable("screen.forever_production_monitor.map.event_log");
         guiGraphics.drawString(this.font,
-                this.font.plainSubstrByWidth(eventTitle.getString(), Math.max(20, right - titleX)),
+                this.ellipsize(eventTitle.getString(), Math.max(20, right - titleX)),
                 titleX, this.top + 9, palette.accentB(), false);
         ArrayDeque<MapEvent> events = this.currentEvents();
         if (events.isEmpty()) {
@@ -1091,14 +1091,38 @@ final class NetworkMapView {
             if (y + 27 > bottom) break;
             String time = EVENT_TIME.format(Instant.ofEpochMilli(event.time()).atZone(ZoneId.systemDefault()));
             guiGraphics.drawString(this.font, time, left, y, palette.muted(), false);
+
+            int nameWidth = Math.max(20, right - (left + 46));
             guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(event.name(), Math.max(30, right - left - 48)),
+                    this.ellipsize(event.name(), nameWidth),
                     left + 46, y, palette.text(), false);
+
+            String eventText = Component.translatable(
+                    "screen.forever_production_monitor.map.event."
+                            + event.type().name().toLowerCase(Locale.ROOT)).getString();
+            int eventWidth = Math.max(20, right - left);
             guiGraphics.drawString(this.font,
-                    Component.translatable("screen.forever_production_monitor.map.event." + event.type().name().toLowerCase(Locale.ROOT)),
+                    this.ellipsize(eventText, eventWidth),
                     left, y + 11, NetworkMapView.eventColor(event.type()), false);
             y += 27;
         }
+    }
+
+    private String ellipsize(String text, int maxWidth) {
+        if (text == null || text.isEmpty() || maxWidth <= 0) {
+            return "";
+        }
+        if (this.font.width(text) <= maxWidth) {
+            return text;
+        }
+
+        String suffix = "...";
+        if (this.font.width(suffix) > maxWidth) {
+            return this.font.plainSubstrByWidth(suffix, maxWidth);
+        }
+
+        int bodyWidth = Math.max(0, maxWidth - this.font.width(suffix));
+        return this.font.plainSubstrByWidth(text, bodyWidth) + suffix;
     }
 
     private void drawDetailLine(GuiGraphics guiGraphics, int n, int n2, int n3, Component component, String string, int n4) {
