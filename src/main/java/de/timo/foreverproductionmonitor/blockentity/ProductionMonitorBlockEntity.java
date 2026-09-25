@@ -1337,9 +1337,17 @@ extends AENetworkedBlockEntity {
         }
 
         private void merge(ResourceLocation resourceLocation, String string, MapNodeState mapNodeState, int n, double d, boolean bl) {
+            boolean hasName = string != null && !string.isBlank();
             if (bl || this.visualId == null) {
                 this.visualId = resourceLocation;
-                String string2 = this.name = string == null || string.isBlank() ? this.name : string;
+                if (hasName) {
+                    this.name = string;
+                }
+            } else if ("ME Network Block".equals(this.name) && hasName) {
+                // The first merge belongs to the visual representation already stored by the
+                // constructor. Preserve later device-priority replacement, but never leave
+                // ordinary cables/parts stuck with the generic placeholder name.
+                this.name = string;
             }
             if (mapNodeState.severity() > this.state.severity()) {
                 this.state = mapNodeState;

@@ -212,8 +212,8 @@ extends Screen {
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
         int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
         int pagingWidth = 114;
-        int searchWidth = this.viewMode == ViewMode.MAP ? Math.min(300, innerWidth) : (this.compactControls ? innerWidth : Math.max(100, Math.min(260, innerWidth * 2 / 5)));
-        this.search.setX(this.contentLeft);
+        int searchWidth = this.viewMode == ViewMode.MAP ? Math.min(200, Math.max(150, innerWidth / 4)) : (this.compactControls ? innerWidth : Math.max(100, Math.min(260, innerWidth * 2 / 5)));
+        this.search.setX(this.viewMode == ViewMode.MAP ? this.contentLeft + 8 : this.contentLeft);
         this.search.setY(this.viewMode == ViewMode.MAP ? this.auxiliaryControlsY : this.controlsY);
         this.search.setWidth(Math.max(1, searchWidth));
         if (this.viewMode == ViewMode.COMPONENTS) {
@@ -290,9 +290,10 @@ extends Screen {
             case MAP -> this.top + 62;
         };
         if (this.viewMode == ViewMode.MAP) {
-            this.auxiliaryControlsY = this.footerY - 24;
-            int mapBottom = this.auxiliaryControlsY - 6;
-            this.networkMapView.setBounds(this.contentLeft, this.contentY, innerWidth, Math.max(24, mapBottom - this.contentY));
+            // The map now uses the entire content area. Search/help are overlays instead of
+            // reserving permanent rows that shrink the 3D viewport.
+            this.auxiliaryControlsY = this.contentBottom - 24;
+            this.networkMapView.setBounds(this.contentLeft, this.contentY, innerWidth, Math.max(24, this.contentBottom - this.contentY));
         }
         int rowsHeight = this.contentBottom - this.contentY - 18 - 31;
         this.visibleRows = Math.max(1, Math.min(18, rowsHeight / ROW_HEIGHT));
@@ -947,6 +948,9 @@ extends Screen {
         if (this.contentTransitionRunning()) {
             return false;
         }
+        if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isMouseOver(d, d2)) {
+            return super.mouseScrolled(d, d2, d3, d4);
+        }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseScrolled(d, d2, d4)) {
             return true;
         }
@@ -972,6 +976,19 @@ extends Screen {
         int n5;
         int n6;
         if (this.contentTransitionRunning()) {
+            return super.mouseClicked(d, d2, n);
+        }
+        // The map search box is an overlay inside the 3D viewport in 3.3.0.
+        // Give the widget first refusal so camera dragging/zoom never steals search input.
+        if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isMouseOver(d, d2)) {
+            if (n == 1) {
+                this.search.setValue("");
+                this.searchDelay = 0;
+                this.search.setFocused(true);
+                this.requestedPage = 0;
+                this.networkMapView.setSearch("");
+                return true;
+            }
             return super.mouseClicked(d, d2, n);
         }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseClicked(d, d2, n)) {

@@ -186,6 +186,8 @@
   ,"screen.forever_production_monitor.map.controls": "Ziehen drehen  ·  Rechts bewegen  ·  Rad zoomen  ·  Klick wählen  ·  Doppelklick Fokus  ·  R zurück"
   ,"screen.forever_production_monitor.map.controls.navigation": "Ziehen: drehen  ·  Rechts: bewegen  ·  Rad: zoomen"
   ,"screen.forever_production_monitor.map.controls.selection": "Klick: wählen  ·  Doppelklick: Fokus  ·  R: zurück"
+  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Ziehen · Rechts · Rad"
+  ,"screen.forever_production_monitor.map.controls.selection.compact": "Klick · 2× Klick · R"
   ,"screen.forever_production_monitor.map.view.fit": "Alles"
   ,"screen.forever_production_monitor.map.view.iso": "Iso"
   ,"screen.forever_production_monitor.map.view.top": "Oben"

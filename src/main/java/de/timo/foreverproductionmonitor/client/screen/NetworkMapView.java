@@ -64,6 +64,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
@@ -73,15 +74,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 final class NetworkMapView {
-    private static final int MIN_DETAILS_WIDTH = 120;
-    private static final int MAX_DETAILS_WIDTH = 150;
+    private static final int MIN_DETAILS_WIDTH = 108;
+    private static final int MAX_DETAILS_WIDTH = 136;
+    private static final int COLLAPSED_DETAILS_WIDTH = 18;
     private static final int VIEW_BUTTON_HEIGHT = 14;
     private static final int VIEW_BUTTON_GAP = 2;
-    private static final int CAMERA_TOOLBAR_WIDTH = 56;
-    private static final int CAMERA_BUTTON_MARGIN = 6;
-    private static final int ZONE_GAP = 4;
-    private static final int VIEW_TOOLBAR_HEIGHT = 42;
-    private static final int HELP_AREA_HEIGHT = 30;
+    private static final int CAMERA_TOOLBAR_WIDTH = 58;
+    private static final int CAMERA_BUTTON_MARGIN = 4;
+    private static final int ZONE_GAP = 2;
+    private static final int VIEW_TOOLBAR_HEIGHT = 24;
+    private static final int CONTROL_BAR_HEIGHT = 28;
     private static final double DRAG_THRESHOLD_SQUARED = 12.0;
     private static final float MIN_CAMERA_PITCH = 5.0f;
     private static final float MAX_CAMERA_PITCH = 85.0f;
@@ -89,6 +91,7 @@ final class NetworkMapView {
     private static String rememberedNetwork;
     private static CameraState rememberedCamera;
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
+    private static boolean bookmarksLoaded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
@@ -113,6 +116,7 @@ final class NetworkMapView {
     private boolean focusedOnBlock;
     private boolean heatmap;
     private boolean showEvents;
+    private boolean detailsCollapsed;
     private MapFilter filter = MapFilter.ALL;
     private String search = "";
     private int searchCursor = -1;
@@ -251,18 +255,19 @@ final class NetworkMapView {
         }
         if (this.snapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.loading"), this.left + (n3 - this.left) / 2, this.top + this.height / 2, -14740);
-            this.drawHelp(guiGraphics, n3);
+            this.drawControlBar(guiGraphics, n3);
             return;
         }
         if (this.snapshot.nodes().isEmpty()) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.empty"), this.left + (n3 - this.left) / 2, this.top + this.height / 2, -7366746);
+            this.drawControlBar(guiGraphics, n3);
             this.drawClippedDetails(guiGraphics);
             return;
         }
         this.updateHover(n, n2);
         this.renderScene(guiGraphics, n3);
         this.drawToolbar(guiGraphics, n, n2, n3);
-        this.drawHelp(guiGraphics, n3);
+        this.drawControlBar(guiGraphics, n3);
         this.drawClippedDetails(guiGraphics);
     }
 
@@ -271,7 +276,11 @@ final class NetworkMapView {
             return;
         }
         guiGraphics.enableScissor(this.detailLeft(), this.top + 1, this.left + this.width - 1, this.top + this.height - 1);
-        this.drawDetails(guiGraphics);
+        if (this.detailsCollapsed) {
+            this.drawCollapsedDetails(guiGraphics);
+        } else {
+            this.drawDetails(guiGraphics);
+        }
         guiGraphics.disableScissor();
     }
 
@@ -304,6 +313,16 @@ final class NetworkMapView {
         for (MonitorNetwork.MapNode mapNode22 : list) {
             if (!this.shouldRender(mapNode22) || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.BLOCK) continue;
             this.renderBlock(poseStack, bufferSource, mapNode22);
+        }
+        if (!this.heatmap) {
+            for (MonitorNetwork.MapNode mapNode22 : list) {
+                if (!this.shouldRender(mapNode22)
+                        || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART
+                        || !NetworkMapView.isCable(mapNode22.visualId().getPath())) {
+                    continue;
+                }
+                this.renderCableItemModels(poseStack, bufferSource, mapNode22, hashSet);
+            }
         }
         bufferSource.endBatch();
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.debugQuads());
@@ -372,23 +391,88 @@ final class NetworkMapView {
         poseStack.popPose();
     }
 
-    private void renderPartGeometry(PoseStack poseStack, VertexConsumer vertexConsumer, VertexConsumer vertexConsumer2, MonitorNetwork.MapNode mapNode, Set<BlockPos> set) {
-        float f;
-        String string = mapNode.visualId().getPath();
-        int n = this.heatmap ? this.heatColorInt(mapNode) : NetworkMapView.partColor(string, mapNode.state());
-        float f2 = (float)(n >> 16 & 0xFF) / 255.0f;
-        float f3 = (float)(n >> 8 & 0xFF) / 255.0f;
-        float f4 = (float)(n & 0xFF) / 255.0f;
-        float f5 = f = string.contains("dense") ? 0.185f : 0.095f;
-        if (NetworkMapView.isCable(string)) {
-            BlockPos blockPos = mapNode.pos();
-            NetworkMapView.addBox(poseStack, vertexConsumer, vertexConsumer2, new AABB((double)blockPos.getX() + 0.5 - (double)f, (double)blockPos.getY() + 0.5 - (double)f, (double)blockPos.getZ() + 0.5 - (double)f, (double)blockPos.getX() + 0.5 + (double)f, (double)blockPos.getY() + 0.5 + (double)f, (double)blockPos.getZ() + 0.5 + (double)f), f2, f3, f4, true);
-            for (Direction direction : Direction.values()) {
-                if (!set.contains(blockPos.relative(direction))) continue;
-                NetworkMapView.addBox(poseStack, vertexConsumer, vertexConsumer2, NetworkMapView.cableArm(blockPos, direction, f), f2, f3, f4, false);
+    private void renderCableItemModels(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                       MonitorNetwork.MapNode mapNode, Set<BlockPos> occupied) {
+        ItemStack stack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(mapNode.visualId()));
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        BlockPos pos = mapNode.pos();
+        boolean xAxis = occupied.contains(pos.relative(Direction.EAST)) || occupied.contains(pos.relative(Direction.WEST));
+        boolean yAxis = occupied.contains(pos.relative(Direction.UP)) || occupied.contains(pos.relative(Direction.DOWN));
+        boolean zAxis = occupied.contains(pos.relative(Direction.NORTH)) || occupied.contains(pos.relative(Direction.SOUTH));
+
+        // Use AE2's own textured cable item model for every connected axis. The stock item
+        // mesh spans roughly 2..14 texels along its cable axis, so a 4/3 local-axis stretch
+        // closes the remaining quarter-block gap without adding synthetic connector boxes.
+        // Corners and T-junctions are therefore composed entirely from the same AE2 artwork.
+        if (!xAxis && !yAxis && !zAxis) {
+            zAxis = true;
+        }
+        if (xAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.X);
+        }
+        if (yAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.Y);
+        }
+        if (zAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.Z);
+        }
+    }
+
+    private void renderCableItemAxis(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                     ItemStack stack, BlockPos pos, Direction.Axis axis) {
+        poseStack.pushPose();
+        poseStack.translate((double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5);
+        if (axis == Direction.Axis.X) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0f));
+        } else if (axis == Direction.Axis.Y) {
+            poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
+        }
+        poseStack.scale(1.0f, 1.0f, 1.334f);
+        this.minecraft.getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE, 0xF000F0,
+                OverlayTexture.NO_OVERLAY, poseStack, (MultiBufferSource)bufferSource,
+                (Level)this.minecraft.level, pos.hashCode() ^ axis.ordinal());
+        poseStack.popPose();
+    }
+
+    private void renderPartGeometry(PoseStack poseStack, VertexConsumer faceConsumer, VertexConsumer lineConsumer,
+                                    MonitorNetwork.MapNode mapNode, Set<BlockPos> occupied) {
+        String path = mapNode.visualId().getPath();
+        int base = this.heatmap ? this.heatColorInt(mapNode) : NetworkMapView.partColor(path, mapNode.state());
+        float r = (float)(base >> 16 & 0xFF) / 255.0f;
+        float g = (float)(base >> 8 & 0xFF) / 255.0f;
+        float b = (float)(base & 0xFF) / 255.0f;
+
+        if (!NetworkMapView.isCable(path)) {
+            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
+                    NetworkMapView.partPlate(mapNode), r, g, b, true);
+            return;
+        }
+
+        if (!this.heatmap) {
+            // Normal map mode is now 100% AE2 cable-model geometry. Synthetic connector
+            // boxes were the source of the thick purple junction bands in 3.3.1.
+            return;
+        }
+
+        boolean dense = path.contains("dense");
+        boolean glass = path.contains("glass");
+        boolean covered = path.contains("covered");
+        double radius = dense ? 0.25 : (glass ? 0.125 : (covered ? 0.21875 : 0.1875));
+        BlockPos pos = mapNode.pos();
+
+        // Heatmap intentionally uses plain diagnostic geometry so its status color remains unambiguous.
+        AABB core = new AABB(
+                (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
+                (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
+        NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, false);
+        for (Direction direction : Direction.values()) {
+            if (occupied.contains(pos.relative(direction))) {
+                NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
+                        NetworkMapView.cableArm(pos, direction, radius), r, g, b, false);
             }
-        } else {
-            NetworkMapView.addBox(poseStack, vertexConsumer, vertexConsumer2, NetworkMapView.partPlate(mapNode), f2, f3, f4, true);
         }
     }
 
@@ -459,6 +543,9 @@ final class NetworkMapView {
         if (mapNodeState == ProductionMonitorBlockEntity.MapNodeState.UNPOWERED) {
             return 16747896;
         }
+        if (string.contains("fluix")) {
+            return 0x7453A8;
+        }
         if (string.contains("light_blue")) {
             return 5740473;
         }
@@ -510,41 +597,58 @@ final class NetworkMapView {
         return string.contains("dense") ? 7492763 : 4757413;
     }
 
-    private void drawToolbar(GuiGraphics guiGraphics, int n, int n2, int n3) {
-        int n4;
-        int n5;
-        int n6 = this.viewButtonsTop();
-        int n7 = this.left + 7;
-        int n8 = n3 - this.left - 14;
-        int n9 = n7;
-        int n10 = (n8 - 12) / 5;
-        for (MapFilter n52 : MapFilter.values()) {
-            this.drawToolbarButton(guiGraphics, n, n2, n9, n6, n10, (Component)Component.translatable((String)("screen.forever_production_monitor.map.filter." + n52.name().toLowerCase(Locale.ROOT))), this.filter == n52, ToolbarGroup.FILTER);
-            n9 += n10 + 3;
+    private void drawToolbar(GuiGraphics guiGraphics, int mouseX, int mouseY, int sceneRight) {
+        int topY = this.viewButtonsTop();
+        int leftX = this.left + 7;
+        int available = sceneRight - this.left - 14;
+        int buttonX = leftX;
+        int buttonWidth = (available - 12) / 5;
+
+        for (MapFilter mapFilter : MapFilter.values()) {
+            this.drawToolbarButton(guiGraphics, mouseX, mouseY, buttonX, topY, buttonWidth,
+                    Component.translatable("screen.forever_production_monitor.map.filter." + mapFilter.name().toLowerCase(Locale.ROOT)),
+                    this.filter == mapFilter, ToolbarGroup.FILTER);
+            buttonX += buttonWidth + 3;
         }
-        if (this.showViewButtons()) {
-            String[] stringArray = new String[]{"fit", "iso", "top", "front"};
-            int n11 = this.top + 5;
-            int n12 = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
-            for (n5 = 0; n5 < stringArray.length; ++n5) {
-                n4 = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
-                this.drawToolbarButton(guiGraphics, n, n2, n4, n11, n12, (Component)Component.translatable((String)("screen.forever_production_monitor.map.view." + stringArray[n5])), false, ToolbarGroup.CAMERA);
-                n11 += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
-            }
+
+        if (!this.showViewButtons()) {
+            return;
         }
-        n5 = n6 + VIEW_BUTTON_HEIGHT + 4;
-        n4 = (n8 - 12) / 5;
-        n9 = n7;
-        this.drawToolbarButton(guiGraphics, n, n2, n9, n5, n4, (Component)Component.translatable((String)"screen.forever_production_monitor.map.heatmap"), this.heatmap, ToolbarGroup.DIAGNOSTIC);
-        this.drawToolbarButton(guiGraphics, n, n2, n9 += n4 + 3, n5, n4, (Component)Component.translatable((String)"screen.forever_production_monitor.map.events"), this.showEvents, ToolbarGroup.DIAGNOSTIC);
-        n9 += n4 + 3;
+
+        int cameraX = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
+        int cameraWidth = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
+        int y = this.top + 5;
+        String[] views = new String[]{"fit", "iso", "top", "front"};
+        for (String view : views) {
+            this.drawToolbarButton(guiGraphics, mouseX, mouseY, cameraX, y, cameraWidth,
+                    Component.translatable("screen.forever_production_monitor.map.view." + view), false, ToolbarGroup.CAMERA);
+            y += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
+        }
+
+        y += 4;
+        this.drawToolbarButton(guiGraphics, mouseX, mouseY, cameraX, y, cameraWidth,
+                Component.translatable("screen.forever_production_monitor.map.heatmap"), this.heatmap, ToolbarGroup.DIAGNOSTIC);
+        y += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
+        this.drawToolbarButton(guiGraphics, mouseX, mouseY, cameraX, y, cameraWidth,
+                Component.translatable("screen.forever_production_monitor.map.events"), this.showEvents, ToolbarGroup.DIAGNOSTIC);
+        y += VIEW_BUTTON_HEIGHT + 5;
+        int bottomBookmarkY = this.top + this.height - VIEW_BUTTON_HEIGHT - 6;
+        if (bottomBookmarkY > y) {
+            y = bottomBookmarkY;
+        }
+
+        int bookmarkGap = 2;
+        int bookmarkWidth = Math.max(8, (cameraWidth - bookmarkGap * 2) / 3);
+        CameraState[] bookmarks = this.cameraBookmarks();
         for (int i = 0; i < 3; ++i) {
-            boolean bl = this.cameraBookmarks()[i] != null;
-            this.drawToolbarButton(guiGraphics, n, n2, n9, n5, n4, (Component)Component.literal((String)((bl ? "\u25c6 " : "\u25c7 ") + (i + 1))), false, ToolbarGroup.BOOKMARK);
-            if (n >= n9 && n < n9 + n4 && n2 >= n5 && n2 < n5 + 16) {
-                guiGraphics.renderTooltip(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.bookmark_hint"), n, n2);
+            int bx = cameraX + i * (bookmarkWidth + bookmarkGap);
+            boolean filled = bookmarks[i] != null;
+            this.drawToolbarButton(guiGraphics, mouseX, mouseY, bx, y, bookmarkWidth,
+                    Component.literal(Integer.toString(i + 1)), filled, ToolbarGroup.BOOKMARK);
+            if (mouseX >= bx && mouseX < bx + bookmarkWidth && mouseY >= y && mouseY < y + VIEW_BUTTON_HEIGHT) {
+                guiGraphics.renderTooltip(this.font,
+                        Component.translatable("screen.forever_production_monitor.map.bookmark_hint"), mouseX, mouseY);
             }
-            n9 += n4 + 3;
         }
     }
 
@@ -574,71 +678,87 @@ final class NetworkMapView {
         return n2 << 24 | n & 0xFFFFFF;
     }
 
-    private boolean clickToolbar(double d, double d2, int n) {
-        int n2;
-        int n3 = this.viewButtonsTop();
-        int n4 = this.left + 7;
-        int n5 = this.sceneRight() - this.left - 14;
-        int n6 = n4;
-        int n7 = (n5 - 12) / 5;
+    private boolean clickToolbar(double mouseX, double mouseY, int button) {
+        int topY = this.viewButtonsTop();
+        int leftX = this.left + 7;
+        int available = this.sceneRight() - this.left - 14;
+        int x = leftX;
+        int filterWidth = (available - 12) / 5;
+
         for (MapFilter mapFilter : MapFilter.values()) {
-            if (NetworkMapView.insideButton(d, d2, n6, n3, n7)) {
+            if (NetworkMapView.insideButton(mouseX, mouseY, x, topY, filterWidth)) {
                 this.filter = mapFilter;
                 this.selectedIndex = -1;
                 this.focusedOnBlock = false;
                 this.recomputeFit();
                 return true;
             }
-            n6 += n7 + 3;
+            x += filterWidth + 3;
         }
-        if (this.showViewButtons()) {
-            int n8 = this.top + 5;
-            int n9 = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
-            for (n2 = 0; n2 < 4; ++n2) {
-                int n10 = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
-                int n13 = n8 + n2 * (VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP);
-                if (!NetworkMapView.insideButton(d, d2, n10, n13, n9)) continue;
-                if (n != 0) {
-                    return true;
-                }
-                switch (n2) {
-                    case 0 -> this.fitView();
-                    case 1 -> this.setView(225.0f, 30.0f, true);
-                    case 2 -> this.setView(180.0f, 85.0f, true);
-                    case 3 -> this.setView(180.0f, 5.0f, true);
+
+        if (!this.showViewButtons()) {
+            return false;
+        }
+
+        int cameraX = this.cameraToolbarLeft() + CAMERA_BUTTON_MARGIN;
+        int cameraWidth = CAMERA_TOOLBAR_WIDTH - CAMERA_BUTTON_MARGIN * 2;
+        int y = this.top + 5;
+        for (int i = 0; i < 4; ++i) {
+            if (NetworkMapView.insideButton(mouseX, mouseY, cameraX, y, cameraWidth)) {
+                if (button == 0) {
+                    switch (i) {
+                        case 0 -> this.fitView();
+                        case 1 -> this.setView(225.0f, 30.0f, true);
+                        case 2 -> this.setView(180.0f, 85.0f, true);
+                        case 3 -> this.setView(180.0f, 5.0f, true);
+                    }
                 }
                 return true;
             }
+            y += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
         }
-        n6 = n4;
-        n2 = n3 + VIEW_BUTTON_HEIGHT + 4;
-        int n11 = (n5 - 12) / 5;
-        if (NetworkMapView.insideButton(d, d2, n6, n2, n11)) {
-            if (n == 0) {
+
+        y += 4;
+        if (NetworkMapView.insideButton(mouseX, mouseY, cameraX, y, cameraWidth)) {
+            if (button == 0) {
                 this.heatmap = !this.heatmap;
             }
             return true;
         }
-        if (NetworkMapView.insideButton(d, d2, n6 += n11 + 3, n2, n11)) {
-            if (n == 0) {
+
+        y += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
+        if (NetworkMapView.insideButton(mouseX, mouseY, cameraX, y, cameraWidth)) {
+            if (button == 0) {
                 this.showEvents = !this.showEvents;
+                if (this.showEvents && this.detailsCollapsed) {
+                    this.detailsCollapsed = false;
+                    this.recomputeFit();
+                }
             }
             return true;
         }
-        n6 += n11 + 3;
-        int n12 = 0;
-        while (n12 < 3) {
-            if (NetworkMapView.insideButton(d, d2, n6, n2, n11)) {
-                if (n == 1) {
-                    this.saveBookmark(n12);
-                } else if (n == 0) {
-                    this.loadBookmark(n12);
-                }
-                return true;
-            }
-            ++n12;
-            n6 += n11 + 3;
+
+        y += VIEW_BUTTON_HEIGHT + 5;
+        int bottomBookmarkY = this.top + this.height - VIEW_BUTTON_HEIGHT - 6;
+        if (bottomBookmarkY > y) {
+            y = bottomBookmarkY;
         }
+
+        int bookmarkGap = 2;
+        int bookmarkWidth = Math.max(8, (cameraWidth - bookmarkGap * 2) / 3);
+        for (int i = 0; i < 3; ++i) {
+            int bx = cameraX + i * (bookmarkWidth + bookmarkGap);
+            if (!NetworkMapView.insideButton(mouseX, mouseY, bx, y, bookmarkWidth)) {
+                continue;
+            }
+            if (button == 1) {
+                this.saveBookmark(i);
+            } else if (button == 0) {
+                this.loadBookmark(i);
+            }
+            return true;
+        }
+
         return false;
     }
 
@@ -646,23 +766,60 @@ final class NetworkMapView {
         return d >= (double)n && d < (double)(n + n3) && d2 >= (double)n2 && d2 < (double)(n2 + VIEW_BUTTON_HEIGHT);
     }
 
-    private void drawHelp(GuiGraphics guiGraphics, int n) {
-        if (!((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue() || this.height < 150) {
-            return;
-        }
+    private void drawControlBar(GuiGraphics guiGraphics, int sceneRight) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n2 = this.top + this.height - 30;
-        int n3 = this.left + (n - this.left) / 2;
-        guiGraphics.fill(this.left + 6, n2, n - 6, this.top + this.height - 5, -1340860382);
-        guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.controls.navigation"), n3, n2 + 4, palette.muted());
-        guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.controls.selection"), n3, n2 + 15, palette.muted());
+        int barTop = this.sceneContentBottom();
+        int barBottom = this.top + this.height - 1;
+
+        guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barBottom, palette.summary());
+        guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barTop + 1,
+                NetworkMapView.withAlpha(palette.border(), 112));
+
+        if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
+            // The search widget owns the left side of the bar. The help gets two dedicated
+            // rows on the right; switch to compact labels rather than ever clipping text.
+            int textLeft = this.left + 216;
+            int textRight = sceneRight - 8;
+            int available = textRight - textLeft;
+            if (available >= 88) {
+                String navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
+                String selection = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
+                if (this.font.width(navigation) > available || this.font.width(selection) > available) {
+                    navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.compact").getString();
+                    selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.compact").getString();
+                }
+
+                if (this.font.width(navigation) <= available && this.font.width(selection) <= available) {
+                    int center = textLeft + available / 2;
+                    guiGraphics.drawCenteredString(this.font, navigation, center, barTop + 4, palette.muted());
+                    guiGraphics.drawCenteredString(this.font, selection, center, barTop + 15, palette.muted());
+                }
+            }
+        }
+
         if (this.snapshot != null && this.snapshot.truncated()) {
-            guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.truncated"), this.left + 7, this.top + 7, -14740, false);
+            guiGraphics.drawString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.truncated"),
+                    this.left + 7, this.top + 7, -14740, false);
         }
     }
 
+    private void drawCollapsedDetails(GuiGraphics guiGraphics) {
+        this.drawDetailsToggle(guiGraphics);
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        int x = this.detailLeft() + COLLAPSED_DETAILS_WIDTH / 2;
+        guiGraphics.fill(x, this.top + 29, x + 1, this.top + this.height - 8,
+                NetworkMapView.withAlpha(palette.accentA(), 36));
+    }
+
+    private void drawDetailsToggle(GuiGraphics guiGraphics) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        String glyph = this.detailsCollapsed ? "›" : "‹";
+        int x = this.detailLeft() + (this.detailsCollapsed ? 5 : 4);
+        guiGraphics.drawString(this.font, glyph, x, this.top + 7, palette.accentB(), false);
+    }
+
     private void drawDetails(GuiGraphics guiGraphics) {
-        MonitorNetwork.MapNode mapNode;
         if (!((Boolean)ClientConfig.VALUES.mapShowDetails.get()).booleanValue()) {
             return;
         }
@@ -670,52 +827,124 @@ final class NetworkMapView {
             this.drawEventLog(guiGraphics);
             return;
         }
+
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n = this.detailLeft() + 8;
-        int n2 = this.left + this.width - 8;
-        Component detailsTitle = Component.translatable((String)"screen.forever_production_monitor.map.details");
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(detailsTitle.getString(), Math.max(20, n2 - n)), n, this.top + 9, palette.accentB(), false);
+        int left = this.detailLeft() + 8;
+        int right = this.left + this.width - 8;
+        this.drawDetailsToggle(guiGraphics);
+
+        int titleX = this.detailLeft() + 17;
+        Component detailsTitle = Component.translatable("screen.forever_production_monitor.map.details");
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(detailsTitle.getString(), Math.max(20, right - titleX)),
+                titleX, this.top + 9, palette.accentB(), false);
+
         if (this.snapshot == null) {
             return;
         }
-        Component blocks = Component.translatable((String)"screen.forever_production_monitor.map.blocks", (Object[])new Object[]{this.snapshot.nodes().size()});
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(blocks.getString(), Math.max(20, n2 - n)), n, this.top + 25, palette.muted(), false);
-        MonitorNetwork.MapNode mapNode2 = mapNode = this.selectedIndex >= 0 && this.selectedIndex < this.snapshot.nodes().size() ? this.snapshot.nodes().get(this.selectedIndex) : null;
-        if (mapNode == null) {
-            guiGraphics.drawWordWrap(this.font, (FormattedText)Component.translatable((String)"screen.forever_production_monitor.map.select_hint"), n, this.top + 48, Math.max(40, n2 - n), palette.muted());
+
+        MonitorNetwork.MapNode selected = this.selectedIndex >= 0 && this.selectedIndex < this.snapshot.nodes().size()
+                ? this.snapshot.nodes().get(this.selectedIndex) : null;
+        Component blocks = Component.translatable("screen.forever_production_monitor.map.blocks", this.snapshot.nodes().size());
+
+        if (selected == null) {
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(blocks.getString(), Math.max(20, right - left)),
+                    left, this.top + 29, palette.muted(), false);
+            guiGraphics.drawWordWrap(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.select_hint"),
+                    left, this.top + 49, Math.max(40, right - left), palette.muted());
             return;
         }
-        ItemStack itemStack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(mapNode.visualId()));
-        guiGraphics.renderItem(itemStack, n, this.top + 45);
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mapNode.name(), Math.max(40, n2 - n - 22)), n + 22, this.top + 46, palette.text(), false);
-        int n3 = this.top + 76;
-        this.drawDetailLine(guiGraphics, n, n2, n3, (Component)Component.translatable((String)"screen.forever_production_monitor.map.position"), mapNode.pos().toShortString(), palette.text());
-        this.drawDetailLine(guiGraphics, n, n2, n3 += 17, (Component)Component.translatable((String)"screen.forever_production_monitor.map.state"), Component.translatable((String)("screen.forever_production_monitor.map.state." + mapNode.state().name().toLowerCase(Locale.ROOT))).getString(), NetworkMapView.stateColorInt(mapNode.state()));
-        this.drawDetailLine(guiGraphics, n, n2, n3 += 17, (Component)Component.translatable((String)"screen.forever_production_monitor.map.channels"), Integer.toString(mapNode.channels()), -8861464);
-        this.drawDetailLine(guiGraphics, n, n2, n3 += 17, (Component)Component.translatable((String)"screen.forever_production_monitor.map.power"), NetworkMapView.formatPower(mapNode.idlePower()), -14740);
-        guiGraphics.drawWordWrap(this.font, (FormattedText)Component.literal((String)mapNode.visualId().toString()), n, n3 += 23, Math.max(40, n2 - n), palette.muted());
+
+        String displayName = this.nodeDisplayName(selected);
+        ItemStack stack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(selected.visualId()));
+        guiGraphics.renderItem(stack, left, this.top + 27);
+
+        int nameX = left + 22;
+        int nameWidth = Math.max(40, right - nameX);
+        List<FormattedCharSequence> nameLines = this.font.split(Component.literal(displayName), nameWidth);
+        int nameY = this.top + 28;
+        int shownLines = Math.min(3, nameLines.size());
+        for (int i = 0; i < shownLines; ++i) {
+            guiGraphics.drawString(this.font, nameLines.get(i), nameX, nameY + i * 10, palette.text(), false);
+        }
+        int blocksY = nameY + shownLines * 10 + 2;
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(blocks.getString(), Math.max(20, right - left - 22)),
+                nameX, blocksY, palette.muted(), false);
+
+        int lineY = Math.max(this.top + 65, blocksY + 23);
+        this.drawDetailLine(guiGraphics, left, right, lineY,
+                Component.translatable("screen.forever_production_monitor.map.position"),
+                selected.pos().toShortString(), palette.text());
+        this.drawDetailLine(guiGraphics, left, right, lineY += 17,
+                Component.translatable("screen.forever_production_monitor.map.state"),
+                Component.translatable("screen.forever_production_monitor.map.state." + selected.state().name().toLowerCase(Locale.ROOT)).getString(),
+                NetworkMapView.stateColorInt(selected.state()));
+        this.drawDetailLine(guiGraphics, left, right, lineY += 17,
+                Component.translatable("screen.forever_production_monitor.map.channels"),
+                Integer.toString(selected.channels()), -8861464);
+        this.drawDetailLine(guiGraphics, left, right, lineY += 17,
+                Component.translatable("screen.forever_production_monitor.map.power"),
+                NetworkMapView.formatPower(selected.idlePower()), -14740);
+
+        guiGraphics.drawWordWrap(this.font, Component.literal(selected.visualId().toString()),
+                left, lineY + 24, Math.max(40, right - left), palette.muted());
+    }
+
+    private String nodeDisplayName(MonitorNetwork.MapNode mapNode) {
+        String name = mapNode.name();
+        if (name != null && !name.isBlank() && !"ME Network Block".equals(name)) {
+            return name;
+        }
+
+        ItemStack stack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(mapNode.visualId()));
+        if (!stack.isEmpty()) {
+            String itemName = stack.getHoverName().getString();
+            if (itemName != null && !itemName.isBlank()) {
+                return itemName;
+            }
+        }
+
+        BlockState state = Block.stateById(mapNode.blockStateId());
+        String blockName = state.getBlock().getName().getString();
+        if (blockName != null && !blockName.isBlank()) {
+            return blockName;
+        }
+        return mapNode.visualId().getPath();
     }
 
     private void drawEventLog(GuiGraphics guiGraphics) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n = this.detailLeft() + 8;
-        int n2 = this.left + this.width - 8;
-        Component eventTitle = Component.translatable((String)"screen.forever_production_monitor.map.event_log");
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(eventTitle.getString(), Math.max(20, n2 - n)), n, this.top + 9, palette.accentB(), false);
-        ArrayDeque<MapEvent> arrayDeque = this.currentEvents();
-        if (arrayDeque.isEmpty()) {
-            guiGraphics.drawWordWrap(this.font, (FormattedText)Component.translatable((String)"screen.forever_production_monitor.map.event_log.empty"), n, this.top + 31, Math.max(40, n2 - n), palette.muted());
+        int left = this.detailLeft() + 8;
+        int right = this.left + this.width - 8;
+        this.drawDetailsToggle(guiGraphics);
+        int titleX = this.detailLeft() + 17;
+        Component eventTitle = Component.translatable("screen.forever_production_monitor.map.event_log");
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(eventTitle.getString(), Math.max(20, right - titleX)),
+                titleX, this.top + 9, palette.accentB(), false);
+        ArrayDeque<MapEvent> events = this.currentEvents();
+        if (events.isEmpty()) {
+            guiGraphics.drawWordWrap(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.event_log.empty"),
+                    left, this.top + 31, Math.max(40, right - left), palette.muted());
             return;
         }
-        int n3 = this.top + 29;
-        int n4 = this.top + this.height - 8;
-        for (MapEvent mapEvent : arrayDeque) {
-            if (n3 + 27 > n4) break;
-            String string = EVENT_TIME.format(Instant.ofEpochMilli(mapEvent.time()).atZone(ZoneId.systemDefault()));
-            guiGraphics.drawString(this.font, string, n, n3, palette.muted(), false);
-            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mapEvent.name(), Math.max(30, n2 - n - 48)), n + 46, n3, palette.text(), false);
-            guiGraphics.drawString(this.font, (Component)Component.translatable((String)("screen.forever_production_monitor.map.event." + mapEvent.type().name().toLowerCase(Locale.ROOT))), n, n3 + 11, NetworkMapView.eventColor(mapEvent.type()), false);
-            n3 += 27;
+        int y = this.top + 29;
+        int bottom = this.top + this.height - 8;
+        for (MapEvent event : events) {
+            if (y + 27 > bottom) break;
+            String time = EVENT_TIME.format(Instant.ofEpochMilli(event.time()).atZone(ZoneId.systemDefault()));
+            guiGraphics.drawString(this.font, time, left, y, palette.muted(), false);
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(event.name(), Math.max(30, right - left - 48)),
+                    left + 46, y, palette.text(), false);
+            guiGraphics.drawString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.event." + event.type().name().toLowerCase(Locale.ROOT)),
+                    left, y + 11, NetworkMapView.eventColor(event.type()), false);
+            y += 27;
         }
     }
 
@@ -728,7 +957,25 @@ final class NetworkMapView {
         return d < 1000.0 ? String.format(Locale.ROOT, "%.2f AE/t", d) : String.format(Locale.ROOT, "%.2fk AE/t", d / 1000.0);
     }
 
+    private boolean clickDetailsToggle(double mouseX, double mouseY) {
+        if (!((Boolean)ClientConfig.VALUES.mapShowDetails.get()).booleanValue()) {
+            return false;
+        }
+        int toggleLeft = this.detailLeft();
+        int toggleWidth = this.detailsCollapsed ? COLLAPSED_DETAILS_WIDTH : 17;
+        if (mouseX < toggleLeft || mouseX >= toggleLeft + toggleWidth
+                || mouseY < this.top + 2 || mouseY >= this.top + 24) {
+            return false;
+        }
+        this.detailsCollapsed = !this.detailsCollapsed;
+        this.recomputeFit();
+        return true;
+    }
+
     boolean mouseClicked(double d, double d2, int n) {
+        if (n == 0 && this.clickDetailsToggle(d, d2)) {
+            return true;
+        }
         if ((n == 0 || n == 1) && this.clickToolbar(d, d2, n)) {
             return true;
         }
@@ -962,10 +1209,16 @@ final class NetworkMapView {
     }
 
     private int detailsWidth() {
-        if (this.width < 280) {
-            return Math.max(72, this.width / 3);
+        if (!((Boolean)ClientConfig.VALUES.mapShowDetails.get()).booleanValue()) {
+            return 0;
         }
-        return Math.max(MIN_DETAILS_WIDTH, Math.min(MAX_DETAILS_WIDTH, this.width / 6));
+        if (this.detailsCollapsed) {
+            return COLLAPSED_DETAILS_WIDTH;
+        }
+        if (this.width < 280) {
+            return Math.max(84, this.width / 3);
+        }
+        return Math.max(MIN_DETAILS_WIDTH, Math.min(MAX_DETAILS_WIDTH, this.width / 7));
     }
 
     private boolean insideScene(double d, double d2) {
@@ -981,7 +1234,9 @@ final class NetworkMapView {
     }
 
     private int sceneContentBottom() {
-        return this.top + this.height - ((Boolean)ClientConfig.VALUES.mapShowControls.get() != false && this.height >= 150 ? HELP_AREA_HEIGHT : 2);
+        // Reserve one compact bottom bar for search + controls. The 3D renderer and hit
+        // testing stop above it, so no blocks, selection boxes or camera drag can overlap GUI.
+        return this.top + this.height - CONTROL_BAR_HEIGHT;
     }
 
     private boolean shouldRender(MonitorNetwork.MapNode mapNode) {
@@ -1064,11 +1319,13 @@ final class NetworkMapView {
     }
 
     private CameraState[] cameraBookmarks() {
+        NetworkMapView.loadPersistedBookmarks();
         return CAMERA_BOOKMARKS.computeIfAbsent(this.networkKey(), string -> new CameraState[3]);
     }
 
     private void saveBookmark(int n) {
         this.cameraBookmarks()[n] = this.cameraState();
+        NetworkMapView.persistBookmarks();
     }
 
     private void loadBookmark(int n) {
@@ -1076,6 +1333,66 @@ final class NetworkMapView {
         if (cameraState != null) {
             this.restoreCamera(cameraState);
         }
+    }
+
+    private static void loadPersistedBookmarks() {
+        if (bookmarksLoaded) {
+            return;
+        }
+        bookmarksLoaded = true;
+        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
+        if (encoded == null || encoded.isBlank()) {
+            return;
+        }
+
+        for (String entry : encoded.split(";")) {
+            if (entry.isBlank()) continue;
+            String[] parts = entry.split("\\|");
+            if (parts.length != 11) continue;
+            try {
+                String key = parts[0];
+                int slot = Integer.parseInt(parts[1]);
+                if (slot < 0 || slot >= 3) continue;
+                CameraState state = new CameraState(
+                        Float.parseFloat(parts[2]),
+                        Float.parseFloat(parts[3]),
+                        Double.parseDouble(parts[4]),
+                        Double.parseDouble(parts[5]),
+                        Double.parseDouble(parts[6]),
+                        Double.parseDouble(parts[7]),
+                        Double.parseDouble(parts[8]),
+                        Double.parseDouble(parts[9]),
+                        Boolean.parseBoolean(parts[10]));
+                CAMERA_BOOKMARKS.computeIfAbsent(key, ignored -> new CameraState[3])[slot] = state;
+            } catch (RuntimeException ignored) {
+                // Ignore one malformed bookmark and keep loading the remaining slots.
+            }
+        }
+    }
+
+    private static void persistBookmarks() {
+        StringBuilder encoded = new StringBuilder();
+        for (Map.Entry<String, CameraState[]> entry : CAMERA_BOOKMARKS.entrySet()) {
+            CameraState[] states = entry.getValue();
+            for (int slot = 0; slot < states.length; ++slot) {
+                CameraState state = states[slot];
+                if (state == null) continue;
+                if (encoded.length() > 0) encoded.append(';');
+                encoded.append(entry.getKey()).append('|')
+                        .append(slot).append('|')
+                        .append(state.yaw()).append('|')
+                        .append(state.pitch()).append('|')
+                        .append(state.zoom()).append('|')
+                        .append(state.panX()).append('|')
+                        .append(state.panY()).append('|')
+                        .append(state.centerX()).append('|')
+                        .append(state.centerY()).append('|')
+                        .append(state.centerZ()).append('|')
+                        .append(state.focused());
+            }
+        }
+        ClientConfig.VALUES.mapCameraBookmarks.set(encoded.toString());
+        ClientConfig.VALUES.mapCameraBookmarks.save();
     }
 
     private CameraState cameraState() {
