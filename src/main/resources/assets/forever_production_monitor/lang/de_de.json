@@ -260,6 +260,7 @@
   ,"screen.forever_production_monitor.settings.hud.hue": "Eigene Farbe: %s°"
   ,"screen.forever_production_monitor.settings.hud.x": "X-Abstand: %s"
   ,"screen.forever_production_monitor.settings.hud.y": "Y-Abstand: %s"
+  ,"screen.forever_production_monitor.settings.hud.live_preview": "Live-HUD-Vorschau"
   ,"screen.forever_production_monitor.map.filter.all": "Alle"
   ,"screen.forever_production_monitor.map.filter.devices": "Geräte"
   ,"screen.forever_production_monitor.map.filter.cables": "Kabel"

@@ -278,6 +278,9 @@ extends Screen {
         this.secondaryY = this.top + 62;
         this.controlsY = this.top + 62;
         this.auxiliaryControlsY = this.top + 86;
+        if (this.viewMode == ViewMode.COMPONENTS) {
+            this.controlsY = this.auxiliaryControlsY;
+        }
         this.compactControls = innerWidth < 520 && (this.viewMode == ViewMode.PRODUCTION || this.viewMode == ViewMode.DEVICES);
         this.contentY = switch (this.viewMode) {
             case DASHBOARD -> this.top + 91;

@@ -169,6 +169,7 @@ extends Screen {
         this.addRenderableWidget(new SettingSlider(this.gridX(11, columns), this.gridY(11, columns), this.gridWidth(11, columns), "settings.hud.hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(), d -> ClientConfig.VALUES.hudCustomHue.set(((int)Math.round(d))), false));
         this.addRenderableWidget(new SettingSlider(this.gridX(12, columns), this.gridY(12, columns), this.gridWidth(12, columns), "settings.hud.x", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudXOffset.get()).intValue(), d -> ClientConfig.VALUES.hudXOffset.set(((int)Math.round(d))), false));
         this.addRenderableWidget(new SettingSlider(this.gridX(13, columns), this.gridY(13, columns), this.gridWidth(13, columns), "settings.hud.y", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(), d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
+        this.previewTop = this.gridY(13, columns) + 28;
     }
 
     private void buildAnimations(int n, int n2) {
@@ -234,12 +235,37 @@ extends Screen {
         if (this.category == Category.INTERFACE) {
             this.drawInterfacePreview(guiGraphics, palette, interfaceStyle);
         }
-        if (this.category == Category.HUD && this.panelWidth >= 620 && this.panelHeight >= 420) {
-            ProductionHud.renderPreview(guiGraphics);
+        if (this.category == Category.HUD) {
+            this.drawHudPreview(guiGraphics, palette);
         }
         if (this.themeDropdown != null) {
+            guiGraphics.flush();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0f, 0.0f, 300.0f);
             this.themeDropdown.render(guiGraphics, n, n2, f);
+            guiGraphics.flush();
+            guiGraphics.pose().popPose();
         }
+    }
+
+    private void drawHudPreview(GuiGraphics guiGraphics, InterfaceTheme.Palette palette) {
+        int previewHeight = this.contentBottom - this.previewTop;
+        if (previewHeight < 72) {
+            return;
+        }
+        int previewRight = this.contentLeft + this.contentWidth;
+        guiGraphics.fill(this.contentLeft, this.previewTop, previewRight, this.contentBottom, palette.tableOuter());
+        guiGraphics.fill(this.contentLeft + 1, this.previewTop + 1, previewRight - 1, this.previewTop + 19, palette.tableHeader());
+        guiGraphics.drawCenteredString(this.font, ProductionMonitorThemeScreen.translated("settings.hud.live_preview", new Object[0]), this.contentLeft + this.contentWidth / 2, this.previewTop + 6, palette.text());
+        InterfaceTheme.drawTableDecoration(guiGraphics, this.contentLeft, this.previewTop, this.contentWidth, previewHeight);
+        guiGraphics.flush();
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0f, 0.0f, 200.0f);
+        guiGraphics.enableScissor(this.contentLeft + 1, this.previewTop + 20, previewRight - 1, this.contentBottom - 1);
+        ProductionHud.renderPreview(guiGraphics, this.contentLeft + 6, this.previewTop + 24, previewRight - 6, this.contentBottom - 6);
+        guiGraphics.flush();
+        guiGraphics.disableScissor();
+        guiGraphics.pose().popPose();
     }
 
     private void drawInterfacePreview(GuiGraphics guiGraphics, InterfaceTheme.Palette palette, ClientConfig.InterfaceStyle interfaceStyle) {

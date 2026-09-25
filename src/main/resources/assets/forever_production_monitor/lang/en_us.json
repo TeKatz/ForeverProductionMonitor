@@ -260,6 +260,7 @@
   ,"screen.forever_production_monitor.settings.hud.hue": "Custom hue: %s°"
   ,"screen.forever_production_monitor.settings.hud.x": "X offset: %s"
   ,"screen.forever_production_monitor.settings.hud.y": "Y offset: %s"
+  ,"screen.forever_production_monitor.settings.hud.live_preview": "Live HUD preview"
   ,"screen.forever_production_monitor.map.filter.all": "All"
   ,"screen.forever_production_monitor.map.filter.devices": "Devices"
   ,"screen.forever_production_monitor.map.filter.cables": "Cables"
