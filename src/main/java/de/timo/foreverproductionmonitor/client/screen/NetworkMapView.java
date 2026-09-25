@@ -472,8 +472,9 @@ final class NetworkMapView {
         double maxY = this.sceneContentBottom() + margin;
 
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        double[] projected = new double[2];
         for (int index : visible) {
-            double[] projected = this.project(nodes.get(index));
+            this.project(nodes.get(index), projected);
             if (projected[0] >= minX && projected[0] <= maxX
                     && projected[1] >= minY && projected[1] <= maxY) {
                 this.frameNodeIndices.add(index);
@@ -1336,9 +1337,10 @@ final class NetworkMapView {
         double hitRadius = Math.max(5.0, Math.min(18.0, this.scale() * 0.7));
         double hitRadiusSquared = hitRadius * hitRadius;
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
+        double[] projected = new double[2];
 
         for (int index : this.frameNodeIndices) {
-            double[] projected = this.project(nodes.get(index));
+            this.project(nodes.get(index), projected);
             double dx = (double)mouseX - projected[0];
             double dy = (double)mouseY - projected[1];
             double distance = dx * dx + dy * dy;
@@ -1349,29 +1351,38 @@ final class NetworkMapView {
         }
     }
 
-    private double[] project(MonitorNetwork.MapNode mapNode) {
-        return this.project(mapNode.pos(), mapNode.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART ? mapNode.side() : -1);
+    private void project(MonitorNetwork.MapNode mapNode, double[] out) {
+        this.project(
+                mapNode.pos(),
+                mapNode.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART
+                        ? mapNode.side() : -1,
+                out);
     }
 
-    private double[] project(BlockPos blockPos, int n) {
-        double d = 0.0;
-        double d2 = 0.0;
-        double d3 = 0.0;
-        if (n >= 0) {
-            Direction direction = Direction.from3DDataValue((int)n);
-            d = (double)direction.getStepX() * 0.38;
-            d2 = (double)direction.getStepY() * 0.38;
-            d3 = (double)direction.getStepZ() * 0.38;
+    private void project(BlockPos blockPos, int side, double[] out) {
+        double sideX = 0.0;
+        double sideY = 0.0;
+        double sideZ = 0.0;
+        if (side >= 0) {
+            Direction direction = Direction.from3DDataValue(side);
+            sideX = (double)direction.getStepX() * 0.38;
+            sideY = (double)direction.getStepY() * 0.38;
+            sideZ = (double)direction.getStepZ() * 0.38;
         }
-        double d4 = (double)blockPos.getX() + 0.5 + d - this.centerX;
-        double d5 = (double)blockPos.getY() + 0.5 + d2 - this.centerY;
-        double d6 = (double)blockPos.getZ() + 0.5 + d3 - this.centerZ;
-        double d7 = Math.toRadians(this.yaw);
-        double d8 = Math.toRadians(this.pitch);
-        double d9 = d4 * Math.cos(d7) + d6 * Math.sin(d7);
-        double d10 = -d4 * Math.sin(d7) + d6 * Math.cos(d7);
-        double d11 = d5 * Math.cos(d8) - d10 * Math.sin(d8);
-        return new double[]{(double)(this.left + this.sceneRight()) * 0.5 + this.panX + d9 * this.scale(), (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5 + this.panY - d11 * this.scale()};
+
+        double localX = (double)blockPos.getX() + 0.5 + sideX - this.centerX;
+        double localY = (double)blockPos.getY() + 0.5 + sideY - this.centerY;
+        double localZ = (double)blockPos.getZ() + 0.5 + sideZ - this.centerZ;
+        double yawRadians = Math.toRadians(this.yaw);
+        double pitchRadians = Math.toRadians(this.pitch);
+        double rotatedX = localX * Math.cos(yawRadians) + localZ * Math.sin(yawRadians);
+        double rotatedZ = -localX * Math.sin(yawRadians) + localZ * Math.cos(yawRadians);
+        double projectedY = localY * Math.cos(pitchRadians) - rotatedZ * Math.sin(pitchRadians);
+
+        out[0] = (double)(this.left + this.sceneRight()) * 0.5
+                + this.panX + rotatedX * this.scale();
+        out[1] = (double)(this.sceneContentTop() + this.sceneContentBottom()) * 0.5
+                + this.panY - projectedY * this.scale();
     }
 
     private void recomputeFit() {
