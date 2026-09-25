@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="forever_production_monitor"
-version="3.4.8"
+version="3.5.0"
 displayName="Forever Production Monitor"
 description='''An AE2 production dashboard with a live 3D network map, pinned resources, alarms, storage and channel diagnostics.'''
 authors="Timo & OpenAI"
