@@ -121,38 +121,41 @@ extends Screen {
 
     private void buildMap(int n, int n2) {
         int n3 = (n2 - 8) / 2;
+        int gap = 4;
+        int column = (n2 - gap * 3) / 4;
         this.addToggle(n, this.contentTop, n3, ProductionMonitorThemeScreen.translated("settings.map.default_view", ProductionMonitorThemeScreen.translated("settings.map.view." + ProductionMonitorThemeScreen.lower((Enum)ClientConfig.VALUES.mapDefaultView.get()), new Object[0])), () -> ClientConfig.VALUES.mapDefaultView.set(((ClientConfig.MapDefaultView)((Object)((Object)ClientConfig.VALUES.mapDefaultView.get()))).next()));
         this.addToggle(n + n3 + 8, this.contentTop, n3, ProductionMonitorThemeScreen.booleanLabel("settings.map.remember", (Boolean)ClientConfig.VALUES.mapRememberCamera.get()), () -> ClientConfig.VALUES.mapRememberCamera.set(!ClientConfig.VALUES.mapRememberCamera.get()));
-        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 28, n3, "settings.map.rotation", 0.15, 1.5, (Double)ClientConfig.VALUES.mapRotationSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapRotationSensitivity).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(n + n3 + 8, this.contentTop + 28, n3, "settings.map.pan", 0.25, 2.0, (Double)ClientConfig.VALUES.mapPanSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapPanSensitivity).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 52, n3, "settings.map.zoom", 0.35, 2.0, (Double)ClientConfig.VALUES.mapZoomSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapZoomSensitivity).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(n + n3 + 8, this.contentTop + 52, n3, "settings.map.focus_zoom", 1.0, 6.0, (Double)ClientConfig.VALUES.mapFocusZoom.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapFocusZoom).set(arg_0), true));
-        this.addToggle(n, this.contentTop + 80, n3, ProductionMonitorThemeScreen.booleanLabel("settings.map.invert_horizontal", (Boolean)ClientConfig.VALUES.mapInvertHorizontal.get()), () -> ClientConfig.VALUES.mapInvertHorizontal.set(!ClientConfig.VALUES.mapInvertHorizontal.get()));
-        this.addToggle(n + n3 + 8, this.contentTop + 80, n3, ProductionMonitorThemeScreen.booleanLabel("settings.map.invert_vertical", (Boolean)ClientConfig.VALUES.mapInvertVertical.get()), () -> ClientConfig.VALUES.mapInvertVertical.set(!ClientConfig.VALUES.mapInvertVertical.get()));
-        this.addToggle(n, this.contentTop + 108, n3, ProductionMonitorThemeScreen.booleanLabel("settings.map.controls", (Boolean)ClientConfig.VALUES.mapShowControls.get()), () -> ClientConfig.VALUES.mapShowControls.set(!ClientConfig.VALUES.mapShowControls.get()));
-        this.addToggle(n + n3 + 8, this.contentTop + 108, n3, ProductionMonitorThemeScreen.booleanLabel("settings.map.details", (Boolean)ClientConfig.VALUES.mapShowDetails.get()), () -> ClientConfig.VALUES.mapShowDetails.set(!ClientConfig.VALUES.mapShowDetails.get()));
+        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 28, column, "settings.map.rotation", 0.15, 1.5, (Double)ClientConfig.VALUES.mapRotationSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapRotationSensitivity).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(n + column + gap, this.contentTop + 28, column, "settings.map.pan", 0.25, 2.0, (Double)ClientConfig.VALUES.mapPanSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapPanSensitivity).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(n + (column + gap) * 2, this.contentTop + 28, column, "settings.map.zoom", 0.35, 2.0, (Double)ClientConfig.VALUES.mapZoomSensitivity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapZoomSensitivity).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(n + (column + gap) * 3, this.contentTop + 28, n2 - column * 3 - gap * 3, "settings.map.focus_zoom", 1.0, 6.0, (Double)ClientConfig.VALUES.mapFocusZoom.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.mapFocusZoom).set(arg_0), true));
+        this.addToggle(n, this.contentTop + 56, column, ProductionMonitorThemeScreen.booleanLabel("settings.map.invert_horizontal", (Boolean)ClientConfig.VALUES.mapInvertHorizontal.get()), () -> ClientConfig.VALUES.mapInvertHorizontal.set(!ClientConfig.VALUES.mapInvertHorizontal.get()));
+        this.addToggle(n + column + gap, this.contentTop + 56, column, ProductionMonitorThemeScreen.booleanLabel("settings.map.invert_vertical", (Boolean)ClientConfig.VALUES.mapInvertVertical.get()), () -> ClientConfig.VALUES.mapInvertVertical.set(!ClientConfig.VALUES.mapInvertVertical.get()));
+        this.addToggle(n + (column + gap) * 2, this.contentTop + 56, column, ProductionMonitorThemeScreen.booleanLabel("settings.map.controls", (Boolean)ClientConfig.VALUES.mapShowControls.get()), () -> ClientConfig.VALUES.mapShowControls.set(!ClientConfig.VALUES.mapShowControls.get()));
+        this.addToggle(n + (column + gap) * 3, this.contentTop + 56, n2 - column * 3 - gap * 3, ProductionMonitorThemeScreen.booleanLabel("settings.map.details", (Boolean)ClientConfig.VALUES.mapShowDetails.get()), () -> ClientConfig.VALUES.mapShowDetails.set(!ClientConfig.VALUES.mapShowDetails.get()));
     }
 
     private void buildHud(int n, int n2) {
-        int n3 = (n2 - 8) / 2;
-        this.addToggle(n, this.contentTop, n3, ProductionMonitorThemeScreen.booleanLabel("settings.hud.enabled", (Boolean)ClientConfig.VALUES.hudEnabled.get()), () -> ClientConfig.VALUES.hudEnabled.set(!ClientConfig.VALUES.hudEnabled.get()));
-        this.addToggle(n + n3 + 8, this.contentTop, n3, ProductionMonitorThemeScreen.anchorLabel(), () -> {
+        int gap = 4;
+        int column = (n2 - gap * 3) / 4;
+        this.addToggle(n, this.contentTop, column, ProductionMonitorThemeScreen.booleanLabel("settings.hud.enabled", (Boolean)ClientConfig.VALUES.hudEnabled.get()), () -> ClientConfig.VALUES.hudEnabled.set(!ClientConfig.VALUES.hudEnabled.get()));
+        this.addToggle(n + column + gap, this.contentTop, column, ProductionMonitorThemeScreen.anchorLabel(), () -> {
             ClientConfig.HudAnchor[] hudAnchorArray = ClientConfig.HudAnchor.values();
             ClientConfig.VALUES.hudAnchor.set(hudAnchorArray[(((ClientConfig.HudAnchor)((Object)((Object)ClientConfig.VALUES.hudAnchor.get()))).ordinal() + 1) % hudAnchorArray.length]);
         });
-        this.addToggle(n, this.contentTop + 28, n3, ProductionMonitorThemeScreen.modeLabel(), () -> ClientConfig.VALUES.hudMode.set(((MonitorNetwork.HudMode)((Object)((Object)ClientConfig.VALUES.hudMode.get()))).next()));
-        this.addToggle(n + n3 + 8, this.contentTop + 28, n3, ProductionMonitorThemeScreen.frameLabel(), () -> ClientConfig.VALUES.hudFrameStyle.set(((ClientConfig.HudFrameStyle)((Object)((Object)ClientConfig.VALUES.hudFrameStyle.get()))).next()));
-        this.addToggle(n, this.contentTop + 56, n2, ProductionMonitorThemeScreen.booleanLabel("settings.hud.match", (Boolean)ClientConfig.VALUES.matchHudTheme.get()), () -> ClientConfig.VALUES.matchHudTheme.set(!ClientConfig.VALUES.matchHudTheme.get()));
-        int n4 = (n2 - 10) / 3;
-        this.addToggle(n, this.contentTop + 84, n4, ProductionMonitorThemeScreen.booleanLabel("settings.hud.icons", (Boolean)ClientConfig.VALUES.hudShowIcons.get()), () -> ClientConfig.VALUES.hudShowIcons.set(!ClientConfig.VALUES.hudShowIcons.get()));
-        this.addToggle(n + n4 + 5, this.contentTop + 84, n4, ProductionMonitorThemeScreen.booleanLabel("settings.hud.names", (Boolean)ClientConfig.VALUES.hudShowNames.get()), () -> ClientConfig.VALUES.hudShowNames.set(!ClientConfig.VALUES.hudShowNames.get()));
-        this.addToggle(n + (n4 + 5) * 2, this.contentTop + 84, n2 - n4 * 2 - 10, ProductionMonitorThemeScreen.booleanLabel("settings.hud.values", (Boolean)ClientConfig.VALUES.hudShowValues.get()), () -> ClientConfig.VALUES.hudShowValues.set(!ClientConfig.VALUES.hudShowValues.get()));
-        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 112, n3, "settings.hud.entries", 1.0, 10.0, ((Integer)ClientConfig.VALUES.hudEntryCount.get()).intValue(), d -> ClientConfig.VALUES.hudEntryCount.set(((int)Math.round(d))), false));
-        this.addRenderableWidget(new SettingSlider(n + n3 + 8, this.contentTop + 112, n3, "settings.hud.scale", 0.5, 2.0, (Double)ClientConfig.VALUES.hudScale.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.hudScale).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 136, n3, "settings.hud.opacity", 0.0, 1.0, (Double)ClientConfig.VALUES.hudOpacity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.hudOpacity).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(n + n3 + 8, this.contentTop + 136, n3, "settings.hud.hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(), d -> ClientConfig.VALUES.hudCustomHue.set(((int)Math.round(d))), false));
-        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 160, n3, "settings.hud.x", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudXOffset.get()).intValue(), d -> ClientConfig.VALUES.hudXOffset.set(((int)Math.round(d))), false));
-        this.addRenderableWidget(new SettingSlider(n + n3 + 8, this.contentTop + 160, n3, "settings.hud.y", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(), d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
+        this.addToggle(n + (column + gap) * 2, this.contentTop, column, ProductionMonitorThemeScreen.modeLabel(), () -> ClientConfig.VALUES.hudMode.set(((MonitorNetwork.HudMode)((Object)((Object)ClientConfig.VALUES.hudMode.get()))).next()));
+        this.addToggle(n + (column + gap) * 3, this.contentTop, n2 - column * 3 - gap * 3, ProductionMonitorThemeScreen.frameLabel(), () -> ClientConfig.VALUES.hudFrameStyle.set(((ClientConfig.HudFrameStyle)((Object)((Object)ClientConfig.VALUES.hudFrameStyle.get()))).next()));
+        this.addToggle(n, this.contentTop + 28, column, ProductionMonitorThemeScreen.booleanLabel("settings.hud.match", (Boolean)ClientConfig.VALUES.matchHudTheme.get()), () -> ClientConfig.VALUES.matchHudTheme.set(!ClientConfig.VALUES.matchHudTheme.get()));
+        this.addToggle(n + column + gap, this.contentTop + 28, column, ProductionMonitorThemeScreen.booleanLabel("settings.hud.icons", (Boolean)ClientConfig.VALUES.hudShowIcons.get()), () -> ClientConfig.VALUES.hudShowIcons.set(!ClientConfig.VALUES.hudShowIcons.get()));
+        this.addToggle(n + (column + gap) * 2, this.contentTop + 28, column, ProductionMonitorThemeScreen.booleanLabel("settings.hud.names", (Boolean)ClientConfig.VALUES.hudShowNames.get()), () -> ClientConfig.VALUES.hudShowNames.set(!ClientConfig.VALUES.hudShowNames.get()));
+        this.addToggle(n + (column + gap) * 3, this.contentTop + 28, n2 - column * 3 - gap * 3, ProductionMonitorThemeScreen.booleanLabel("settings.hud.values", (Boolean)ClientConfig.VALUES.hudShowValues.get()), () -> ClientConfig.VALUES.hudShowValues.set(!ClientConfig.VALUES.hudShowValues.get()));
+        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 56, column, "settings.hud.entries", 1.0, 10.0, ((Integer)ClientConfig.VALUES.hudEntryCount.get()).intValue(), d -> ClientConfig.VALUES.hudEntryCount.set(((int)Math.round(d))), false));
+        this.addRenderableWidget(new SettingSlider(n + column + gap, this.contentTop + 56, column, "settings.hud.scale", 0.5, 2.0, (Double)ClientConfig.VALUES.hudScale.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.hudScale).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(n + (column + gap) * 2, this.contentTop + 56, column, "settings.hud.opacity", 0.0, 1.0, (Double)ClientConfig.VALUES.hudOpacity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.hudOpacity).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(n + (column + gap) * 3, this.contentTop + 56, n2 - column * 3 - gap * 3, "settings.hud.hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(), d -> ClientConfig.VALUES.hudCustomHue.set(((int)Math.round(d))), false));
+        int half = (n2 - 8) / 2;
+        this.addRenderableWidget(new SettingSlider(n, this.contentTop + 84, half, "settings.hud.x", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudXOffset.get()).intValue(), d -> ClientConfig.VALUES.hudXOffset.set(((int)Math.round(d))), false));
+        this.addRenderableWidget(new SettingSlider(n + half + 8, this.contentTop + 84, half, "settings.hud.y", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(), d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
     }
 
     private void addToggle(int n, int n2, int n3, Component component, Runnable runnable) {
@@ -390,7 +393,7 @@ extends Screen {
                 return;
             }
             ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.values();
-            int rows = Math.min(MAX_VISIBLE, styles.length);
+            int rows = this.visibleRows();
             int listY = this.getY() + this.getHeight();
             graphics.fill(this.getX(), listY, this.getX() + this.getWidth(), listY + rows * 18 + 2, palette.border());
             for (int row = 0; row < rows; ++row) {
@@ -414,7 +417,7 @@ extends Screen {
             if (this.open) {
                 int row = (int)((mouseY - this.getY() - this.getHeight() - 1) / 18.0);
                 ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.values();
-                if (mouseX >= this.getX() && mouseX < this.getX() + this.getWidth() && row >= 0 && row < Math.min(MAX_VISIBLE, styles.length)) {
+                if (mouseX >= this.getX() && mouseX < this.getX() + this.getWidth() && mouseY >= this.getY() + this.getHeight() && row >= 0 && row < this.visibleRows()) {
                     this.selection.accept(styles[this.scroll + row]);
                     this.open = false;
                     return true;
@@ -428,9 +431,14 @@ extends Screen {
             if (!this.open || scrollY == 0.0) {
                 return false;
             }
-            int max = Math.max(0, ClientConfig.InterfaceStyle.values().length - MAX_VISIBLE);
+            int max = Math.max(0, ClientConfig.InterfaceStyle.values().length - this.visibleRows());
             this.scroll = Math.max(0, Math.min(max, this.scroll + (scrollY < 0.0 ? 1 : -1)));
             return true;
+        }
+
+        private int visibleRows() {
+            int available = ProductionMonitorThemeScreen.this.top + ProductionMonitorThemeScreen.this.panelHeight - 33 - this.getY() - this.getHeight();
+            return Math.min(MAX_VISIBLE, Math.max(3, Math.min(ClientConfig.InterfaceStyle.values().length, available / 18)));
         }
 
         protected void updateWidgetNarration(NarrationElementOutput output) {

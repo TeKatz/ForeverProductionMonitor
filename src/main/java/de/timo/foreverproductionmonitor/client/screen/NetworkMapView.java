@@ -672,7 +672,7 @@ final class NetworkMapView {
         }
         ItemStack itemStack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(mapNode.visualId()));
         guiGraphics.renderItem(itemStack, n, this.top + 45);
-        guiGraphics.drawWordWrap(this.font, (FormattedText)Component.literal((String)mapNode.name()), n + 22, this.top + 46, Math.max(40, n2 - n - 22), palette.text());
+        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mapNode.name(), Math.max(40, n2 - n - 22)), n + 22, this.top + 46, palette.text(), false);
         int n3 = this.top + 76;
         this.drawDetailLine(guiGraphics, n, n2, n3, (Component)Component.translatable((String)"screen.forever_production_monitor.map.position"), mapNode.pos().toShortString(), palette.text());
         this.drawDetailLine(guiGraphics, n, n2, n3 += 17, (Component)Component.translatable((String)"screen.forever_production_monitor.map.state"), Component.translatable((String)("screen.forever_production_monitor.map.state." + mapNode.state().name().toLowerCase(Locale.ROOT))).getString(), NetworkMapView.stateColorInt(mapNode.state()));

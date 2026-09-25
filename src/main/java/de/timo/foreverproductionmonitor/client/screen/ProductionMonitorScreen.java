@@ -111,7 +111,7 @@ extends Screen {
         this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
         this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
         this.settingsButton = (GearButton)this.addRenderableWidget(new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
-        int n5 = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
+        int n5 = this.panelWidth < 520 ? 105 : Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
         this.search = new EditBox(this.font, this.left + 18, this.top + 62, n5, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.search"));
         this.search.setHint((Component)Component.translatable((String)"screen.forever_production_monitor.search"));
         this.search.setMaxLength(64);
@@ -136,8 +136,8 @@ extends Screen {
         this.nbtItemsButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.nbt_items"), button -> this.switchView(ViewMode.COMPONENTS), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 62, n4, 20));
         int n6 = this.left + this.panelWidth - 132;
         int n7 = this.left + this.panelWidth - 52;
-        this.sortX = this.left + 18 + n5 + 12;
-        this.sortWidth = Math.max(90, n6 - 12 - this.sortX);
+        this.sortX = this.left + 18 + n5 + (this.panelWidth < 520 ? 6 : 12);
+        this.sortWidth = Math.max(60, n6 - (this.panelWidth < 520 ? 6 : 12) - this.sortX);
         this.sortButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.sortLabel(), button -> {
             if (this.viewMode == ViewMode.DEVICES) {
                 this.deviceSort = this.deviceSort.next();
@@ -194,11 +194,11 @@ extends Screen {
         }
         this.search.active = this.search.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.DASHBOARD;
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
-        int n = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
+        int n = this.panelWidth < 520 ? 105 : Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
         this.search.setY(this.viewMode == ViewMode.MAP ? this.top + this.panelHeight - 56 : this.top + 62);
         if (this.viewMode == ViewMode.COMPONENTS) {
-            this.search.setX(this.left + 242);
-            this.search.setWidth(Math.max(120, this.left + this.panelWidth - 144 - this.search.getX()));
+            this.search.setX(this.left + (this.panelWidth < 520 ? 120 : 242));
+            this.search.setWidth(Math.max(60, this.left + this.panelWidth - 144 - this.search.getX()));
         } else {
             this.search.setX(this.left + 18);
             this.search.setWidth(this.viewMode == ViewMode.MAP ? Math.min(260, this.panelWidth - 36) : n);
@@ -425,8 +425,9 @@ extends Screen {
         int n5 = this.left + 18;
         int n6 = this.left + this.panelWidth - 18;
         int n7 = this.top + this.panelHeight - 42;
-        int n8 = n6 - 176;
-        int n9 = n6 - 300;
+        boolean compact = this.panelWidth < 520;
+        int n8 = n6 - (compact ? 92 : 176);
+        int n9 = n6 - (compact ? 170 : 300);
         guiGraphics.fill(n5, n4, n6, n7, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 20, palette.tableHeader());
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.pinned"), n5 + 24, n4 + 6, palette.text(), false);
@@ -452,7 +453,7 @@ extends Screen {
             guiGraphics.fill(n5 + 1, n14, n5 + 4, n14 + 27, n16);
             AEKeyRendering.drawInGui((Minecraft)this.minecraft, (GuiGraphics)guiGraphics, (int)(n5 + 7), (int)(n14 + 5), (AEKey)dashboardEntry2.key());
             Component mutableComponent = dashboardEntry2.kind() == MonitorNetwork.EntryKind.ENERGY ? Component.translatable((String)"screen.forever_production_monitor.energy") : AEKeyRendering.getDisplayName((AEKey)dashboardEntry2.key());
-            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mutableComponent.getString(), n9 - n5 - 80), n5 + 29, n14 + 5, palette.text(), false);
+            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mutableComponent.getString(), Math.max(32, n9 - n5 - 80)), n5 + 29, n14 + 5, palette.text(), false);
             guiGraphics.drawString(this.font, dashboardEntry2.key().getId().toString(), n5 + 29, n14 + 16, palette.muted(), false);
             this.drawRight(guiGraphics, (Component)Component.literal((String)(dashboardEntry2.infinite() ? "Infinite" : ProductionMonitorScreen.formatStored(dashboardEntry2.stored(), dashboardEntry2.kind()))), n9, n14 + 9, dashboardEntry2.infinite() ? palette.accentB() : palette.text());
             this.drawRight(guiGraphics, (Component)Component.literal((String)(dashboardEntry2.infinite() ? "\u2014" : ProductionMonitorScreen.formatRate(dashboardEntry2.averagePerMinute(), dashboardEntry2.kind()))), n8, n14 + 9, ProductionMonitorScreen.rateColor(dashboardEntry2.averagePerMinute()));
@@ -780,7 +781,7 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(n, n2, n + n3, n2 + 43, palette.tableOuter());
         guiGraphics.fill(n + 1, n2 + 1, n + n3 - 1, n2 + 42, palette.rowEven());
-        guiGraphics.drawCenteredString(this.font, component, n + n3 / 2, n2 + 8, palette.muted());
+        guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), Math.max(12, n3 - 6)), n + n3 / 2, n2 + 8, palette.muted());
         guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)string), n + n3 / 2, n2 + 25, n4);
     }
 

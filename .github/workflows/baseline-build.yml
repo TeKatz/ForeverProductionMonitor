@@ -13,9 +13,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Build reconstructed 2.2.1
+      - name: Build mod
         run: ./gradlew clean build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: reconstructed-2.2.1
+          name: ForeverProductionMonitor-build
           path: build/libs/*.jar
