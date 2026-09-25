@@ -1004,8 +1004,35 @@ extends AENetworkedBlockEntity {
         if (blockPos == null) {
             return null;
         }
+
+        // A logical AE grid can span multiple dimensions through Quantum Bridges. A position
+        // alone is therefore not a complete device location: the same coordinates can even
+        // exist in several dimensions. Preserve the owning grid node's real dimension so the
+        // locator never mistakes the monitor dimension for the device dimension.
+        ResourceLocation dimension = null;
+        try {
+            Level nodeLevel = iGridNode.getLevel();
+            if (nodeLevel != null) {
+                dimension = nodeLevel.dimension().location();
+            }
+        } catch (RuntimeException ignored) {
+        }
+        if (dimension == null) {
+            Level foundLevel = ProductionMonitorBlockEntity.findLevel(object2, 0);
+            if (foundLevel == null) {
+                foundLevel = ProductionMonitorBlockEntity.findLevel(object, 0);
+            }
+            if (foundLevel != null) {
+                dimension = foundLevel.dimension().location();
+            }
+        }
+        if (dimension == null) {
+            return null;
+        }
+
         Direction direction = ProductionMonitorBlockEntity.findDirection(object);
-        return new DeviceLocation(blockPos.immutable(), direction == null ? -1 : direction.get3DDataValue());
+        return new DeviceLocation(dimension, blockPos.immutable(),
+                direction == null ? -1 : direction.get3DDataValue());
     }
 
     private static BlockPos findBlockPos(Object object, int n) {
@@ -1410,7 +1437,7 @@ extends AENetworkedBlockEntity {
     private record QuantumBridgeEndpoint(ResourceLocation dimension, BlockPos pos) {
     }
 
-    public record DeviceLocation(BlockPos pos, int side) {
+    public record DeviceLocation(ResourceLocation dimension, BlockPos pos, int side) {
         public static final int NO_SIDE = -1;
     }
 
