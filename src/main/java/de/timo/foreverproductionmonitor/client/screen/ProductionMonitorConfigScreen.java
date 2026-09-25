@@ -149,6 +149,7 @@ extends Screen {
             renderable.render(guiGraphics, n, n2, f);
         }
         ProductionHud.renderPreview(guiGraphics);
+        guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)"Forever Production Monitor 2.2.2"), n4 + n3 / 2, n6 + n7 - 11, -7366746);
     }
 
     public void onClose() {
