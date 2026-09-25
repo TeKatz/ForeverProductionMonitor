@@ -108,14 +108,15 @@ public final class ProductionHud {
             n9 = Math.max(viewportTop, Math.min(Math.max(viewportTop, viewportBottom - n3), n9));
         }
         int n10 = (int)Math.round((Double)ClientConfig.VALUES.hudOpacity.get() * 255.0);
-        ClientConfig.HudFrameStyle hudFrameStyle = ClientConfig.effectiveHudFrameStyle();
-        FrameColors frameColors = ProductionHud.frameColors(hudFrameStyle);
+        ClientConfig.InterfaceStyle hudTheme = ClientConfig.effectiveHudTheme();
+        ClientConfig.HudLayoutStyle hudLayout = (ClientConfig.HudLayoutStyle)((Object)ClientConfig.VALUES.hudLayoutStyle.get());
+        HudThemeRenderer.Colors frameColors = HudThemeRenderer.colors(hudTheme);
         guiGraphics.pose().pushPose();
         guiGraphics.pose().scale((float)d, (float)d, 1.0f);
-        ProductionHud.renderFrame(guiGraphics, n8, n9, n3, n10, hudFrameStyle, frameColors);
-        ProductionHud.renderThemeMark(guiGraphics, n8, n9, n10, hudFrameStyle, frameColors);
+        HudThemeRenderer.renderFrame(guiGraphics, n8, n9, n3, n10, hudTheme, hudLayout);
+        HudThemeRenderer.renderMark(guiGraphics, n8, n9, n10, hudTheme, hudLayout);
         MutableComponent mutableComponent = Component.translatable((String)("hud.forever_production_monitor.mode." + hudMode.name().toLowerCase(Locale.ROOT)));
-        int n11 = n8 + (hudFrameStyle == ClientConfig.HudFrameStyle.NONE ? 6 : 17);
+        int n11 = n8 + ((hudLayout == ClientConfig.HudLayoutStyle.NONE || hudLayout == ClientConfig.HudLayoutStyle.MINIMAL) ? 6 : 17);
         guiGraphics.drawString(minecraft.font, (Component)mutableComponent, n11, n9 + 6, frameColors.titleText() | 0xFF000000, false);
         if (list.isEmpty()) {
             MutableComponent mutableComponent2 = Component.translatable((String)("screen.forever_production_monitor.status." + status.name().toLowerCase(Locale.ROOT)));
@@ -125,7 +126,7 @@ public final class ProductionHud {
                 int n12;
                 MonitorNetwork.Entry entry = list.get(i);
                 int n13 = n9 + 18 + i * 17;
-                ProductionHud.renderRowBackground(guiGraphics, n8, n13, i, n10, hudFrameStyle, frameColors);
+                HudThemeRenderer.renderRow(guiGraphics, n8, n13, i, n10, hudTheme, hudLayout);
                 if (entry.alarmActive()) {
                     guiGraphics.fill(n8 + 1, n13, n8 + 188 - 1, n13 + 17, 1430196248);
                     guiGraphics.fill(n8 + 1, n13 + 2, n8 + 4, n13 + 17 - 2, -41624);

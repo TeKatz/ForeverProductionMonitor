@@ -41,6 +41,12 @@ public final class ClientConfig {
         };
     }
 
+    public static InterfaceStyle effectiveHudTheme() {
+        return (Boolean)ClientConfig.VALUES.matchHudTheme.get()
+                ? (InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get())
+                : (InterfaceStyle)((Object)ClientConfig.VALUES.hudThemeStyle.get());
+    }
+
     public static int effectiveHudCustomHue() {
         return (Boolean)ClientConfig.VALUES.matchHudTheme.get() != false ? (Integer)ClientConfig.VALUES.interfaceCustomHue.get() : (Integer)ClientConfig.VALUES.hudCustomHue.get();
     }
@@ -60,6 +66,10 @@ public final class ClientConfig {
         public final ModConfigSpec.DoubleValue hudOpacity;
         public final ModConfigSpec.EnumValue<MonitorNetwork.HudMode> hudMode;
         public final ModConfigSpec.EnumValue<HudFrameStyle> hudFrameStyle;
+        public final ModConfigSpec.EnumValue<InterfaceStyle> hudThemeStyle;
+        public final ModConfigSpec.EnumValue<HudLayoutStyle> hudLayoutStyle;
+        public final ModConfigSpec.BooleanValue hudAnimations;
+        public final ModConfigSpec.DoubleValue hudAnimationIntensity;
         public final ModConfigSpec.IntValue hudCustomHue;
         public final ModConfigSpec.IntValue hudEntryCount;
         public final ModConfigSpec.BooleanValue hudShowIcons;
@@ -106,8 +116,12 @@ public final class ClientConfig {
             this.hudScale = builder.comment("HUD scale").defineInRange("scale", 1.0, 0.5, 2.0);
             this.hudOpacity = builder.comment("HUD background opacity").defineInRange("opacity", 0.78, 0.0, 1.0);
             this.hudMode = builder.comment("Entries shown in the compact HUD").defineEnum("mode", (Enum)MonitorNetwork.HudMode.ACTIVITY);
-            this.hudFrameStyle = builder.comment("Visual frame style used by the compact HUD").defineEnum("frameStyle", (Enum)HudFrameStyle.FOREVER);
-            this.hudCustomHue = builder.comment("Hue used by the custom HUD frame, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
+            this.hudFrameStyle = builder.comment("Legacy compact HUD frame style kept for backwards compatibility").defineEnum("frameStyle", (Enum)HudFrameStyle.FOREVER);
+            this.hudThemeStyle = builder.comment("Independent visual theme used by the compact HUD when theme matching is disabled").defineEnum("theme", (Enum)InterfaceStyle.FOREVER);
+            this.hudLayoutStyle = builder.comment("Compact HUD frame geometry").defineEnum("layout", (Enum)HudLayoutStyle.FULL);
+            this.hudAnimations = builder.comment("Enable compact HUD theme animations").define("animations", true);
+            this.hudAnimationIntensity = builder.comment("Strength of compact HUD theme animations").defineInRange("animationIntensity", 0.35, 0.0, 1.0);
+            this.hudCustomHue = builder.comment("Hue used by the custom HUD theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
             this.hudEntryCount = builder.comment("Number of rows shown by the compact HUD").defineInRange("entryCount", 5, 1, 10);
             this.hudShowIcons = builder.comment("Show resource icons in compact HUD rows").define("showIcons", true);
             this.hudShowNames = builder.comment("Show resource names in compact HUD rows").define("showNames", true);
@@ -165,6 +179,18 @@ public final class ClientConfig {
         public HudFrameStyle next() {
             HudFrameStyle[] hudFrameStyleArray = HudFrameStyle.values();
             return hudFrameStyleArray[(this.ordinal() + 1) % hudFrameStyleArray.length];
+        }
+    }
+
+    public static enum HudLayoutStyle {
+        FULL,
+        COMPACT,
+        MINIMAL,
+        NONE;
+
+        public HudLayoutStyle next() {
+            HudLayoutStyle[] values = HudLayoutStyle.values();
+            return values[(this.ordinal() + 1) % values.length];
         }
     }
 

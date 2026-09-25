@@ -278,4 +278,13 @@
   ,"screen.forever_production_monitor.map.event.power_lost": "Power lost"
   ,"screen.forever_production_monitor.map.event.power_restored": "Power restored"
   ,"screen.forever_production_monitor.map.event.state_changed": "State changed"
+  ,"screen.forever_production_monitor.settings.hud.theme": "HUD theme: %s"
+  ,"screen.forever_production_monitor.settings.hud.theme_matched": "HUD theme: %s (matched)"
+  ,"screen.forever_production_monitor.settings.hud.layout": "Frame: %s"
+  ,"screen.forever_production_monitor.settings.hud.layout.full": "Full"
+  ,"screen.forever_production_monitor.settings.hud.layout.compact": "Compact"
+  ,"screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal"
+  ,"screen.forever_production_monitor.settings.hud.layout.none": "None"
+  ,"screen.forever_production_monitor.settings.hud.animations": "HUD animations: %s"
+  ,"screen.forever_production_monitor.settings.hud.animation_intensity": "HUD motion: %s"
 }

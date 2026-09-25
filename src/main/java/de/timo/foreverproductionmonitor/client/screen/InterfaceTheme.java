@@ -26,10 +26,10 @@ public final class InterfaceTheme {
             default -> throw new IncompatibleClassChangeError();
             case ClientConfig.InterfaceStyle.STANDARD -> new Palette(1510542095, -2063597568, -16118768, -233037784, -14078408, -15723751, -13617599, -14670804, -15065563, 1716344420, -14209995, -986379, -7103576, -8484972, -4406324, -9932418);
             case ClientConfig.InterfaceStyle.FOREVER -> new Palette(1695024397, -2063597568, -16054256, -233105373, -14015949, -15725290, -13423810, -14607318, -15001822, 1717452408, -14015436, -724745, -6647388, -2516414, -6591279, -10926747);
-            case ClientConfig.InterfaceStyle.AE2 -> new Palette(1610877970, -2063597568, -16379879, -233826272, -15257539, -16248037, -14928575, -15456721, -15720665, 1715515339, -15126212, -1378053, -7820876, -11941400, -6263328, -13214613);
+            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x7007080A, -2063597568, 0xFF2B2D33, 0xF1363940, 0xFF41444C, 0xFF15171B, 0xFF4B4F58, 0xFF292C32, 0xFF202329, 0x665E636D, 0xFF34373E, 0xFFF2F3F5, 0xFFA6A9B0, 0xFF8D929C, 0xFFC9CCD3, 0xFF5B606B);
             case ClientConfig.InterfaceStyle.ORITECH -> new Palette(1611466756, -2063597568, -15594745, -232974831, -13097705, -15594231, -12440805, -14148846, -14608881, 1718566173, -13294824, -3875, -5005171, -1606867, -1920177, -9354461);
             case ClientConfig.InterfaceStyle.MEKANISM -> new Palette(1610943760, -2063597568, -16314348, -233759712, -15125702, -16313833, -14597046, -15455697, -15719639, 1716709329, -15059395, -983041, -7227465, -14295865, -9633934, -13276048);
-            case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(1694893072, -2063597568, -16251631, -233237975, -13623228, -15923177, -12573350, -14412240, -14937816, 1719616216, -13492410, -462593, -5794122, -5026561, -19922, -9944441);
+            case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(0x76040308, -2063597568, 0xFF17151C, 0xF11D1A23, 0xFF2A2631, 0xFF0E0C12, 0xFF322D3A, 0xFF201C27, 0xFF18151E, 0x665C2B83, 0xFF28222F, 0xFFF1ECF6, 0xFFA39DA9, 0xFF8C43D6, 0xFFD39DFF, 0xFF54415F);
             case ClientConfig.InterfaceStyle.HOLOGRAPHIC -> new Palette(1207962642, 0x65000000, -16576233, -653254616, -652592314, -653978341, -534754215, -921423816, -921885652, 1885140223, -652658108, -1442049, -7617847, -11671041, -6264321, -13009782);
             case ClientConfig.InterfaceStyle.MONOCHROME -> new Palette(0x58000000, Integer.MIN_VALUE, -16250614, -233169889, -14013135, -15921391, -13091775, -14539479, -15000031, 1717528174, -13947085, -723724, -6578525, -2631204, -8551800, -10788762);
             case ClientConfig.InterfaceStyle.MINIMAL -> new Palette(0x39000000, 0x45000000, 0, -401139168, -400744151, -653389546, -400085963, -652533978, -652862944, 1429881164, -400480722, -855051, -7169628, -4866873, -9142903, -12564654);
@@ -40,7 +40,7 @@ public final class InterfaceTheme {
             case ClientConfig.InterfaceStyle.AURORA -> new Palette(0x72020B18, -2063597568, 0xFF071B27, 0xF10A2730, 0xFF103A42, 0xFF061820, 0xFF124B50, 0xFF0B3036, 0xFF08262D, 0x6656FFD7, 0xFF0D3B40, 0xFFE3FFF8, 0xFF75B8AE, 0xFF38E6C1, 0xFFC55CFF, 0xFF27776E);
             case ClientConfig.InterfaceStyle.REDSTONE -> new Palette(0x74100000, -2063597568, 0xFF270909, 0xF1321010, 0xFF461414, 0xFF1B0707, 0xFF5A1919, 0xFF361010, 0xFF2A0B0B, 0x66FF3434, 0xFF431313, 0xFFFFE7E2, 0xFFC4877E, 0xFFFF3B30, 0xFFFFA126, 0xFF7D2420);
             case ClientConfig.InterfaceStyle.FROST -> new Palette(0x68101B28, -2063597568, 0xFF182C3D, 0xEE274154, 0xFF31566E, 0xFF112331, 0xFF3B6580, 0xFF263F51, 0xFF1D3546, 0x668DEBFF, 0xFF2C4D62, 0xFFF4FDFF, 0xFF9EC3D0, 0xFF7DDBF2, 0xFFD7F7FF, 0xFF56849B);
-            case ClientConfig.InterfaceStyle.NATURE -> new Palette(0x72100904, -2063597568, 0xFF172514, 0xF121321C, 0xFF30452A, 0xFF111C0F, 0xFF3B5533, 0xFF263821, 0xFF1D2D1A, 0x6689C96D, 0xFF2D4327, 0xFFF0F6DD, 0xFFA6B18C, 0xFF79B85C, 0xFFD4A84E, 0xFF557348);
+            case ClientConfig.InterfaceStyle.NATURE -> new Palette(0x7A040804, -2063597568, 0xFF0A120A, 0xF10D160C, 0xFF162316, 0xFF081008, 0xFF1B2E19, 0xFF101B0F, 0xFF0C160C, 0x66527F45, 0xFF172617, 0xFFE3EAD6, 0xFF89957A, 0xFF4E9847, 0xFFD278A4, 0xFF30432D);
             case ClientConfig.InterfaceStyle.CUSTOM -> InterfaceTheme.customPalette(n, n2, d);
         };
     }
@@ -65,6 +65,7 @@ public final class InterfaceTheme {
         }
         guiGraphics.fill(n, n2, n + n3, n2 + n4, palette.panel());
         guiGraphics.fill(n + 1, n2 + 1, n + n3 - 1, n2 + 32, palette.header());
+        ThemeAmbientRenderer.drawPanel(guiGraphics, n, n2, n3, n4, interfaceStyle, palette);
         switch (interfaceStyle) {
             case STANDARD: {
                 guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentA());
@@ -76,20 +77,31 @@ public final class InterfaceTheme {
                 int n5 = n + n3 * 3 / 5;
                 guiGraphics.fill(n, n2, n5, n2 + 2, palette.accentA());
                 guiGraphics.fill(n5, n2, n + n3, n2 + 2, palette.accentB());
-                guiGraphics.fill(n + 1, n2 + 32, n5, n2 + 33, InterfaceTheme.darken(palette.accentA(), 0.72f));
-                guiGraphics.fill(n5, n2 + 32, n + n3 - 1, n2 + 33, InterfaceTheme.darken(palette.accentB(), 0.72f));
-                InterfaceTheme.corner(guiGraphics, n + 4, n2 + 5, palette.accentA());
-                InterfaceTheme.corner(guiGraphics, n + n3 - 8, n2 + n4 - 9, palette.accentB());
+                guiGraphics.fill(n + 1, n2 + 32, n5 - 10, n2 + 33, InterfaceTheme.darken(palette.accentA(), 0.68f));
+                guiGraphics.fill(n5 + 10, n2 + 32, n + n3 - 1, n2 + 33, InterfaceTheme.darken(palette.accentB(), 0.68f));
+                guiGraphics.fill(n5 - 1, n2 + 27, n5 + 1, n2 + 34, palette.text());
+                guiGraphics.fill(n + 12, n2 + n4 - 5, n + Math.min(n3 / 3, 84), n2 + n4 - 4,
+                        InterfaceTheme.darken(palette.accentA(), 0.70f));
                 break;
             }
             case AE2: {
-                int n6 = n + n3 / 2;
-                guiGraphics.fill(n, n2, n6, n2 + 2, palette.accentA());
-                guiGraphics.fill(n6, n2, n + n3, n2 + 2, palette.accentB());
-                guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.accentA());
-                guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.accentB());
-                InterfaceTheme.circuit(guiGraphics, n + 7, n2 + n4 - 5, palette.accentA(), true);
-                InterfaceTheme.circuit(guiGraphics, n + n3 - 7, n2 + n4 - 5, palette.accentB(), false);
+                // ME Controller-style structural shell: cool silver bands around a dark core.
+                guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentB());
+                guiGraphics.fill(n + 1, n2 + 2, n + 3, n2 + n4 - 2, palette.accentA());
+                guiGraphics.fill(n + n3 - 3, n2 + 2, n + n3 - 1, n2 + n4 - 2, palette.border());
+
+                // Stepped header geometry echoes the block's layered metal corners.
+                guiGraphics.fill(n + 8, n2 + 27, n + n3 - 8, n2 + 30, 0xFF22252B);
+                guiGraphics.fill(n + 10, n2 + 27, n + n3 - 10, n2 + 28, palette.accentA());
+                guiGraphics.fill(n + 18, n2 + 23, n + 42, n2 + 25, palette.accentB());
+                guiGraphics.fill(n + n3 - 42, n2 + 23, n + n3 - 18, n2 + 25, palette.border());
+
+                // Small dark corner insets keep the controller's maze/casing vocabulary
+                // without repeating coloured LEDs across every widget.
+                guiGraphics.fill(n + 5, n2 + 6, n + 18, n2 + 8, 0xFF1A1C21);
+                guiGraphics.fill(n + 5, n2 + 8, n + 7, n2 + 17, 0xFF1A1C21);
+                guiGraphics.fill(n + n3 - 18, n2 + 6, n + n3 - 5, n2 + 8, 0xFF1A1C21);
+                guiGraphics.fill(n + n3 - 7, n2 + 8, n + n3 - 5, n2 + 17, 0xFF1A1C21);
                 break;
             }
             case ORITECH: {
@@ -98,6 +110,11 @@ public final class InterfaceTheme {
                     guiGraphics.fill(n + i, n2, n + Math.min(n3, i + 12), n2 + 2, i / 18 % 2 == 0 ? palette.accentA() : palette.accentB());
                 }
                 guiGraphics.fill(n + 2, n2 + 3, n + 4, n2 + n4 - 3, palette.accentA());
+                guiGraphics.fill(n + n3 - 5, n2 + 3, n + n3 - 3, n2 + n4 - 3, palette.border());
+                for (int plateX = n + 14; plateX < n + n3 - 18; plateX += 42) {
+                    guiGraphics.fill(plateX, n2 + 27, Math.min(plateX + 26, n + n3 - 14), n2 + 29, palette.border());
+                    InterfaceTheme.rivet(guiGraphics, plateX, n2 + 24, palette.accentA());
+                }
                 InterfaceTheme.rivet(guiGraphics, n + 7, n2 + 7, palette.accentB());
                 InterfaceTheme.rivet(guiGraphics, n + n3 - 9, n2 + 7, palette.accentB());
                 InterfaceTheme.rivet(guiGraphics, n + 7, n2 + n4 - 9, palette.accentA());
@@ -105,20 +122,39 @@ public final class InterfaceTheme {
                 break;
             }
             case MEKANISM: {
-                guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentA());
+                int coreX = n + n3 / 2;
+                guiGraphics.fill(n, n2, coreX, n2 + 2, palette.accentA());
+                guiGraphics.fill(coreX, n2, n + n3, n2 + 2, palette.accentB());
                 guiGraphics.fill(n + 4, n2 + 5, n + 6, n2 + n4 - 5, palette.accentB());
                 guiGraphics.fill(n + n3 - 6, n2 + 5, n + n3 - 4, n2 + n4 - 5, palette.accentA());
+                for (int railY = n2 + 8; railY < n2 + n4 - 8; railY += 12) {
+                    guiGraphics.fill(n + 3, railY, n + 7, Math.min(railY + 7, n2 + n4 - 6), palette.accentA());
+                    guiGraphics.fill(n + n3 - 7, railY, n + n3 - 3, Math.min(railY + 7, n2 + n4 - 6), palette.accentB());
+                }
+                guiGraphics.fill(coreX - 3, n2 + 7, coreX + 4, n2 + 24, palette.border());
+                guiGraphics.fill(coreX - 5, n2 + 12, coreX + 6, n2 + 19, palette.accentA());
+                guiGraphics.fill(coreX - 2, n2 + 14, coreX + 3, n2 + 17, palette.accentB());
                 InterfaceTheme.circuit(guiGraphics, n + 10, n2 + n4 - 6, palette.accentA(), true);
                 InterfaceTheme.circuit(guiGraphics, n + n3 - 10, n2 + n4 - 6, palette.accentB(), false);
                 break;
             }
             case QUANTUM: {
-                int n7 = n + n3 / 2;
-                guiGraphics.fill(n, n2, n7, n2 + 2, palette.accentA());
-                guiGraphics.fill(n7, n2, n + n3, n2 + 2, palette.accentB());
-                InterfaceTheme.corner(guiGraphics, n + 4, n2 + 5, palette.accentA());
-                InterfaceTheme.corner(guiGraphics, n + n3 - 11, n2 + 5, palette.accentB());
-                guiGraphics.fill(n7 - 2, n2 + n4 - 2, n7 + 2, n2 + n4, palette.accentB());
+                guiGraphics.fill(n, n2, n + n3, n2 + 2, 0xFF8C43D6);
+                guiGraphics.fill(n + 2, n2 + 3, n + 4, n2 + n4 - 3, 0xFF777981);
+                guiGraphics.fill(n + n3 - 4, n2 + 3, n + n3 - 2, n2 + n4 - 3, 0xFF777981);
+
+                // Industrial hazard seam distinguishes the AdvancedAE-inspired multiblock from Forever.
+                int seamY = n2 + 31;
+                guiGraphics.fill(n + 10, seamY, n + n3 - 10, seamY + 2, 0xFF17151C);
+                for (int hx = n + 12; hx < n + n3 - 12; hx += 10) {
+                    guiGraphics.fill(hx, seamY, Math.min(hx + 5, n + n3 - 12), seamY + 2, 0xFFD2A62B);
+                }
+
+                // Small purple core plate in the title area.
+                int coreX = n + n3 - 31;
+                guiGraphics.fill(coreX - 7, n2 + 8, coreX + 8, n2 + 23, 0xFF24212A);
+                guiGraphics.fill(coreX - 4, n2 + 11, coreX + 5, n2 + 20, 0xFF3A1B58);
+                guiGraphics.fill(coreX - 2, n2 + 13, coreX + 3, n2 + 18, 0xFF8C43D6);
                 break;
             }
             case HOLOGRAPHIC: {
@@ -179,8 +215,16 @@ public final class InterfaceTheme {
                     }
                     case NATURE -> {
                         guiGraphics.fill(n + 3, n2 + 34, n + 5, n2 + n4 - 5, palette.accentA());
-                        guiGraphics.fill(n + 5, n2 + n4 - 12, n + 11, n2 + n4 - 10, palette.accentB());
-                        guiGraphics.fill(n + 5, n2 + n4 - 25, n + 9, n2 + n4 - 23, palette.accentA());
+                        guiGraphics.fill(n + n3 - 5, n2 + 34, n + n3 - 4, n2 + Math.min(n4 - 5, 108), InterfaceTheme.darken(palette.accentA(), 0.72f));
+                        guiGraphics.fill(n + 5, n2 + n4 - 12, n + 13, n2 + n4 - 10, palette.accentA());
+                        guiGraphics.fill(n + 5, n2 + n4 - 25, n + 10, n2 + n4 - 23, palette.accentA());
+                        int blossomX = n + n3 - 14;
+                        int blossomY = n2 + 14;
+                        guiGraphics.fill(blossomX - 1, blossomY - 4, blossomX + 2, blossomY - 1, palette.accentB());
+                        guiGraphics.fill(blossomX - 1, blossomY + 1, blossomX + 2, blossomY + 4, palette.accentB());
+                        guiGraphics.fill(blossomX - 4, blossomY - 1, blossomX - 1, blossomY + 2, palette.accentB());
+                        guiGraphics.fill(blossomX + 1, blossomY - 1, blossomX + 4, blossomY + 2, palette.accentB());
+                        guiGraphics.fill(blossomX, blossomY, blossomX + 1, blossomY + 1, palette.text());
                     }
                     default -> {
                     }
@@ -201,6 +245,7 @@ public final class InterfaceTheme {
         ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
         Palette palette = InterfaceTheme.current();
         int accent = active ? palette.accentB() : palette.accentA();
+        ThemeAmbientRenderer.drawButton(guiGraphics, x, y, width, height, style, palette, active, hoverProgress);
         switch (style) {
             case CARBON -> {
                 for (int stripeX = x + 3; stripeX < x + width - 3; stripeX += 8) {
@@ -250,6 +295,7 @@ public final class InterfaceTheme {
     public static void drawTableDecoration(GuiGraphics guiGraphics, int x, int y, int width, int height) {
         ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
         Palette palette = InterfaceTheme.current();
+        ThemeAmbientRenderer.drawTable(guiGraphics, x, y, width, height, style, palette);
         switch (style) {
             case CARBON -> guiGraphics.fill(x + 3, y + 3, x + width - 3, y + 4, palette.border());
             case TERMINAL -> {
