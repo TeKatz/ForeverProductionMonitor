@@ -290,6 +290,7 @@
   ,"screen.forever_production_monitor.settings.hud.animations": "HUD-Animationen: %s"
   ,"screen.forever_production_monitor.settings.hud.animation_intensity": "HUD-Bewegung: %s"
   ,"screen.forever_production_monitor.map.quantum_bridge": "Quantum Bridge"
+  ,"screen.forever_production_monitor.map.wireless_connector": "Wireless Connector"
   ,"screen.forever_production_monitor.map.destination": "Ziel: %s"
   ,"screen.forever_production_monitor.map.follow_path": "Pfad folgen"
   ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s Netzwerkdimensionen"
