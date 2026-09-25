@@ -64,6 +64,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
@@ -78,7 +79,7 @@ final class NetworkMapView {
     private static final int COLLAPSED_DETAILS_WIDTH = 18;
     private static final int VIEW_BUTTON_HEIGHT = 14;
     private static final int VIEW_BUTTON_GAP = 2;
-    private static final int CAMERA_TOOLBAR_WIDTH = 48;
+    private static final int CAMERA_TOOLBAR_WIDTH = 58;
     private static final int CAMERA_BUTTON_MARGIN = 4;
     private static final int ZONE_GAP = 2;
     private static final int VIEW_TOOLBAR_HEIGHT = 24;
@@ -90,6 +91,7 @@ final class NetworkMapView {
     private static String rememberedNetwork;
     private static CameraState rememberedCamera;
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
+    private static boolean bookmarksLoaded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
@@ -311,6 +313,16 @@ final class NetworkMapView {
             if (!this.shouldRender(mapNode22) || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.BLOCK) continue;
             this.renderBlock(poseStack, bufferSource, mapNode22);
         }
+        if (!this.heatmap) {
+            for (MonitorNetwork.MapNode mapNode22 : list) {
+                if (!this.shouldRender(mapNode22)
+                        || mapNode22.renderKind() != ProductionMonitorBlockEntity.MapRenderKind.PART
+                        || !NetworkMapView.isCable(mapNode22.visualId().getPath())) {
+                    continue;
+                }
+                this.renderCableItemModels(poseStack, bufferSource, mapNode22, hashSet);
+            }
+        }
         bufferSource.endBatch();
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.debugQuads());
         VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
@@ -378,6 +390,37 @@ final class NetworkMapView {
         poseStack.popPose();
     }
 
+    private void renderCableItemModels(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                       MonitorNetwork.MapNode mapNode, Set<BlockPos> occupied) {
+        ItemStack stack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(mapNode.visualId()));
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        BlockPos pos = mapNode.pos();
+        Direction.Axis primaryAxis = NetworkMapView.preferredCableAxis(pos, occupied);
+
+        // AE2's own cable item model supplies the real smart/dense/glass texture. Rendering
+        // one model per cable keeps the large map affordable; secondary branches are joined
+        // with clean topology arms below instead of multiplying item-model renders at junctions.
+        this.renderCableItemAxis(poseStack, bufferSource, stack, pos, primaryAxis);
+    }
+
+    private void renderCableItemAxis(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                     ItemStack stack, BlockPos pos, Direction.Axis axis) {
+        poseStack.pushPose();
+        poseStack.translate((double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5);
+        if (axis == Direction.Axis.X) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0f));
+        } else if (axis == Direction.Axis.Y) {
+            poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
+        }
+        this.minecraft.getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE, 0xF000F0,
+                OverlayTexture.NO_OVERLAY, poseStack, (MultiBufferSource)bufferSource,
+                (Level)this.minecraft.level, pos.hashCode() ^ axis.ordinal());
+        poseStack.popPose();
+    }
+
     private void renderPartGeometry(PoseStack poseStack, VertexConsumer faceConsumer, VertexConsumer lineConsumer,
                                     MonitorNetwork.MapNode mapNode, Set<BlockPos> occupied) {
         String path = mapNode.visualId().getPath();
@@ -393,104 +436,74 @@ final class NetworkMapView {
         }
 
         boolean dense = path.contains("dense");
-        boolean smart = path.contains("smart");
-        float radius = dense ? 0.17f : 0.088f;
+        boolean glass = path.contains("glass");
+        boolean covered = path.contains("covered");
+        double radius = dense ? 0.25 : (glass ? 0.125 : (covered ? 0.21875 : 0.1875));
         BlockPos pos = mapNode.pos();
 
-        // Main cable body keeps the real cable color, but every segment now receives a
-        // dark edge outline. This reads much closer to AE2's sleeved cable geometry than
-        // the previous flat debug-coloured tubes.
-        AABB core = new AABB(
-                (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
-                (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
-        NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, true);
+        if (this.heatmap) {
+            // Heatmap intentionally uses plain diagnostic geometry so its status color remains unambiguous.
+            AABB core = new AABB(
+                    (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
+                    (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
+            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, false);
+            for (Direction direction : Direction.values()) {
+                if (occupied.contains(pos.relative(direction))) {
+                    NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
+                            NetworkMapView.cableArm(pos, direction, radius), r, g, b, false);
+                }
+            }
+            return;
+        }
 
-        int dark = NetworkMapView.darkenColor(base, dense ? 0.54f : 0.46f);
-        int signal = NetworkMapView.lightenColor(base, smart ? 0.42f : 0.24f);
-        float dr = (float)(dark >> 16 & 0xFF) / 255.0f;
-        float dg = (float)(dark >> 8 & 0xFF) / 255.0f;
-        float db = (float)(dark & 0xFF) / 255.0f;
-        float sr = (float)(signal >> 16 & 0xFF) / 255.0f;
-        float sg = (float)(signal >> 8 & 0xFF) / 255.0f;
-        float sb = (float)(signal & 0xFF) / 255.0f;
-
+        // The real AE2 item model spans 2..14 texels along its axis. Only fill the final
+        // connection gap to the neighbouring block; this avoids the old cage/debug-box look.
+        Direction.Axis primaryAxis = NetworkMapView.preferredCableAxis(pos, occupied);
         for (Direction direction : Direction.values()) {
             if (!occupied.contains(pos.relative(direction))) {
                 continue;
             }
-
-            AABB arm = NetworkMapView.cableArm(pos, direction, radius);
-            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, arm, r, g, b, true);
-
-            // Covered/dense cables get physical sleeve rings. Smart variants additionally
-            // receive a small brighter status band, evoking AE2's channel-indicator texture.
-            AABB sleeve = NetworkMapView.cableBand(pos, direction, radius * 1.08, dense ? 0.22 : 0.27, dense ? 0.045 : 0.032);
-            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, sleeve, dr, dg, db, false);
-
-            if (smart) {
-                AABB indicator = NetworkMapView.cableBand(pos, direction, radius * 1.12, dense ? 0.34 : 0.38, dense ? 0.028 : 0.022);
-                NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, indicator, sr, sg, sb, false);
-            }
+            AABB connector = direction.getAxis() == primaryAxis
+                    ? NetworkMapView.cableEndCap(pos, direction, radius, 0.15)
+                    : NetworkMapView.cableArm(pos, direction, radius);
+            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, connector, r, g, b, false);
         }
+    }
 
-        if (smart && !this.heatmap) {
-            // Three tiny face indicators make the smart/dense-smart centre readable from
-            // different camera angles without returning to the old repeated cube look.
-            for (AABB plate : NetworkMapView.smartCableIndicatorPlates(pos, radius)) {
-                NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, plate, sr, sg, sb, false);
-            }
-        }
+    private static Direction.Axis preferredCableAxis(BlockPos pos, Set<BlockPos> occupied) {
+        int x = (occupied.contains(pos.relative(Direction.EAST)) ? 1 : 0)
+                + (occupied.contains(pos.relative(Direction.WEST)) ? 1 : 0);
+        int y = (occupied.contains(pos.relative(Direction.UP)) ? 1 : 0)
+                + (occupied.contains(pos.relative(Direction.DOWN)) ? 1 : 0);
+        int z = (occupied.contains(pos.relative(Direction.NORTH)) ? 1 : 0)
+                + (occupied.contains(pos.relative(Direction.SOUTH)) ? 1 : 0);
+        if (x >= y && x >= z && x > 0) return Direction.Axis.X;
+        if (y >= z && y > 0) return Direction.Axis.Y;
+        return Direction.Axis.Z;
+    }
+
+    private static AABB cableEndCap(BlockPos pos, Direction direction, double radius, double depth) {
+        double cx = (double)pos.getX() + 0.5;
+        double cy = (double)pos.getY() + 0.5;
+        double cz = (double)pos.getZ() + 0.5;
+        return switch (direction) {
+            case DOWN -> new AABB(cx - radius, pos.getY(), cz - radius,
+                    cx + radius, pos.getY() + depth, cz + radius);
+            case UP -> new AABB(cx - radius, (double)pos.getY() + 1.0 - depth, cz - radius,
+                    cx + radius, (double)pos.getY() + 1.0, cz + radius);
+            case NORTH -> new AABB(cx - radius, cy - radius, pos.getZ(),
+                    cx + radius, cy + radius, pos.getZ() + depth);
+            case SOUTH -> new AABB(cx - radius, cy - radius, (double)pos.getZ() + 1.0 - depth,
+                    cx + radius, cy + radius, (double)pos.getZ() + 1.0);
+            case WEST -> new AABB(pos.getX(), cy - radius, cz - radius,
+                    pos.getX() + depth, cy + radius, cz + radius);
+            case EAST -> new AABB((double)pos.getX() + 1.0 - depth, cy - radius, cz - radius,
+                    (double)pos.getX() + 1.0, cy + radius, cz + radius);
+        };
     }
 
     private static boolean isCable(String string) {
         return string.contains("cable") && !string.contains("bus");
-    }
-
-    private static AABB cableBand(BlockPos pos, Direction direction, double radius, double distance, double halfWidth) {
-        double cx = (double)pos.getX() + 0.5;
-        double cy = (double)pos.getY() + 0.5;
-        double cz = (double)pos.getZ() + 0.5;
-        double px = cx + direction.getStepX() * distance;
-        double py = cy + direction.getStepY() * distance;
-        double pz = cz + direction.getStepZ() * distance;
-
-        return switch (direction.getAxis()) {
-            case X -> new AABB(px - halfWidth, cy - radius, cz - radius,
-                    px + halfWidth, cy + radius, cz + radius);
-            case Y -> new AABB(cx - radius, py - halfWidth, cz - radius,
-                    cx + radius, py + halfWidth, cz + radius);
-            case Z -> new AABB(cx - radius, cy - radius, pz - halfWidth,
-                    cx + radius, cy + radius, pz + halfWidth);
-        };
-    }
-
-    private static List<AABB> smartCableIndicatorPlates(BlockPos pos, double radius) {
-        double cx = (double)pos.getX() + 0.5;
-        double cy = (double)pos.getY() + 0.5;
-        double cz = (double)pos.getZ() + 0.5;
-        double half = Math.max(0.028, radius * 0.58);
-        double lift = radius + 0.004;
-        double depth = 0.012;
-        return List.of(
-                new AABB(cx - half, cy + lift - depth, cz - half, cx + half, cy + lift + depth, cz + half),
-                new AABB(cx - half, cy - half, cz + lift - depth, cx + half, cy + half, cz + lift + depth),
-                new AABB(cx + lift - depth, cy - half, cz - half, cx + lift + depth, cy + half, cz + half));
-    }
-
-    private static int darkenColor(int color, float amount) {
-        float keep = Math.max(0.0f, Math.min(1.0f, 1.0f - amount));
-        int r = Math.round((color >> 16 & 0xFF) * keep);
-        int g = Math.round((color >> 8 & 0xFF) * keep);
-        int b = Math.round((color & 0xFF) * keep);
-        return r << 16 | g << 8 | b;
-    }
-
-    private static int lightenColor(int color, float amount) {
-        float a = Math.max(0.0f, Math.min(1.0f, amount));
-        int r = Math.round((color >> 16 & 0xFF) + (255 - (color >> 16 & 0xFF)) * a);
-        int g = Math.round((color >> 8 & 0xFF) + (255 - (color >> 8 & 0xFF)) * a);
-        int b = Math.round((color & 0xFF) + (255 - (color & 0xFF)) * a);
-        return r << 16 | g << 8 | b;
     }
 
     private static AABB cableArm(BlockPos blockPos, Direction direction, double d) {
@@ -785,20 +798,25 @@ final class NetworkMapView {
         }
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         int sceneWidth = Math.max(1, sceneRight - this.left);
-        int boxLeft = sceneWidth > 520 ? this.left + Math.min(270, sceneWidth / 2) : this.left + 6;
+        int boxLeft = this.left + Math.min(260, Math.max(190, sceneWidth / 3));
         int boxRight = sceneRight - 6;
-        if (boxRight - boxLeft < 120) {
-            boxLeft = this.left + 6;
+        if (boxRight - boxLeft < 150) {
+            return;
         }
         int boxTop = this.sceneContentBottom() - HELP_AREA_HEIGHT + 3;
         int center = boxLeft + (boxRight - boxLeft) / 2;
+        int textWidth = Math.max(40, boxRight - boxLeft - 12);
         guiGraphics.fill(boxLeft, boxTop, boxRight, this.sceneContentBottom() - 3, -1340860382);
+
+        String nav = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
+        String select = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
         guiGraphics.drawCenteredString(this.font,
-                Component.translatable("screen.forever_production_monitor.map.controls.navigation"),
+                this.font.plainSubstrByWidth(nav, textWidth),
                 center, boxTop + 4, palette.muted());
         guiGraphics.drawCenteredString(this.font,
-                Component.translatable("screen.forever_production_monitor.map.controls.selection"),
+                this.font.plainSubstrByWidth(select, textWidth),
                 center, boxTop + 15, palette.muted());
+
         if (this.snapshot != null && this.snapshot.truncated()) {
             guiGraphics.drawString(this.font,
                     Component.translatable("screen.forever_production_monitor.map.truncated"),
@@ -862,14 +880,21 @@ final class NetworkMapView {
         String displayName = this.nodeDisplayName(selected);
         ItemStack stack = new ItemStack((ItemLike)BuiltInRegistries.ITEM.get(selected.visualId()));
         guiGraphics.renderItem(stack, left, this.top + 27);
-        guiGraphics.drawString(this.font,
-                this.font.plainSubstrByWidth(displayName, Math.max(40, right - left - 22)),
-                left + 22, this.top + 30, palette.text(), false);
+
+        int nameX = left + 22;
+        int nameWidth = Math.max(40, right - nameX);
+        List<FormattedCharSequence> nameLines = this.font.split(Component.literal(displayName), nameWidth);
+        int nameY = this.top + 28;
+        int shownLines = Math.min(3, nameLines.size());
+        for (int i = 0; i < shownLines; ++i) {
+            guiGraphics.drawString(this.font, nameLines.get(i), nameX, nameY + i * 10, palette.text(), false);
+        }
+        int blocksY = nameY + shownLines * 10 + 2;
         guiGraphics.drawString(this.font,
                 this.font.plainSubstrByWidth(blocks.getString(), Math.max(20, right - left - 22)),
-                left + 22, this.top + 42, palette.muted(), false);
+                nameX, blocksY, palette.muted(), false);
 
-        int lineY = this.top + 65;
+        int lineY = Math.max(this.top + 65, blocksY + 23);
         this.drawDetailLine(guiGraphics, left, right, lineY,
                 Component.translatable("screen.forever_production_monitor.map.position"),
                 selected.pos().toShortString(), palette.text());
@@ -1313,11 +1338,13 @@ final class NetworkMapView {
     }
 
     private CameraState[] cameraBookmarks() {
+        NetworkMapView.loadPersistedBookmarks();
         return CAMERA_BOOKMARKS.computeIfAbsent(this.networkKey(), string -> new CameraState[3]);
     }
 
     private void saveBookmark(int n) {
         this.cameraBookmarks()[n] = this.cameraState();
+        NetworkMapView.persistBookmarks();
     }
 
     private void loadBookmark(int n) {
@@ -1325,6 +1352,66 @@ final class NetworkMapView {
         if (cameraState != null) {
             this.restoreCamera(cameraState);
         }
+    }
+
+    private static void loadPersistedBookmarks() {
+        if (bookmarksLoaded) {
+            return;
+        }
+        bookmarksLoaded = true;
+        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
+        if (encoded == null || encoded.isBlank()) {
+            return;
+        }
+
+        for (String entry : encoded.split(";")) {
+            if (entry.isBlank()) continue;
+            String[] parts = entry.split("\\|");
+            if (parts.length != 11) continue;
+            try {
+                String key = parts[0];
+                int slot = Integer.parseInt(parts[1]);
+                if (slot < 0 || slot >= 3) continue;
+                CameraState state = new CameraState(
+                        Float.parseFloat(parts[2]),
+                        Float.parseFloat(parts[3]),
+                        Double.parseDouble(parts[4]),
+                        Double.parseDouble(parts[5]),
+                        Double.parseDouble(parts[6]),
+                        Double.parseDouble(parts[7]),
+                        Double.parseDouble(parts[8]),
+                        Double.parseDouble(parts[9]),
+                        Boolean.parseBoolean(parts[10]));
+                CAMERA_BOOKMARKS.computeIfAbsent(key, ignored -> new CameraState[3])[slot] = state;
+            } catch (RuntimeException ignored) {
+                // Ignore one malformed bookmark and keep loading the remaining slots.
+            }
+        }
+    }
+
+    private static void persistBookmarks() {
+        StringBuilder encoded = new StringBuilder();
+        for (Map.Entry<String, CameraState[]> entry : CAMERA_BOOKMARKS.entrySet()) {
+            CameraState[] states = entry.getValue();
+            for (int slot = 0; slot < states.length; ++slot) {
+                CameraState state = states[slot];
+                if (state == null) continue;
+                if (encoded.length() > 0) encoded.append(';');
+                encoded.append(entry.getKey()).append('|')
+                        .append(slot).append('|')
+                        .append(state.yaw()).append('|')
+                        .append(state.pitch()).append('|')
+                        .append(state.zoom()).append('|')
+                        .append(state.panX()).append('|')
+                        .append(state.panY()).append('|')
+                        .append(state.centerX()).append('|')
+                        .append(state.centerY()).append('|')
+                        .append(state.centerZ()).append('|')
+                        .append(state.focused());
+            }
+        }
+        ClientConfig.VALUES.mapCameraBookmarks.set(encoded.toString());
+        ClientConfig.VALUES.mapCameraBookmarks.save();
     }
 
     private CameraState cameraState() {

@@ -106,6 +106,7 @@ public final class ClientConfig {
         public final ModConfigSpec.BooleanValue mapShowViewButtons;
         public final ModConfigSpec.BooleanValue mapShowDetails;
         public final ModConfigSpec.BooleanValue mapRememberCamera;
+        public final ModConfigSpec.ConfigValue<String> mapCameraBookmarks;
 
         private Values(ModConfigSpec.Builder builder) {
             builder.comment("Production Tablet compact HUD settings").push("hud");
@@ -163,6 +164,8 @@ public final class ClientConfig {
             this.mapShowViewButtons = builder.define("showViewButtons", true);
             this.mapShowDetails = builder.define("showDetailsPanel", true);
             this.mapRememberCamera = builder.define("rememberCamera", true);
+            this.mapCameraBookmarks = builder.comment("Persistent camera bookmark data for network map slots 1-3")
+                    .define("cameraBookmarks", "");
             builder.pop();
         }
     }
