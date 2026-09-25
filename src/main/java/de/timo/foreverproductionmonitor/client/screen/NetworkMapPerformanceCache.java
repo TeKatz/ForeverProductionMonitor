@@ -23,11 +23,19 @@ final class NetworkMapPerformanceCache {
     private final HashSet<BlockPos> visiblePositions = new HashSet<>();
     private final HashMap<Long, Integer> cableLoads = new HashMap<>();
 
-    void rebuild(MonitorNetwork.NetworkMapPayload snapshot,
-                 Predicate<MonitorNetwork.MapNode> visibilityPredicate) {
+    void acceptSnapshot(MonitorNetwork.NetworkMapPayload snapshot,
+                        Predicate<MonitorNetwork.MapNode> visibilityPredicate) {
+        this.cableLoads.clear();
+        if (snapshot != null) {
+            this.rebuildCableLoads(snapshot.nodes());
+        }
+        this.rebuildVisibility(snapshot, visibilityPredicate);
+    }
+
+    void rebuildVisibility(MonitorNetwork.NetworkMapPayload snapshot,
+                           Predicate<MonitorNetwork.MapNode> visibilityPredicate) {
         this.visibleNodeIndices.clear();
         this.visiblePositions.clear();
-        this.cableLoads.clear();
 
         if (snapshot == null) {
             return;
@@ -41,8 +49,6 @@ final class NetworkMapPerformanceCache {
                 this.visiblePositions.add(node.pos());
             }
         }
-
-        this.rebuildCableLoads(nodes);
     }
 
     void clear() {
