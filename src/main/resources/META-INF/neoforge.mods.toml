@@ -6,7 +6,7 @@ license="MIT"
 modId="forever_production_monitor"
 version="4.0.0"
 displayName="Forever Production Monitor"
-description='''An AE2 production dashboard with a live 3D network map, pinned resources, alarms, storage and channel diagnostics.'''
+description='''AE2 monitoring and diagnostics with production and storage statistics, alarms, a Mini HUD, Missing Channel tools and an interactive 3D Network Map.'''
 authors="Timo"
 
 [[dependencies.forever_production_monitor]]
