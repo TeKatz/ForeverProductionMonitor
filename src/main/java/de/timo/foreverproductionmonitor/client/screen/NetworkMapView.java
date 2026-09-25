@@ -46,7 +46,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -130,7 +129,6 @@ final class NetworkMapView {
     private MapFilter filter = MapFilter.ALL;
     private String search = "";
     private int searchCursor = -1;
-    private final Map<Long, Integer> cableLoads = new HashMap<Long, Integer>();
     private long lastClickTime;
     private int lastClickIndex = -1;
     private double centerX;
