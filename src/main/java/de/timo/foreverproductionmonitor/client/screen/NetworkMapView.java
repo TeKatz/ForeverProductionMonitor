@@ -645,6 +645,10 @@ final class NetworkMapView {
         this.drawToolbarButton(guiGraphics, mouseX, mouseY, cameraX, y, cameraWidth,
                 Component.translatable("screen.forever_production_monitor.map.events"), this.showEvents, ToolbarGroup.DIAGNOSTIC);
         y += VIEW_BUTTON_HEIGHT + 5;
+        int bottomBookmarkY = this.top + this.height - VIEW_BUTTON_HEIGHT - 6;
+        if (bottomBookmarkY > y) {
+            y = bottomBookmarkY;
+        }
 
         int bookmarkGap = 2;
         int bookmarkWidth = Math.max(8, (cameraWidth - bookmarkGap * 2) / 3);
@@ -748,6 +752,11 @@ final class NetworkMapView {
         }
 
         y += VIEW_BUTTON_HEIGHT + 5;
+        int bottomBookmarkY = this.top + this.height - VIEW_BUTTON_HEIGHT - 6;
+        if (bottomBookmarkY > y) {
+            y = bottomBookmarkY;
+        }
+
         int bookmarkGap = 2;
         int bookmarkWidth = Math.max(8, (cameraWidth - bookmarkGap * 2) / 3);
         for (int i = 0; i < 3; ++i) {
