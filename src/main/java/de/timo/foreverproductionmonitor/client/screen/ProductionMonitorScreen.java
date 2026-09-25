@@ -212,7 +212,7 @@ extends Screen {
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
         int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
         int pagingWidth = 114;
-        int searchWidth = this.viewMode == ViewMode.MAP ? Math.min(230, Math.max(160, innerWidth / 3)) : (this.compactControls ? innerWidth : Math.max(100, Math.min(260, innerWidth * 2 / 5)));
+        int searchWidth = this.viewMode == ViewMode.MAP ? Math.min(200, Math.max(150, innerWidth / 4)) : (this.compactControls ? innerWidth : Math.max(100, Math.min(260, innerWidth * 2 / 5)));
         this.search.setX(this.viewMode == ViewMode.MAP ? this.contentLeft + 8 : this.contentLeft);
         this.search.setY(this.viewMode == ViewMode.MAP ? this.auxiliaryControlsY : this.controlsY);
         this.search.setWidth(Math.max(1, searchWidth));

@@ -776,15 +776,24 @@ final class NetworkMapView {
                 NetworkMapView.withAlpha(palette.border(), 112));
 
         if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
-            // The search widget occupies the left ~230px of this same bar. Keep the one-line
-            // help strictly to its right so neither element can overlap or clip the other.
-            int textLeft = this.left + Math.min(252, Math.max(188, (sceneRight - this.left) / 3));
+            // The search widget owns the left side of the bar. The help gets two dedicated
+            // rows on the right; switch to compact labels rather than ever clipping text.
+            int textLeft = this.left + 216;
             int textRight = sceneRight - 8;
             int available = textRight - textLeft;
-            if (available >= 120) {
-                String help = Component.translatable("screen.forever_production_monitor.map.controls").getString();
-                String clipped = this.font.plainSubstrByWidth(help, available);
-                guiGraphics.drawString(this.font, clipped, textLeft, barTop + 9, palette.muted(), false);
+            if (available >= 88) {
+                String navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
+                String selection = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
+                if (this.font.width(navigation) > available || this.font.width(selection) > available) {
+                    navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation.compact").getString();
+                    selection = Component.translatable("screen.forever_production_monitor.map.controls.selection.compact").getString();
+                }
+
+                if (this.font.width(navigation) <= available && this.font.width(selection) <= available) {
+                    int center = textLeft + available / 2;
+                    guiGraphics.drawCenteredString(this.font, navigation, center, barTop + 4, palette.muted());
+                    guiGraphics.drawCenteredString(this.font, selection, center, barTop + 15, palette.muted());
+                }
             }
         }
 
