@@ -173,7 +173,7 @@ final class NetworkMapView {
         LAST_EVENT_SNAPSHOTS.put(eventKey, networkMapPayload);
 
         this.snapshot = networkMapPayload;
-        this.rebuildPerformanceCache();
+        this.performanceCache.acceptSnapshot(this.snapshot, this::shouldRender);
         if (this.selectedIndex >= networkMapPayload.nodes().size()
                 || this.selectedIndex >= 0 && !this.shouldRender(networkMapPayload.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
@@ -239,7 +239,7 @@ final class NetworkMapView {
         }
         this.search = string2;
         this.searchCursor = -1;
-        this.rebuildPerformanceCache();
+        this.rebuildVisibilityCache();
         if (this.selectedIndex >= 0 && this.snapshot != null
                 && !this.shouldRender(this.snapshot.nodes().get(this.selectedIndex))) {
             this.selectedIndex = -1;
@@ -814,7 +814,7 @@ final class NetworkMapView {
                 this.filter = mapFilter;
                 this.selectedIndex = -1;
                 this.focusedOnBlock = false;
-                this.rebuildPerformanceCache();
+                this.rebuildVisibilityCache();
                 this.recomputeFit();
                 return true;
             }
@@ -1546,8 +1546,8 @@ final class NetworkMapView {
         return this.performanceCache.cableLoad(blockPos);
     }
 
-    private void rebuildPerformanceCache() {
-        this.performanceCache.rebuild(this.snapshot, this::shouldRender);
+    private void rebuildVisibilityCache() {
+        this.performanceCache.rebuildVisibility(this.snapshot, this::shouldRender);
     }
 
     private CameraState[] cameraBookmarks() {
