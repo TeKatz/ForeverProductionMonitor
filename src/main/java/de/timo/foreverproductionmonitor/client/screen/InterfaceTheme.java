@@ -40,7 +40,7 @@ public final class InterfaceTheme {
             case ClientConfig.InterfaceStyle.AURORA -> new Palette(0x72020B18, -2063597568, 0xFF071B27, 0xF10A2730, 0xFF103A42, 0xFF061820, 0xFF124B50, 0xFF0B3036, 0xFF08262D, 0x6656FFD7, 0xFF0D3B40, 0xFFE3FFF8, 0xFF75B8AE, 0xFF38E6C1, 0xFFC55CFF, 0xFF27776E);
             case ClientConfig.InterfaceStyle.REDSTONE -> new Palette(0x74100000, -2063597568, 0xFF270909, 0xF1321010, 0xFF461414, 0xFF1B0707, 0xFF5A1919, 0xFF361010, 0xFF2A0B0B, 0x66FF3434, 0xFF431313, 0xFFFFE7E2, 0xFFC4877E, 0xFFFF3B30, 0xFFFFA126, 0xFF7D2420);
             case ClientConfig.InterfaceStyle.FROST -> new Palette(0x68101B28, -2063597568, 0xFF182C3D, 0xEE274154, 0xFF31566E, 0xFF112331, 0xFF3B6580, 0xFF263F51, 0xFF1D3546, 0x668DEBFF, 0xFF2C4D62, 0xFFF4FDFF, 0xFF9EC3D0, 0xFF7DDBF2, 0xFFD7F7FF, 0xFF56849B);
-            case ClientConfig.InterfaceStyle.NATURE -> new Palette(0x72100904, -2063597568, 0xFF172514, 0xF121321C, 0xFF30452A, 0xFF111C0F, 0xFF3B5533, 0xFF263821, 0xFF1D2D1A, 0x6689C96D, 0xFF2D4327, 0xFFF0F6DD, 0xFFA6B18C, 0xFF79B85C, 0xFFD4A84E, 0xFF557348);
+            case ClientConfig.InterfaceStyle.NATURE -> new Palette(0x7A040804, -2063597568, 0xFF0A120A, 0xF10D160C, 0xFF162316, 0xFF081008, 0xFF1B2E19, 0xFF101B0F, 0xFF0C160C, 0x66527F45, 0xFF172617, 0xFFE3EAD6, 0xFF89957A, 0xFF4E9847, 0xFFD278A4, 0xFF30432D);
             case ClientConfig.InterfaceStyle.CUSTOM -> InterfaceTheme.customPalette(n, n2, d);
         };
     }
@@ -89,6 +89,15 @@ public final class InterfaceTheme {
                 guiGraphics.fill(n6, n2, n + n3, n2 + 2, palette.accentB());
                 guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.accentA());
                 guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.accentB());
+                for (int cellX = n + 10; cellX < n + Math.min(n3 / 3, 118); cellX += 13) {
+                    guiGraphics.fill(cellX, n2 + 7, cellX + 9, n2 + 15, InterfaceTheme.darken(palette.tableHeader(), 0.82f));
+                    guiGraphics.fill(cellX + 2, n2 + 9, cellX + 7, n2 + 13, cellX / 13 % 2 == 0 ? palette.accentA() : palette.accentB());
+                }
+                int crystalX = n + n3 - 17;
+                int crystalY = n2 + 15;
+                guiGraphics.fill(crystalX, crystalY - 4, crystalX + 1, crystalY + 5, palette.accentB());
+                guiGraphics.fill(crystalX - 4, crystalY, crystalX + 5, crystalY + 1, palette.accentB());
+                guiGraphics.fill(crystalX - 2, crystalY - 2, crystalX + 3, crystalY + 3, palette.accentA());
                 InterfaceTheme.circuit(guiGraphics, n + 7, n2 + n4 - 5, palette.accentA(), true);
                 InterfaceTheme.circuit(guiGraphics, n + n3 - 7, n2 + n4 - 5, palette.accentB(), false);
                 break;
@@ -99,6 +108,11 @@ public final class InterfaceTheme {
                     guiGraphics.fill(n + i, n2, n + Math.min(n3, i + 12), n2 + 2, i / 18 % 2 == 0 ? palette.accentA() : palette.accentB());
                 }
                 guiGraphics.fill(n + 2, n2 + 3, n + 4, n2 + n4 - 3, palette.accentA());
+                guiGraphics.fill(n + n3 - 5, n2 + 3, n + n3 - 3, n2 + n4 - 3, palette.border());
+                for (int plateX = n + 14; plateX < n + n3 - 18; plateX += 42) {
+                    guiGraphics.fill(plateX, n2 + 27, Math.min(plateX + 26, n + n3 - 14), n2 + 29, palette.border());
+                    InterfaceTheme.rivet(guiGraphics, plateX, n2 + 24, palette.accentA());
+                }
                 InterfaceTheme.rivet(guiGraphics, n + 7, n2 + 7, palette.accentB());
                 InterfaceTheme.rivet(guiGraphics, n + n3 - 9, n2 + 7, palette.accentB());
                 InterfaceTheme.rivet(guiGraphics, n + 7, n2 + n4 - 9, palette.accentA());
@@ -106,9 +120,18 @@ public final class InterfaceTheme {
                 break;
             }
             case MEKANISM: {
-                guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentA());
+                int coreX = n + n3 / 2;
+                guiGraphics.fill(n, n2, coreX, n2 + 2, palette.accentA());
+                guiGraphics.fill(coreX, n2, n + n3, n2 + 2, palette.accentB());
                 guiGraphics.fill(n + 4, n2 + 5, n + 6, n2 + n4 - 5, palette.accentB());
                 guiGraphics.fill(n + n3 - 6, n2 + 5, n + n3 - 4, n2 + n4 - 5, palette.accentA());
+                for (int railY = n2 + 8; railY < n2 + n4 - 8; railY += 12) {
+                    guiGraphics.fill(n + 3, railY, n + 7, Math.min(railY + 7, n2 + n4 - 6), palette.accentA());
+                    guiGraphics.fill(n + n3 - 7, railY, n + n3 - 3, Math.min(railY + 7, n2 + n4 - 6), palette.accentB());
+                }
+                guiGraphics.fill(coreX - 3, n2 + 7, coreX + 4, n2 + 24, palette.border());
+                guiGraphics.fill(coreX - 5, n2 + 12, coreX + 6, n2 + 19, palette.accentA());
+                guiGraphics.fill(coreX - 2, n2 + 14, coreX + 3, n2 + 17, palette.accentB());
                 InterfaceTheme.circuit(guiGraphics, n + 10, n2 + n4 - 6, palette.accentA(), true);
                 InterfaceTheme.circuit(guiGraphics, n + n3 - 10, n2 + n4 - 6, palette.accentB(), false);
                 break;
@@ -180,8 +203,16 @@ public final class InterfaceTheme {
                     }
                     case NATURE -> {
                         guiGraphics.fill(n + 3, n2 + 34, n + 5, n2 + n4 - 5, palette.accentA());
-                        guiGraphics.fill(n + 5, n2 + n4 - 12, n + 11, n2 + n4 - 10, palette.accentB());
-                        guiGraphics.fill(n + 5, n2 + n4 - 25, n + 9, n2 + n4 - 23, palette.accentA());
+                        guiGraphics.fill(n + n3 - 5, n2 + 34, n + n3 - 4, n2 + Math.min(n4 - 5, 108), InterfaceTheme.darken(palette.accentA(), 0.72f));
+                        guiGraphics.fill(n + 5, n2 + n4 - 12, n + 13, n2 + n4 - 10, palette.accentA());
+                        guiGraphics.fill(n + 5, n2 + n4 - 25, n + 10, n2 + n4 - 23, palette.accentA());
+                        int blossomX = n + n3 - 14;
+                        int blossomY = n2 + 14;
+                        guiGraphics.fill(blossomX - 1, blossomY - 4, blossomX + 2, blossomY - 1, palette.accentB());
+                        guiGraphics.fill(blossomX - 1, blossomY + 1, blossomX + 2, blossomY + 4, palette.accentB());
+                        guiGraphics.fill(blossomX - 4, blossomY - 1, blossomX - 1, blossomY + 2, palette.accentB());
+                        guiGraphics.fill(blossomX + 1, blossomY - 1, blossomX + 4, blossomY + 2, palette.accentB());
+                        guiGraphics.fill(blossomX, blossomY, blossomX + 1, blossomY + 1, palette.text());
                     }
                     default -> {
                     }
