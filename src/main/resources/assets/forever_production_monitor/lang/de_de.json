@@ -293,6 +293,7 @@
   ,"screen.forever_production_monitor.map.destination": "Ziel: %s"
   ,"screen.forever_production_monitor.map.follow_path": "Pfad folgen"
   ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s Netzwerkdimensionen"
+  ,"screen.forever_production_monitor.map.dimension_count": "· %s Netzwerkdimensionen"
   ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Ziehen=Drehen · Rad=Zoom"
   ,"screen.forever_production_monitor.map.controls.selection.minimal": "Klick=Auswahl · R=Reset"
 }
