@@ -33,9 +33,9 @@ public final class ClientConfig {
             case InterfaceStyle.FOREVER -> HudFrameStyle.FOREVER;
             case InterfaceStyle.AE2 -> HudFrameStyle.AE2;
             case InterfaceStyle.ORITECH -> HudFrameStyle.ORITECH;
-            case InterfaceStyle.MEKANISM, InterfaceStyle.HOLOGRAPHIC -> HudFrameStyle.AE2;
-            case InterfaceStyle.QUANTUM -> HudFrameStyle.FOREVER;
-            case InterfaceStyle.MONOCHROME -> HudFrameStyle.STANDARD;
+            case InterfaceStyle.MEKANISM, InterfaceStyle.HOLOGRAPHIC, InterfaceStyle.TERMINAL, InterfaceStyle.DEEP_SPACE, InterfaceStyle.FROST -> HudFrameStyle.AE2;
+            case InterfaceStyle.QUANTUM, InterfaceStyle.AURORA, InterfaceStyle.NATURE -> HudFrameStyle.FOREVER;
+            case InterfaceStyle.MONOCHROME, InterfaceStyle.CARBON, InterfaceStyle.COPPER, InterfaceStyle.REDSTONE -> HudFrameStyle.STANDARD;
             case InterfaceStyle.MINIMAL -> HudFrameStyle.NONE;
             case InterfaceStyle.CUSTOM -> HudFrameStyle.CUSTOM;
         };
@@ -72,6 +72,12 @@ public final class ClientConfig {
         public final ModConfigSpec.IntValue interfaceCustomSecondaryHue;
         public final ModConfigSpec.DoubleValue interfaceCustomBrightness;
         public final ModConfigSpec.DoubleValue interfaceOpacity;
+        public final ModConfigSpec.BooleanValue guiAnimations;
+        public final ModConfigSpec.BooleanValue updatePulseEnabled;
+        public final ModConfigSpec.DoubleValue updatePulseIntensity;
+        public final ModConfigSpec.DoubleValue updatePulseDuration;
+        public final ModConfigSpec.BooleanValue ambientMotionEnabled;
+        public final ModConfigSpec.DoubleValue ambientMotionIntensity;
         public final ModConfigSpec.BooleanValue matchHudTheme;
         public final ModConfigSpec.BooleanValue invertMapRotation;
         public final ModConfigSpec.EnumValue<DefaultTab> defaultTab;
@@ -115,6 +121,12 @@ public final class ClientConfig {
             this.interfaceCustomSecondaryHue = builder.comment("Secondary hue used by the custom dashboard theme").defineInRange("customSecondaryHue", 38, 0, 359);
             this.interfaceCustomBrightness = builder.comment("Brightness of custom dashboard surfaces").defineInRange("customBrightness", 0.52, 0.2, 0.9);
             this.interfaceOpacity = builder.comment("Opacity of the full dashboard").defineInRange("opacity", 0.95, 0.55, 1.0);
+            this.guiAnimations = builder.comment("Enable subtle client-side GUI animations").define("guiAnimations", true);
+            this.updatePulseEnabled = builder.comment("Show a subtle outline pulse when monitor data is refreshed").define("updatePulseEnabled", true);
+            this.updatePulseIntensity = builder.comment("Strength of the monitor data refresh pulse").defineInRange("updatePulseIntensity", 0.35, 0.0, 1.0);
+            this.updatePulseDuration = builder.comment("Duration of the monitor data refresh pulse in seconds").defineInRange("updatePulseDuration", 1.8, 0.6, 4.0);
+            this.ambientMotionEnabled = builder.comment("Show subtle continuous accent motion on the monitor frame").define("ambientMotionEnabled", true);
+            this.ambientMotionIntensity = builder.comment("Strength of continuous monitor accent motion").defineInRange("ambientMotionIntensity", 0.3, 0.0, 1.0);
             this.matchHudTheme = builder.comment("Make the compact HUD follow the dashboard theme").define("matchHudTheme", false);
             this.invertMapRotation = builder.comment("Invert horizontal and vertical left-drag rotation in the network map").define("invertMapRotation", false);
             builder.pop();
@@ -166,6 +178,14 @@ public final class ClientConfig {
         HOLOGRAPHIC,
         MONOCHROME,
         MINIMAL,
+        CARBON,
+        TERMINAL,
+        DEEP_SPACE,
+        COPPER,
+        AURORA,
+        REDSTONE,
+        FROST,
+        NATURE,
         CUSTOM;
 
 
@@ -258,4 +278,3 @@ public final class ClientConfig {
 
     }
 }
-

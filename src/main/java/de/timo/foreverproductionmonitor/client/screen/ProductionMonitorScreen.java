@@ -47,8 +47,8 @@ import net.minecraft.network.chat.MutableComponent;
 
 public final class ProductionMonitorScreen
 extends Screen {
-    private static final int MAX_PANEL_WIDTH = 670;
-    private static final int MAX_PANEL_HEIGHT = 454;
+    private static final int MAX_PANEL_WIDTH = 960;
+    private static final int MAX_PANEL_HEIGHT = 560;
     private static final int HEADER_HEIGHT = 32;
     private static final int ROW_HEIGHT = 17;
     private static ViewMode lastViewMode;
@@ -85,6 +85,18 @@ extends Screen {
     private int searchDelay;
     private int sortX;
     private int sortWidth;
+    private int contentLeft;
+    private int contentRight;
+    private int secondaryY;
+    private int controlsY;
+    private int auxiliaryControlsY;
+    private int contentY;
+    private int contentBottom;
+    private int footerY;
+    private boolean compactControls;
+    private long contentTransitionStartedNanos;
+    private int contentTransitionDirection = 1;
+    private long dataPulseStartedNanos;
     private final Map<String, Integer> locatorIndexes = new HashMap<String, Integer>();
 
     public ProductionMonitorScreen(ProductionTabletItem.MonitorLink monitorLink) {
@@ -95,22 +107,25 @@ extends Screen {
 
     protected void init() {
         String string2 = this.search == null ? "" : this.search.getValue();
-        this.panelWidth = Math.min(670, this.width - 16);
-        this.panelHeight = Math.min(454, this.height - 16);
+        this.panelWidth = Math.max(1, Math.min(MAX_PANEL_WIDTH, this.width - 12));
+        this.panelHeight = Math.max(1, Math.min(MAX_PANEL_HEIGHT, this.height - 12));
         this.left = (this.width - this.panelWidth) / 2;
         this.top = (this.height - this.panelHeight) / 2;
-        this.visibleRows = Math.max(6, Math.min(18, (this.panelHeight - 180) / 17));
-        int n = this.left + 18;
-        int n2 = this.panelWidth - 36;
+        this.contentLeft = this.left + 18;
+        this.contentRight = this.left + this.panelWidth - 18;
+        this.footerY = this.top + this.panelHeight - 29;
+        this.contentBottom = this.footerY - 8;
+        int n = this.contentLeft;
+        int n2 = Math.max(5, this.contentRight - this.contentLeft);
         int n3 = 4;
-        int n4 = (n2 - n3 * 4) / 5;
+        int n4 = Math.max(1, (n2 - n3 * 4) / 5);
         this.dashboardTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18));
         this.productionTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18));
         this.storageTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18));
         this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
         this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
         this.settingsButton = (GearButton)this.addRenderableWidget(new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
-        int n5 = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
+        int n5 = Math.max(60, Math.min(260, n2));
         this.search = new EditBox(this.font, this.left + 18, this.top + 62, n5, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.search"));
         this.search.setHint((Component)Component.translatable((String)"screen.forever_production_monitor.search"));
         this.search.setMaxLength(64);
@@ -127,16 +142,16 @@ extends Screen {
         if (this.networkMapView == null) {
             this.networkMapView = new NetworkMapView(this.minecraft, this.font);
         }
-        this.networkMapView.setBounds(this.left + 18, this.top + 88, this.panelWidth - 36, this.panelHeight - 130);
+        this.networkMapView.setBounds(this.contentLeft, this.top + 62, n2, Math.max(24, this.contentBottom - this.top - 62));
         if (this.networkMapSnapshot != null) {
             this.networkMapView.accept(this.networkMapSnapshot);
         }
         this.storageCapacityButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.capacity"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n, this.top + 62, n4, 20));
         this.nbtItemsButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.nbt_items"), button -> this.switchView(ViewMode.COMPONENTS), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 62, n4, 20));
-        int n6 = this.left + this.panelWidth - 132;
-        int n7 = this.left + this.panelWidth - 52;
-        this.sortX = this.left + 18 + n5 + 12;
-        this.sortWidth = Math.max(90, n6 - 12 - this.sortX);
+        int n6 = this.contentRight - 74;
+        int n7 = this.contentRight - 34;
+        this.sortX = this.contentLeft;
+        this.sortWidth = Math.max(44, n2 - 82);
         this.sortButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create(this.sortLabel(), button -> {
             if (this.viewMode == ViewMode.DEVICES) {
                 this.deviceSort = this.deviceSort.next();
@@ -173,7 +188,9 @@ extends Screen {
         if (this.viewMode == viewMode) {
             return;
         }
+        this.contentTransitionDirection = viewMode.ordinal() >= this.viewMode.ordinal() ? 1 : -1;
         this.viewMode = viewMode;
+        this.contentTransitionStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
         lastViewMode = viewMode;
         this.requestedPage = 0;
         this.statisticsSnapshot = null;
@@ -190,34 +207,53 @@ extends Screen {
         if (this.search == null) {
             return;
         }
+        this.layoutCurrentView();
         this.search.active = this.search.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.DASHBOARD;
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
-        int n = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
+        int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        int pagingWidth = 114;
+        int searchWidth = this.viewMode == ViewMode.MAP ? Math.min(300, innerWidth) : (this.compactControls ? innerWidth : Math.max(100, Math.min(260, innerWidth * 2 / 5)));
+        this.search.setX(this.contentLeft);
+        this.search.setY(this.viewMode == ViewMode.MAP ? this.auxiliaryControlsY : this.controlsY);
+        this.search.setWidth(Math.max(1, searchWidth));
         if (this.viewMode == ViewMode.COMPONENTS) {
-            this.search.setX(this.left + 242);
-            this.search.setWidth(Math.max(120, this.left + this.panelWidth - 144 - this.search.getX()));
-        } else {
-            this.search.setX(this.left + 18);
-            this.search.setWidth(this.viewMode == ViewMode.MAP ? Math.min(330, this.panelWidth - 36) : n);
+            this.search.setWidth(Math.max(1, innerWidth - pagingWidth - 8));
         }
+        int pagingX = this.contentRight - pagingWidth;
+        int pagingY = this.viewMode == ViewMode.COMPONENTS || this.compactControls ? this.auxiliaryControlsY : this.controlsY;
+        this.sortX = this.compactControls ? this.contentLeft : this.search.getX() + this.search.getWidth() + 8;
+        this.sortWidth = Math.max(44, pagingX - 8 - this.sortX);
         this.sortButton.visible = bl2 = this.viewMode == ViewMode.PRODUCTION || this.viewMode == ViewMode.DEVICES;
         this.sortButton.active = bl2;
         int n2 = 4;
-        int n3 = Math.max(44, (this.sortWidth - n2) / 2);
+        int n3 = Math.max(20, (this.sortWidth - n2) / 2);
         this.sortButton.setX(this.sortX);
+        this.sortButton.setY(this.compactControls ? this.auxiliaryControlsY : this.controlsY);
         this.sortButton.setWidth(this.viewMode == ViewMode.DEVICES ? n3 : this.sortWidth);
         this.sortButton.setMessage(this.sortLabel());
         this.filterButton.visible = this.viewMode == ViewMode.DEVICES;
         this.filterButton.active = this.viewMode == ViewMode.DEVICES;
         this.filterButton.setX(this.sortX + n3 + n2);
-        this.filterButton.setWidth(this.sortWidth - n3 - n2);
+        this.filterButton.setY(this.compactControls ? this.auxiliaryControlsY : this.controlsY);
+        this.filterButton.setWidth(Math.max(1, this.sortWidth - n3 - n2));
         this.filterButton.setMessage(this.filterLabel());
         this.previousButton.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.MAP;
         this.nextButton.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.MAP;
+        this.previousButton.setX(pagingX);
+        this.previousButton.setY(pagingY);
+        this.nextButton.setX(pagingX + 80);
+        this.nextButton.setY(pagingY);
         this.storageCapacityButton.visible = bl = this.viewMode == ViewMode.STORAGE || this.viewMode == ViewMode.COMPONENTS;
         this.storageCapacityButton.active = bl;
         this.nbtItemsButton.visible = bl;
         this.nbtItemsButton.active = bl;
+        int secondaryWidth = Math.max(1, (innerWidth - 4) / 2);
+        this.storageCapacityButton.setX(this.contentLeft);
+        this.storageCapacityButton.setY(this.secondaryY);
+        this.storageCapacityButton.setWidth(secondaryWidth);
+        this.nbtItemsButton.setX(this.contentLeft + secondaryWidth + 4);
+        this.nbtItemsButton.setY(this.secondaryY);
+        this.nbtItemsButton.setWidth(Math.max(1, innerWidth - secondaryWidth - 4));
         this.storageCapacityButton.setStyle(this.viewMode == ViewMode.STORAGE ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.nbtItemsButton.setStyle(this.viewMode == ViewMode.COMPONENTS ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.dashboardTab.setMessage(this.tabLabel(ViewMode.DASHBOARD, "screen.forever_production_monitor.tab.dashboard"));
@@ -235,6 +271,31 @@ extends Screen {
         this.previousButton.setStyle(ForeverButton.Style.THEMED);
         this.nextButton.setStyle(ForeverButton.Style.THEMED);
         this.updateButtons();
+    }
+
+    private void layoutCurrentView() {
+        int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        this.secondaryY = this.top + 62;
+        this.controlsY = this.top + 62;
+        this.auxiliaryControlsY = this.top + 86;
+        if (this.viewMode == ViewMode.COMPONENTS) {
+            this.controlsY = this.auxiliaryControlsY;
+        }
+        this.compactControls = innerWidth < 520 && (this.viewMode == ViewMode.PRODUCTION || this.viewMode == ViewMode.DEVICES);
+        this.contentY = switch (this.viewMode) {
+            case DASHBOARD -> this.top + 91;
+            case STORAGE -> this.top + 91;
+            case COMPONENTS -> this.top + 119;
+            case PRODUCTION, DEVICES -> this.top + (this.compactControls ? 119 : 95);
+            case MAP -> this.top + 62;
+        };
+        if (this.viewMode == ViewMode.MAP) {
+            this.auxiliaryControlsY = this.footerY - 24;
+            int mapBottom = this.auxiliaryControlsY - 6;
+            this.networkMapView.setBounds(this.contentLeft, this.contentY, innerWidth, Math.max(24, mapBottom - this.contentY));
+        }
+        int rowsHeight = this.contentBottom - this.contentY - 18 - 31;
+        this.visibleRows = Math.max(1, Math.min(18, rowsHeight / ROW_HEIGHT));
     }
 
     private Component tabLabel(ViewMode viewMode, String string) {
@@ -288,6 +349,7 @@ extends Screen {
         if (this.viewMode == ViewMode.PRODUCTION && monitorSnapshot.dimension().equals((Object)this.link.dimension()) && monitorSnapshot.pos().equals((Object)this.link.pos())) {
             this.snapshot = monitorSnapshot;
             this.requestedPage = monitorSnapshot.page();
+            this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             this.updateButtons();
         }
     }
@@ -302,6 +364,7 @@ extends Screen {
         if (this.viewMode != ViewMode.PRODUCTION && statisticsSnapshot.statisticsPage() == statisticsPage && statisticsSnapshot.dimension().equals((Object)this.link.dimension()) && statisticsSnapshot.pos().equals((Object)this.link.pos())) {
             this.statisticsSnapshot = statisticsSnapshot;
             this.requestedPage = statisticsSnapshot.page();
+            this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             this.updateButtons();
         }
     }
@@ -309,6 +372,7 @@ extends Screen {
     public void acceptDashboard(MonitorNetwork.DashboardSnapshot dashboardSnapshot) {
         if (dashboardSnapshot.dimension().equals((Object)this.link.dimension()) && dashboardSnapshot.pos().equals((Object)this.link.pos())) {
             this.dashboardSnapshot = dashboardSnapshot;
+            this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             this.updateButtons();
         }
     }
@@ -316,6 +380,7 @@ extends Screen {
     public void acceptNetworkMap(MonitorNetwork.NetworkMapPayload networkMapPayload) {
         if (networkMapPayload.dimension().equals((Object)this.link.dimension()) && networkMapPayload.pos().equals((Object)this.link.pos())) {
             this.networkMapSnapshot = networkMapPayload;
+            this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             if (this.networkMapView != null) {
                 this.networkMapView.accept(networkMapPayload);
             }
@@ -342,17 +407,36 @@ extends Screen {
     }
 
     private int dashboardCapacity() {
-        return Math.max(1, (this.panelHeight - 108) / 28);
+        return Math.max(1, (this.contentBottom - this.contentY - 21) / 28);
     }
 
     public void render(GuiGraphics guiGraphics, int n, int n2, float f) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
+        this.drawAmbientFrameAccent(guiGraphics, palette);
+        float transition = GuiMotion.progress(this.contentTransitionStartedNanos, 160L);
+        float easedTransition = GuiMotion.easeOut(transition);
+        float transitionOffset = transition < 1.0f ? (1.0f - easedTransition) * 8.0f * (float)this.contentTransitionDirection : 0.0f;
+        guiGraphics.pose().pushPose();
+        if (transition < 1.0f) {
+            guiGraphics.pose().translate(transitionOffset, 0.0f, 0.0f);
+        }
+        this.drawContent(guiGraphics, Math.round((float)n - transitionOffset), n2, f);
+        guiGraphics.pose().popPose();
+        if (transition < 1.0f) {
+            int alpha = (int)((1.0f - easedTransition) * 72.0f);
+            guiGraphics.fill(this.contentLeft, this.contentY, this.contentRight, this.contentBottom, GuiMotion.alpha(InterfaceTheme.current().panel(), alpha));
+        }
+        float dataPulse = GuiMotion.progress(this.dataPulseStartedNanos, GuiMotion.updatePulseDurationMillis());
+        float pulseIntensity = GuiMotion.updatePulseIntensity();
+        if (dataPulse < 1.0f && pulseIntensity > 0.0f) {
+            int pulseAlpha = Math.round((1.0f - GuiMotion.easeOut(dataPulse)) * 72.0f * pulseIntensity);
+            guiGraphics.renderOutline(this.contentLeft, this.contentY, Math.max(1, this.contentRight - this.contentLeft), Math.max(1, this.contentBottom - this.contentY), GuiMotion.alpha(palette.accentB(), pulseAlpha));
+        }
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
         }
-        this.drawContent(guiGraphics, n, n2, f);
         this.drawTitle(guiGraphics);
         if (this.settingsButton != null && this.settingsButton.isHoveredOrFocused()) {
             guiGraphics.renderTooltip(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.theme.open"), n, n2);
@@ -361,6 +445,22 @@ extends Screen {
 
     private void drawPanel(GuiGraphics guiGraphics) {
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, (ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get()), InterfaceTheme.current());
+    }
+
+    private void drawAmbientFrameAccent(GuiGraphics guiGraphics, InterfaceTheme.Palette palette) {
+        if (!GuiMotion.ambientMotionEnabled()) {
+            return;
+        }
+        float intensity = GuiMotion.ambientMotionIntensity();
+        int inset = 20;
+        int available = this.panelWidth - inset * 2;
+        int length = Math.min(36, Math.max(12, 16 + Math.round(intensity * 20.0f)));
+        if (available <= length) {
+            return;
+        }
+        int accentX = this.left + inset + Math.round(GuiMotion.cycle(7200L) * (float)(available - length));
+        int alpha = Math.round(46.0f * intensity);
+        guiGraphics.fill(accentX, this.top + 2, accentX + length, this.top + 3, GuiMotion.alpha(palette.accentB(), alpha));
     }
 
     private void drawTitle(GuiGraphics guiGraphics) {
@@ -399,7 +499,7 @@ extends Screen {
         if (this.networkMapView != null) {
             this.networkMapView.render(guiGraphics, n, n2, f);
         }
-        int n3 = this.top + this.panelHeight - 29;
+        int n3 = this.footerY;
         String string = String.valueOf(this.link.dimension()) + "  " + this.link.pos().toShortString();
         guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, this.panelWidth / 2), this.left + 18, n3, InterfaceTheme.current().muted(), false);
         if (this.networkMapSnapshot != null) {
@@ -410,14 +510,16 @@ extends Screen {
     private void drawDashboardContent(GuiGraphics guiGraphics, int n, int n2) {
         int n3;
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n4 = this.top + 66;
-        int n5 = this.left + 18;
-        int n6 = this.left + this.panelWidth - 18;
-        int n7 = this.top + this.panelHeight - 42;
-        int n8 = n6 - 176;
-        int n9 = n6 - 300;
+        int n4 = this.contentY;
+        int n5 = this.contentLeft;
+        int n6 = this.contentRight;
+        int n7 = this.contentBottom;
+        boolean compact = this.panelWidth < 520;
+        int n8 = n6 - (compact ? 92 : 176);
+        int n9 = n6 - (compact ? 170 : 300);
         guiGraphics.fill(n5, n4, n6, n7, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 20, palette.tableHeader());
+        InterfaceTheme.drawTableDecoration(guiGraphics, n5, n4, n6 - n5, n7 - n4);
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.pinned"), n5 + 24, n4 + 6, palette.text(), false);
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.stored"), n9, n4 + 6, palette.text());
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.average"), n8, n4 + 6, palette.accentA());
@@ -439,9 +541,13 @@ extends Screen {
             }
             int n16 = dashboardEntry2.alarmState() == ProductionMonitorBlockEntity.AlarmState.ACTIVE ? -39826 : (dashboardEntry2.alarmState() == ProductionMonitorBlockEntity.AlarmState.PENDING ? -14740 : -9972847);
             guiGraphics.fill(n5 + 1, n14, n5 + 4, n14 + 27, n16);
+            if (GuiMotion.enabled() && dashboardEntry2.alarmState() != ProductionMonitorBlockEntity.AlarmState.NORMAL) {
+                int pulseAlpha = 18 + (int)((Math.sin((double)GuiMotion.now() / 2.4E8) + 1.0) * 13.0);
+                guiGraphics.fill(n5 + 4, n14, n6 - 1, n14 + 27, GuiMotion.alpha(n16, pulseAlpha));
+            }
             AEKeyRendering.drawInGui((Minecraft)this.minecraft, (GuiGraphics)guiGraphics, (int)(n5 + 7), (int)(n14 + 5), (AEKey)dashboardEntry2.key());
             Component mutableComponent = dashboardEntry2.kind() == MonitorNetwork.EntryKind.ENERGY ? Component.translatable((String)"screen.forever_production_monitor.energy") : AEKeyRendering.getDisplayName((AEKey)dashboardEntry2.key());
-            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mutableComponent.getString(), n9 - n5 - 80), n5 + 29, n14 + 5, palette.text(), false);
+            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(mutableComponent.getString(), Math.max(32, n9 - n5 - 80)), n5 + 29, n14 + 5, palette.text(), false);
             guiGraphics.drawString(this.font, dashboardEntry2.key().getId().toString(), n5 + 29, n14 + 16, palette.muted(), false);
             this.drawRight(guiGraphics, (Component)Component.literal((String)(dashboardEntry2.infinite() ? "Infinite" : ProductionMonitorScreen.formatStored(dashboardEntry2.stored(), dashboardEntry2.kind()))), n9, n14 + 9, dashboardEntry2.infinite() ? palette.accentB() : palette.text());
             this.drawRight(guiGraphics, (Component)Component.literal((String)(dashboardEntry2.infinite() ? "\u2014" : ProductionMonitorScreen.formatRate(dashboardEntry2.averagePerMinute(), dashboardEntry2.kind()))), n8, n14 + 9, ProductionMonitorScreen.rateColor(dashboardEntry2.averagePerMinute()));
@@ -455,9 +561,10 @@ extends Screen {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.empty_hint"), this.left + this.panelWidth / 2, n4 + 96, palette.accentA());
         }
         n3 = (int)list.stream().filter(dashboardEntry -> dashboardEntry.alarmState() == ProductionMonitorBlockEntity.AlarmState.ACTIVE).count();
-        guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.summary", (Object[])new Object[]{list.size(), n3}), n5, this.top + this.panelHeight - 27, n3 > 0 ? -39826 : palette.muted(), false);
+        guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.dashboard.summary", (Object[])new Object[]{list.size(), n3}), n5, this.footerY, n3 > 0 ? -39826 : palette.muted(), false);
         if (this.dashboardSnapshot != null) {
-            this.drawStatus(guiGraphics, this.dashboardSnapshot.status(), n6, this.top + this.panelHeight - 27);
+            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(this.requestedPage + 1 + " / " + this.dashboardPages())), this.contentRight - 57, this.controlsY + 6, palette.text());
+            this.drawStatus(guiGraphics, this.dashboardSnapshot.status(), n6, this.footerY);
         }
     }
 
@@ -472,15 +579,16 @@ extends Screen {
         int n4;
         int n5;
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n6 = this.top + 95;
-        int n7 = this.left + 18;
-        int n8 = this.left + this.panelWidth - 18;
+        int n6 = this.contentY;
+        int n7 = this.contentLeft;
+        int n8 = this.contentRight;
         int n9 = n8 - n7;
         int n10 = n7 + n9 * 66 / 100;
         int n11 = n7 + n9 * 82 / 100;
         int n12 = n6 + 18 + this.visibleRows * 17;
         guiGraphics.fill(n7, n6, n8, n12, palette.tableOuter());
         guiGraphics.fill(n7 + 1, n6 + 1, n8 - 1, n6 + 18, palette.tableHeader());
+        InterfaceTheme.drawTableDecoration(guiGraphics, n7, n6, n8 - n7, n12 - n6);
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.item"), n7 + 24, n6 + 5, palette.text(), false);
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.stored"), n10, n6 + 5, palette.text());
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.rate"), n11, n6 + 5, palette.accentA());
@@ -515,7 +623,7 @@ extends Screen {
         }
         n5 = n12 + 6;
         this.drawSummary(guiGraphics, n7, n8, n5);
-        n4 = n5 + 24;
+        n4 = this.footerY - 7;
         String string = String.valueOf(this.link.dimension()) + "  " + this.link.pos().toShortString();
         guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, n9 / 2), n7, n4 + 7, palette.muted(), false);
         if (this.snapshot == null) {
@@ -524,17 +632,17 @@ extends Screen {
             Component statusText = Component.translatable((String)("screen.forever_production_monitor.status." + this.snapshot.status().name().toLowerCase()));
             n3 = this.snapshot.status() == MonitorNetwork.Status.ONLINE ? -9972847 : (this.snapshot.status() == MonitorNetwork.Status.WARMING_UP ? -14740 : -35716);
             this.drawRight(guiGraphics, statusText, n8, n4 + 7, n3);
-            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(this.snapshot.page() + 1 + " / " + this.snapshot.pages())), this.left + this.panelWidth - 75, this.top + 68, palette.text());
-            guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.entries", (Object[])new Object[]{this.snapshot.totalEntries()}), this.left + 18, this.top + 87, palette.muted(), false);
+            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(this.snapshot.page() + 1 + " / " + this.snapshot.pages())), this.contentRight - 57, (this.compactControls ? this.auxiliaryControlsY : this.controlsY) + 6, palette.text());
+            guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.entries", (Object[])new Object[]{this.snapshot.totalEntries()}), this.contentLeft, this.contentY - 8, palette.muted(), false);
         }
     }
 
     private void drawStorageContent(GuiGraphics guiGraphics) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n = this.left + 18;
-        int n2 = this.left + this.panelWidth - 18;
+        int n = this.contentLeft;
+        int n2 = this.contentRight;
         int n3 = n2 - n;
-        int n4 = this.top + 91;
+        int n4 = this.contentY;
         MonitorNetwork.StatisticsSnapshot statisticsSnapshot = this.statisticsSnapshot != null && this.statisticsSnapshot.statisticsPage() == MonitorNetwork.StatisticsPage.STORAGE ? this.statisticsSnapshot : null;
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.subtitle"), n, n4, palette.muted(), false);
         MonitorNetwork.StorageStats storageStats = statisticsSnapshot == null ? MonitorNetwork.StorageStats.EMPTY : statisticsSnapshot.storage();
@@ -542,13 +650,18 @@ extends Screen {
         this.drawCapacityBar(guiGraphics, n, n2, n4 += 16, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.bytes"), d, ProductionMonitorScreen.formatBytes(storageStats.usedBytes()) + " / " + ProductionMonitorScreen.formatBytes(storageStats.totalBytes()));
         int n5 = 5;
         int n6 = (n3 - n5 * 3) / 4;
-        this.drawStatCard(guiGraphics, n, n4 += 34, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.used"), ProductionMonitorScreen.formatBytes(storageStats.usedBytes()), palette.accentA());
-        this.drawStatCard(guiGraphics, n + n6 + n5, n4, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.free"), ProductionMonitorScreen.formatBytes(storageStats.freeBytes()), -9972847);
-        this.drawStatCard(guiGraphics, n + (n6 + n5) * 2, n4, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.capacity"), ProductionMonitorScreen.formatBytes(storageStats.totalBytes()), -1185038);
-        this.drawStatCard(guiGraphics, n + (n6 + n5) * 3, n4, n3 - (n6 + n5) * 3, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.utilization"), String.format(Locale.ROOT, "%.1f%%", d * 100.0), palette.accentB());
+        if (n4 + 77 <= this.contentBottom) {
+            this.drawStatCard(guiGraphics, n, n4 += 34, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.used"), ProductionMonitorScreen.formatBytes(storageStats.usedBytes()), palette.accentA());
+            this.drawStatCard(guiGraphics, n + n6 + n5, n4, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.free"), ProductionMonitorScreen.formatBytes(storageStats.freeBytes()), -9972847);
+            this.drawStatCard(guiGraphics, n + (n6 + n5) * 2, n4, n6, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.capacity"), ProductionMonitorScreen.formatBytes(storageStats.totalBytes()), -1185038);
+            this.drawStatCard(guiGraphics, n + (n6 + n5) * 3, n4, n3 - (n6 + n5) * 3, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.utilization"), String.format(Locale.ROOT, "%.1f%%", d * 100.0), palette.accentB());
+        }
         double d2 = storageStats.totalTypes() <= 0L ? 0.0 : Math.min(1.0, (double)storageStats.usedTypes() / (double)storageStats.totalTypes());
-        this.drawCapacityBar(guiGraphics, n, n2, n4 += 50, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.types"), d2, ProductionMonitorScreen.formatAmount(storageStats.usedTypes()) + " / " + ProductionMonitorScreen.formatAmount(storageStats.totalTypes()));
-        guiGraphics.fill(n, n4 += 40, n2, n4 + 79, palette.tableOuter());
+        if (n4 + 84 <= this.contentBottom) {
+            this.drawCapacityBar(guiGraphics, n, n2, n4 += 50, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.types"), d2, ProductionMonitorScreen.formatAmount(storageStats.usedTypes()) + " / " + ProductionMonitorScreen.formatAmount(storageStats.totalTypes()));
+        }
+        if (n4 + 119 <= this.contentBottom) {
+            guiGraphics.fill(n, n4 += 40, n2, n4 + 79, palette.tableOuter());
         guiGraphics.fill(n + 1, n4 + 1, n2 - 1, n4 + 19, palette.tableHeader());
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.sources"), n + 8, n4 + 6, palette.text(), false);
         int n7 = n3 / 2;
@@ -557,6 +670,7 @@ extends Screen {
         this.drawSourceLine(guiGraphics, n + 9, n4 + 48, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.other_cells"), storageStats.otherCells(), palette.accentA());
         this.drawSourceLine(guiGraphics, n + n7 + 5, n4 + 48, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.external"), storageStats.externalStorageBuses(), -8861464);
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.storage.note"), n + 9, n4 + 66, palette.muted(), false);
+        }
         this.drawStatisticsFooter(guiGraphics, statisticsSnapshot, n, n2);
         if (statisticsSnapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.loading"), this.left + this.panelWidth / 2, this.top + this.panelHeight / 2, -14740);
@@ -566,9 +680,9 @@ extends Screen {
     private void drawComponentsContent(GuiGraphics guiGraphics, int n, int n2) {
         int n3;
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n4 = this.top + 95;
-        int n5 = this.left + 18;
-        int n6 = this.left + this.panelWidth - 18;
+        int n4 = this.contentY;
+        int n5 = this.contentLeft;
+        int n6 = this.contentRight;
         int n7 = n6 - n5;
         int n8 = n5 + n7 * 78 / 100;
         int n9 = n4 + 18 + this.visibleRows * 17;
@@ -576,6 +690,7 @@ extends Screen {
         List<MonitorNetwork.ComponentGroup> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.componentGroups();
         guiGraphics.fill(n5, n4, n6, n9, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 18, palette.tableHeader());
+        InterfaceTheme.drawTableDecoration(guiGraphics, n5, n4, n6 - n5, n9 - n4);
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.components.item"), n5 + 24, n4 + 5, palette.text(), false);
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.components.variants"), n8, n4 + 5, palette.accentB());
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.stored"), n6 - 8, n4 + 5, palette.accentA());
@@ -614,17 +729,17 @@ extends Screen {
         if (statisticsSnapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.loading"), this.left + this.panelWidth / 2, n4 + (n9 - n4) / 2, -14740);
         } else {
-            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(statisticsSnapshot.page() + 1 + " / " + statisticsSnapshot.pages())), this.left + this.panelWidth - 75, this.top + 68, palette.text());
-            guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.components.entries", (Object[])new Object[]{statisticsSnapshot.totalEntries()}), this.left + 18, this.top + 87, palette.muted(), false);
+            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(statisticsSnapshot.page() + 1 + " / " + statisticsSnapshot.pages())), this.contentRight - 57, this.auxiliaryControlsY + 6, palette.text());
+            guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.components.entries", (Object[])new Object[]{statisticsSnapshot.totalEntries()}), this.contentLeft, this.contentY - 8, palette.muted(), false);
         }
     }
 
     private void drawDevicesContent(GuiGraphics guiGraphics, int n, int n2) {
         int n3;
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int n4 = this.top + 95;
-        int n5 = this.left + 18;
-        int n6 = this.left + this.panelWidth - 18;
+        int n4 = this.contentY;
+        int n5 = this.contentLeft;
+        int n6 = this.contentRight;
         int n7 = n6 - n5;
         int n8 = n5 + n7 * 60 / 100;
         int n9 = n5 + n7 * 72 / 100;
@@ -637,6 +752,7 @@ extends Screen {
         List<MonitorNetwork.DeviceGroup> list = statisticsSnapshot == null ? List.of() : statisticsSnapshot.deviceGroups();
         guiGraphics.fill(n5, n4, n6, n14, palette.tableOuter());
         guiGraphics.fill(n5 + 1, n4 + 1, n6 - 1, n4 + 18, palette.tableHeader());
+        InterfaceTheme.drawTableDecoration(guiGraphics, n5, n4, n6 - n5, n14 - n4);
         guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.device"), n5 + 24, n4 + 5, palette.text(), false);
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.count"), n8, n4 + 5, palette.text());
         this.drawRight(guiGraphics, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.channels"), n9, n4 + 5, -8861464);
@@ -688,11 +804,11 @@ extends Screen {
         if (statisticsSnapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.loading"), this.left + this.panelWidth / 2, n4 + (n14 - n4) / 2, -14740);
         } else {
-            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(statisticsSnapshot.page() + 1 + " / " + statisticsSnapshot.pages())), this.left + this.panelWidth - 75, this.top + 68, palette.text());
+            guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)(statisticsSnapshot.page() + 1 + " / " + statisticsSnapshot.pages())), this.contentRight - 57, (this.compactControls ? this.auxiliaryControlsY : this.controlsY) + 6, palette.text());
             MutableComponent mutableComponent = Component.translatable((String)"screen.forever_production_monitor.devices.entries", (Object[])new Object[]{statisticsSnapshot.totalEntries()});
-            guiGraphics.drawString(this.font, (Component)mutableComponent, this.left + 18, this.top + 87, palette.muted(), false);
+            guiGraphics.drawString(this.font, (Component)mutableComponent, this.contentLeft, this.contentY - 8, palette.muted(), false);
             if (statisticsSnapshot.deviceTotals().unresolvedChannels() > 0) {
-                guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.unresolved", (Object[])new Object[]{statisticsSnapshot.deviceTotals().unresolvedChannels()}), this.left + 23 + this.font.width((FormattedText)mutableComponent), this.top + 87, -14740, false);
+                guiGraphics.drawString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.devices.unresolved", (Object[])new Object[]{statisticsSnapshot.deviceTotals().unresolvedChannels()}), this.contentLeft + 5 + this.font.width((FormattedText)mutableComponent), this.contentY - 8, -14740, false);
             }
         }
     }
@@ -769,7 +885,7 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(n, n2, n + n3, n2 + 43, palette.tableOuter());
         guiGraphics.fill(n + 1, n2 + 1, n + n3 - 1, n2 + 42, palette.rowEven());
-        guiGraphics.drawCenteredString(this.font, component, n + n3 / 2, n2 + 8, palette.muted());
+        guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), Math.max(12, n3 - 6)), n + n3 / 2, n2 + 8, palette.muted());
         guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)string), n + n3 / 2, n2 + 25, n4);
     }
 
@@ -780,7 +896,7 @@ extends Screen {
     }
 
     private void drawStatisticsFooter(GuiGraphics guiGraphics, MonitorNetwork.StatisticsSnapshot statisticsSnapshot, int n, int n2) {
-        int n3 = this.top + this.panelHeight - 29;
+        int n3 = this.footerY;
         String string = String.valueOf(this.link.dimension()) + "  " + this.link.pos().toShortString();
         guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, (n2 - n) / 2), n, n3, InterfaceTheme.current().muted(), false);
         if (statisticsSnapshot != null) {
@@ -812,14 +928,25 @@ extends Screen {
     }
 
     private void drawSummaryValue(GuiGraphics guiGraphics, Component component, String string, int n, int n2, int n3, int n4) {
-        MutableComponent mutableComponent = Component.literal((String)(component.getString() + " ")).append((Component)Component.literal((String)string));
-        int n5 = this.font.width((FormattedText)mutableComponent);
-        int n6 = n + Math.max(3, (n2 - n5) / 2);
-        guiGraphics.drawString(this.font, component, n6, n3 + 6, InterfaceTheme.current().muted(), false);
-        guiGraphics.drawString(this.font, string, n6 + this.font.width((FormattedText)component) + 3, n3 + 6, n4, false);
+        int available = Math.max(1, n2 - 6);
+        int labelWidth = Math.min(this.font.width((FormattedText)component), available * 3 / 5);
+        String label = this.font.plainSubstrByWidth(component.getString(), labelWidth);
+        int valueWidth = Math.max(1, available - this.font.width(label) - 3);
+        String value = this.font.plainSubstrByWidth(string, valueWidth);
+        int combinedWidth = this.font.width(label) + 3 + this.font.width(value);
+        int n6 = n + Math.max(3, (n2 - combinedWidth) / 2);
+        guiGraphics.drawString(this.font, label, n6, n3 + 6, InterfaceTheme.current().muted(), false);
+        guiGraphics.drawString(this.font, value, n6 + this.font.width(label) + 3, n3 + 6, n4, false);
+    }
+
+    private boolean contentTransitionRunning() {
+        return GuiMotion.enabled() && GuiMotion.progress(this.contentTransitionStartedNanos, 160L) < 1.0f;
     }
 
     public boolean mouseScrolled(double d, double d2, double d3, double d4) {
+        if (this.contentTransitionRunning()) {
+            return false;
+        }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseScrolled(d, d2, d4)) {
             return true;
         }
@@ -844,12 +971,15 @@ extends Screen {
         int n4;
         int n5;
         int n6;
+        if (this.contentTransitionRunning()) {
+            return super.mouseClicked(d, d2, n);
+        }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseClicked(d, d2, n)) {
             return true;
         }
         if (n == 0 && this.viewMode == ViewMode.DASHBOARD && this.dashboardSnapshot != null) {
-            n6 = this.top + 66;
-            n5 = this.left + this.panelWidth - 18;
+            n6 = this.contentY;
+            n5 = this.contentRight;
             n4 = (int)((d2 - (double)n6 - 21.0) / 28.0);
             n3 = this.requestedPage * this.dashboardCapacity() + n4;
             if (n4 >= 0 && n3 >= 0 && n3 < this.dashboardSnapshot.entries().size()) {
@@ -866,8 +996,8 @@ extends Screen {
             }
         }
         if (n == 0 && this.viewMode == ViewMode.PRODUCTION && this.snapshot != null) {
-            n6 = this.top + 95;
-            n5 = this.left + this.panelWidth - 18;
+            n6 = this.contentY;
+            n5 = this.contentRight;
             n4 = (int)((d2 - (double)n6 - 18.0) / 17.0);
             if (d >= (double)(n5 - 22) && d < (double)n5 && n4 >= 0 && n4 < this.snapshot.entries().size() && d2 >= (double)(n3 = n6 + 18 + n4 * 17) && d2 < (double)(n3 + 17)) {
                 MonitorNetwork.Entry entry = this.snapshot.entries().get(n4);
@@ -878,8 +1008,8 @@ extends Screen {
             }
         }
         if (n == 0 && this.viewMode == ViewMode.DEVICES && this.statisticsSnapshot != null && this.statisticsSnapshot.statisticsPage() == MonitorNetwork.StatisticsPage.DEVICES) {
-            n6 = this.top + 95;
-            n5 = this.left + this.panelWidth - 18;
+            n6 = this.contentY;
+            n5 = this.contentRight;
             n4 = n5 - 18;
             n3 = n6 + 18;
             n2 = (int)((d2 - (double)n3) / 17.0);
@@ -908,6 +1038,9 @@ extends Screen {
     }
 
     public boolean mouseDragged(double d, double d2, int n, double d3, double d4) {
+        if (this.contentTransitionRunning()) {
+            return false;
+        }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseDragged(d, d2, n, d3, d4)) {
             return true;
         }
@@ -915,6 +1048,9 @@ extends Screen {
     }
 
     public boolean mouseReleased(double d, double d2, int n) {
+        if (this.contentTransitionRunning()) {
+            return false;
+        }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseReleased(d, d2, n)) {
             return true;
         }
@@ -926,6 +1062,9 @@ extends Screen {
     }
 
     public boolean keyPressed(int n, int n2, int n3) {
+        if (this.contentTransitionRunning()) {
+            return super.keyPressed(n, n2, n3);
+        }
         if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isFocused() && (n == 257 || n == 335) && this.networkMapView != null) {
             this.networkMapView.focusNextSearchMatch();
             return true;

@@ -63,7 +63,21 @@ public final class ProductionHud {
         ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE, list);
     }
 
+    public static void renderPreview(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+        if (!((Boolean)ClientConfig.VALUES.hudEnabled.get()).booleanValue() || right <= left || bottom <= top) {
+            return;
+        }
+        MonitorNetwork.HudMode hudMode = (MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.get());
+        MonitorNetwork.HudSnapshot hudSnapshot = ClientMonitorState.hudSnapshot();
+        List<MonitorNetwork.Entry> list = hudSnapshot != null && !hudSnapshot.entries().isEmpty() ? hudSnapshot.entries() : ProductionHud.previewEntries(hudMode);
+        ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE, list, left, top, right, bottom, true);
+    }
+
     private static void renderConfigured(GuiGraphics guiGraphics, MonitorNetwork.HudMode hudMode, MonitorNetwork.Status status, List<MonitorNetwork.Entry> list) {
+        ProductionHud.renderConfigured(guiGraphics, hudMode, status, list, 0, 0, guiGraphics.guiWidth(), guiGraphics.guiHeight(), false);
+    }
+
+    private static void renderConfigured(GuiGraphics guiGraphics, MonitorNetwork.HudMode hudMode, MonitorNetwork.Status status, List<MonitorNetwork.Entry> list, int left, int top, int right, int bottom, boolean clampToViewport) {
         Minecraft minecraft = Minecraft.getInstance();
         int n = Math.min(list.size(), (Integer)ClientConfig.VALUES.hudEntryCount.get());
         if (n < list.size()) {
@@ -72,21 +86,27 @@ public final class ProductionHud {
         int n2 = Math.max(1, list.size());
         int n3 = 18 + n2 * 17 + 2;
         double d = (Double)ClientConfig.VALUES.hudScale.get();
-        int n4 = (int)Math.round((double)guiGraphics.guiWidth() / d);
-        int n5 = (int)Math.round((double)guiGraphics.guiHeight() / d);
+        int viewportLeft = clampToViewport ? (int)Math.ceil((double)left / d) : 0;
+        int viewportTop = clampToViewport ? (int)Math.ceil((double)top / d) : 0;
+        int viewportRight = clampToViewport ? (int)Math.floor((double)right / d) : (int)Math.round((double)guiGraphics.guiWidth() / d);
+        int viewportBottom = clampToViewport ? (int)Math.floor((double)bottom / d) : (int)Math.round((double)guiGraphics.guiHeight() / d);
         int n6 = (Integer)ClientConfig.VALUES.hudXOffset.get();
         int n7 = (Integer)ClientConfig.VALUES.hudYOffset.get();
         ClientConfig.HudAnchor hudAnchor = (ClientConfig.HudAnchor)((Object)ClientConfig.VALUES.hudAnchor.get());
         int n8 = switch (hudAnchor) {
             default -> throw new IncompatibleClassChangeError();
-            case ClientConfig.HudAnchor.TOP_LEFT, ClientConfig.HudAnchor.BOTTOM_LEFT -> n6;
-            case ClientConfig.HudAnchor.TOP_RIGHT, ClientConfig.HudAnchor.BOTTOM_RIGHT -> n4 - 188 - n6;
+            case ClientConfig.HudAnchor.TOP_LEFT, ClientConfig.HudAnchor.BOTTOM_LEFT -> viewportLeft + n6;
+            case ClientConfig.HudAnchor.TOP_RIGHT, ClientConfig.HudAnchor.BOTTOM_RIGHT -> viewportRight - 188 - n6;
         };
         int n9 = switch (hudAnchor) {
             default -> throw new IncompatibleClassChangeError();
-            case ClientConfig.HudAnchor.TOP_LEFT, ClientConfig.HudAnchor.TOP_RIGHT -> n7;
-            case ClientConfig.HudAnchor.BOTTOM_LEFT, ClientConfig.HudAnchor.BOTTOM_RIGHT -> n5 - n3 - n7;
+            case ClientConfig.HudAnchor.TOP_LEFT, ClientConfig.HudAnchor.TOP_RIGHT -> viewportTop + n7;
+            case ClientConfig.HudAnchor.BOTTOM_LEFT, ClientConfig.HudAnchor.BOTTOM_RIGHT -> viewportBottom - n3 - n7;
         };
+        if (clampToViewport) {
+            n8 = Math.max(viewportLeft, Math.min(Math.max(viewportLeft, viewportRight - 188), n8));
+            n9 = Math.max(viewportTop, Math.min(Math.max(viewportTop, viewportBottom - n3), n9));
+        }
         int n10 = (int)Math.round((Double)ClientConfig.VALUES.hudOpacity.get() * 255.0);
         ClientConfig.HudFrameStyle hudFrameStyle = ClientConfig.effectiveHudFrameStyle();
         FrameColors frameColors = ProductionHud.frameColors(hudFrameStyle);
