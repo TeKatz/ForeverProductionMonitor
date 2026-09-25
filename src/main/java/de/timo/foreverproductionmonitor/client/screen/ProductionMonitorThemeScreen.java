@@ -168,6 +168,7 @@ extends Screen {
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, interfaceStyle, palette);
         guiGraphics.drawCenteredString(this.font, this.title, this.left + this.panelWidth / 2, this.top + 13, palette.text());
+        guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)"Forever Production Monitor 2.2.2"), this.left + this.panelWidth / 2, this.top + 25, palette.muted());
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
         }
