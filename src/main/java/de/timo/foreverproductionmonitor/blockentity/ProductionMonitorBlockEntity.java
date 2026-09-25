@@ -621,6 +621,7 @@ extends AENetworkedBlockEntity {
         LinkedHashMap<ResourceLocation, ServerLevel> levels = new LinkedHashMap<>();
         LinkedHashMap<ResourceLocation, List<MapNodeSource>> sourcesByDimension = new LinkedHashMap<>();
         HashMap<Long, List<QuantumBridgeEndpoint>> quantumEndpoints = new HashMap<>();
+        LinkedHashMap<WirelessConnectorEndpoint, BlockPos> wirelessEndpoints = new LinkedHashMap<>();
 
         // IGrid is already the authoritative logical AE network. In particular, an active
         // Quantum Bridge makes both physical sides part of this same grid. Wireless terminals
@@ -666,6 +667,22 @@ extends AENetworkedBlockEntity {
                     }
                 }
             }
+
+            // ExtendedAE's ME Wireless Connector exposes its paired block position through
+            // getOtherSide(). Keep this integration optional by using the stable block id and
+            // reflection instead of introducing a hard ExtendedAE dependency.
+            BlockState ownerState = nodeLevel.getBlockState(location.pos());
+            ResourceLocation ownerBlockId = BuiltInRegistries.BLOCK.getKey(ownerState.getBlock());
+            if ("extendedae".equals(ownerBlockId.getNamespace())
+                    && "wireless_connect".equals(ownerBlockId.getPath())
+                    && Boolean.TRUE.equals(ProductionMonitorBlockEntity.invokeNoArg(owner, "isConnected"))) {
+                Object otherSide = ProductionMonitorBlockEntity.invokeNoArg(owner, "getOtherSide");
+                if (otherSide instanceof BlockPos otherPos && !otherPos.equals(location.pos())) {
+                    wirelessEndpoints.put(
+                            new WirelessConnectorEndpoint(dimension, location.pos().immutable()),
+                            otherPos.immutable());
+                }
+            }
         }
 
         ArrayList<ResourceLocation> dimensions = new ArrayList<>(levels.keySet());
@@ -683,9 +700,27 @@ extends AENetworkedBlockEntity {
             quantumLinks.add(new NetworkMapLink(a.dimension(), a.pos(), b.dimension(), b.pos()));
         }
 
+        ArrayList<NetworkMapWirelessLink> wirelessLinks = new ArrayList<>();
+        for (Map.Entry<WirelessConnectorEndpoint, BlockPos> entry : wirelessEndpoints.entrySet()) {
+            WirelessConnectorEndpoint a = entry.getKey();
+            BlockPos bPos = entry.getValue();
+            WirelessConnectorEndpoint b = new WirelessConnectorEndpoint(a.dimension(), bPos);
+            BlockPos reciprocal = wirelessEndpoints.get(b);
+            if (reciprocal == null || !reciprocal.equals(a.pos())) {
+                continue;
+            }
+
+            // Both endpoints report each other. Add the physical pair only once.
+            if (Long.compare(a.pos().asLong(), bPos.asLong()) < 0) {
+                wirelessLinks.add(new NetworkMapWirelessLink(
+                        a.dimension(), a.pos(), bPos));
+            }
+        }
+
         ServerLevel level = levels.get(viewDimension);
         if (level == null) {
-            return new NetworkMapSnapshot(viewDimension, dimensions, quantumLinks, List.of(), false);
+            return new NetworkMapSnapshot(
+                    viewDimension, dimensions, quantumLinks, wirelessLinks, List.of(), false);
         }
 
         List<MapNodeSource> sources = sourcesByDimension.getOrDefault(viewDimension, List.of());
@@ -764,6 +799,7 @@ extends AENetworkedBlockEntity {
                 viewDimension,
                 dimensions,
                 quantumLinks,
+                wirelessLinks,
                 nodes,
                 map.size() > NetworkMapSnapshot.MAX_NODES);
     }
@@ -1415,6 +1451,7 @@ extends AENetworkedBlockEntity {
     public record NetworkMapSnapshot(ResourceLocation viewDimension,
                                      List<ResourceLocation> dimensions,
                                      List<NetworkMapLink> quantumLinks,
+                                     List<NetworkMapWirelessLink> wirelessLinks,
                                      List<NetworkMapNode> nodes,
                                      boolean truncated) {
         public static final int MAX_NODES = 4096;
@@ -1422,11 +1459,13 @@ extends AENetworkedBlockEntity {
         public NetworkMapSnapshot {
             dimensions = List.copyOf(dimensions);
             quantumLinks = List.copyOf(quantumLinks);
+            wirelessLinks = List.copyOf(wirelessLinks);
             nodes = List.copyOf(nodes);
         }
 
         public static NetworkMapSnapshot empty(ResourceLocation viewDimension) {
-            return new NetworkMapSnapshot(viewDimension, List.of(), List.of(), List.of(), false);
+            return new NetworkMapSnapshot(
+                    viewDimension, List.of(), List.of(), List.of(), List.of(), false);
         }
     }
 
@@ -1434,7 +1473,14 @@ extends AENetworkedBlockEntity {
                                  ResourceLocation dimensionB, BlockPos posB) {
     }
 
+    public record NetworkMapWirelessLink(ResourceLocation dimension,
+                                         BlockPos posA, BlockPos posB) {
+    }
+
     private record QuantumBridgeEndpoint(ResourceLocation dimension, BlockPos pos) {
+    }
+
+    private record WirelessConnectorEndpoint(ResourceLocation dimension, BlockPos pos) {
     }
 
     public record DeviceLocation(ResourceLocation dimension, BlockPos pos, int side) {
