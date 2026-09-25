@@ -85,6 +85,7 @@ extends Screen {
     private int searchDelay;
     private int sortX;
     private int sortWidth;
+    private float contentTransition = 1.0f;
     private final Map<String, Integer> locatorIndexes = new HashMap<String, Integer>();
 
     public ProductionMonitorScreen(ProductionTabletItem.MonitorLink monitorLink) {
@@ -174,6 +175,7 @@ extends Screen {
             return;
         }
         this.viewMode = viewMode;
+        this.contentTransition = (Boolean)ClientConfig.VALUES.guiAnimations.get() ? 0.0f : 1.0f;
         lastViewMode = viewMode;
         this.requestedPage = 0;
         this.statisticsSnapshot = null;
@@ -350,7 +352,15 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
+        boolean animations = (Boolean)ClientConfig.VALUES.guiAnimations.get();
+        this.contentTransition = animations ? Math.min(1.0f, this.contentTransition + 0.14f) : 1.0f;
+        guiGraphics.pose().pushPose();
+        if (this.contentTransition < 1.0f) {
+            float remaining = 1.0f - this.contentTransition;
+            guiGraphics.pose().translate(0.0f, remaining * remaining * 6.0f, 0.0f);
+        }
         this.drawContent(guiGraphics, n, n2, f);
+        guiGraphics.pose().popPose();
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
         }

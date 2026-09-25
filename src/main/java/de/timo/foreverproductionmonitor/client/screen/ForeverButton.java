@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 public final class ForeverButton
 extends Button {
     private Style style;
+    private float hoverProgress;
 
     private ForeverButton(int n, int n2, int n3, int n4, Component component, Button.OnPress onPress, Style style) {
         super(n, n2, n3, n4, component, onPress, DEFAULT_NARRATION);
@@ -36,7 +37,14 @@ extends Button {
     protected void renderWidget(GuiGraphics guiGraphics, int n, int n2, float f) {
         int n3;
         int n4;
-        boolean bl = this.isHoveredOrFocused();
+        boolean hovered = this.isHoveredOrFocused();
+        boolean animations = (Boolean)de.timo.foreverproductionmonitor.client.ClientConfig.VALUES.guiAnimations.get();
+        if (animations) {
+            this.hoverProgress = Math.max(0.0f, Math.min(1.0f, this.hoverProgress + (hovered ? 0.18f : -0.18f)));
+        } else {
+            this.hoverProgress = 0.0f;
+        }
+        boolean bl = animations ? false : hovered;
         if (!this.active) {
             n4 = -12960184;
         } else {
@@ -128,6 +136,12 @@ extends Button {
         int n5 = n3;
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), n4);
         guiGraphics.fill(this.getX() + 1, this.getY() + 1, this.getX() + this.getWidth() - 1, this.getY() + this.getHeight() - 1, n5);
+        if (animations && this.active && this.hoverProgress > 0.0f) {
+            int alpha = (int)(this.hoverProgress * 72.0f);
+            int accent = this.style == Style.THEMED_ACTIVE ? InterfaceTheme.current().accentB() : InterfaceTheme.current().accentA();
+            guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), alpha << 24 | accent & 0xFFFFFF);
+            guiGraphics.renderOutline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), accent);
+        }
         int n6 = this.active ? (this.style == Style.THEMED || this.style == Style.THEMED_ACTIVE ? InterfaceTheme.current().text() : -724502) : -8946554;
         this.renderScrollingString(guiGraphics, Minecraft.getInstance().font, 3, n6);
     }
@@ -141,4 +155,3 @@ extends Button {
 
     }
 }
-

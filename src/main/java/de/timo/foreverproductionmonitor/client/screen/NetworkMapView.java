@@ -307,7 +307,8 @@ final class NetworkMapView {
         if (n2 >= 0 && n2 < list.size() && this.shouldRender(list.get(n2))) {
             MonitorNetwork.MapNode mapNode = list.get(n2);
             float[] fArray = NetworkMapView.stateColor(mapNode.state());
-            LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)bufferSource.getBuffer(RenderType.lines()), (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.035), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)1.0f);
+            double pulse = (Boolean)ClientConfig.VALUES.guiAnimations.get() ? (Math.sin((double)System.nanoTime() / 2.2E8) + 1.0) * 0.009 : 0.0;
+            LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)bufferSource.getBuffer(RenderType.lines()), (AABB)NetworkMapView.boundsFor(mapNode).inflate(0.035 + pulse), (float)fArray[0], (float)fArray[1], (float)fArray[2], (float)1.0f);
             bufferSource.endBatch(RenderType.lines());
         }
         poseStack.popPose();

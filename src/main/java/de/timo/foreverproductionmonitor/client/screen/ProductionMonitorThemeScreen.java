@@ -99,6 +99,7 @@ extends Screen {
         this.addToggle(n + n3 + 8, this.contentTop, n3, ProductionMonitorThemeScreen.booleanLabel("settings.remember_tab", (Boolean)ClientConfig.VALUES.rememberLastTab.get()), () -> ClientConfig.VALUES.rememberLastTab.set(!ClientConfig.VALUES.rememberLastTab.get()));
         this.addToggle(n, this.contentTop + 30, n3, ProductionMonitorThemeScreen.rateLabel(), () -> ClientConfig.VALUES.rateUnit.set(((ClientConfig.RateUnit)((Object)((Object)ClientConfig.VALUES.rateUnit.get()))).next()));
         this.addToggle(n + n3 + 8, this.contentTop + 30, n3, ProductionMonitorThemeScreen.refreshLabel(), () -> ClientConfig.VALUES.refreshInterval.set(((ClientConfig.RefreshInterval)((Object)((Object)ClientConfig.VALUES.refreshInterval.get()))).next()));
+        this.addToggle(n, this.contentTop + 60, n2, ProductionMonitorThemeScreen.booleanLabel("settings.gui_animations", (Boolean)ClientConfig.VALUES.guiAnimations.get()), () -> ClientConfig.VALUES.guiAnimations.set(!ClientConfig.VALUES.guiAnimations.get()));
     }
 
     private void buildInterface(int n, int n2) {
@@ -217,6 +218,7 @@ extends Screen {
                 ClientConfig.VALUES.rememberLastTab.set(((Boolean)ClientConfig.VALUES.rememberLastTab.getDefault()));
                 ClientConfig.VALUES.rateUnit.set(((ClientConfig.RateUnit)((Object)ClientConfig.VALUES.rateUnit.getDefault())));
                 ClientConfig.VALUES.refreshInterval.set(((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.getDefault())));
+                ClientConfig.VALUES.guiAnimations.set(((Boolean)ClientConfig.VALUES.guiAnimations.getDefault()));
                 break;
             }
             case INTERFACE: {
@@ -292,6 +294,7 @@ extends Screen {
         ClientConfig.VALUES.interfaceCustomSecondaryHue.save();
         ClientConfig.VALUES.interfaceCustomBrightness.save();
         ClientConfig.VALUES.interfaceOpacity.save();
+        ClientConfig.VALUES.guiAnimations.save();
         ClientConfig.VALUES.matchHudTheme.save();
         ClientConfig.VALUES.defaultTab.save();
         ClientConfig.VALUES.rememberLastTab.save();

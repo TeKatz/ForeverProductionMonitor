@@ -156,6 +156,7 @@
   ,"screen.forever_production_monitor.theme.custom": "Benutzerdefiniert"
   ,"screen.forever_production_monitor.theme.hue": "Eigener Akzent: %s°"
   ,"screen.forever_production_monitor.theme.match_hud": "Kompaktes HUD koppeln: %s"
+  ,"screen.forever_production_monitor.settings.gui_animations": "GUI-Animationen: %s"
   ,"screen.forever_production_monitor.tab.dashboard": "Dashboard"
   ,"screen.forever_production_monitor.dashboard.pinned": "Angepinnte Ressource"
   ,"screen.forever_production_monitor.dashboard.alarm": "Alarm"

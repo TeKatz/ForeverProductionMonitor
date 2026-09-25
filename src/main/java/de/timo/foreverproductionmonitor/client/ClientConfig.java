@@ -72,6 +72,7 @@ public final class ClientConfig {
         public final ModConfigSpec.IntValue interfaceCustomSecondaryHue;
         public final ModConfigSpec.DoubleValue interfaceCustomBrightness;
         public final ModConfigSpec.DoubleValue interfaceOpacity;
+        public final ModConfigSpec.BooleanValue guiAnimations;
         public final ModConfigSpec.BooleanValue matchHudTheme;
         public final ModConfigSpec.BooleanValue invertMapRotation;
         public final ModConfigSpec.EnumValue<DefaultTab> defaultTab;
@@ -115,6 +116,7 @@ public final class ClientConfig {
             this.interfaceCustomSecondaryHue = builder.comment("Secondary hue used by the custom dashboard theme").defineInRange("customSecondaryHue", 38, 0, 359);
             this.interfaceCustomBrightness = builder.comment("Brightness of custom dashboard surfaces").defineInRange("customBrightness", 0.52, 0.2, 0.9);
             this.interfaceOpacity = builder.comment("Opacity of the full dashboard").defineInRange("opacity", 0.95, 0.55, 1.0);
+            this.guiAnimations = builder.comment("Enable subtle client-side GUI animations").define("guiAnimations", true);
             this.matchHudTheme = builder.comment("Make the compact HUD follow the dashboard theme").define("matchHudTheme", false);
             this.invertMapRotation = builder.comment("Invert horizontal and vertical left-drag rotation in the network map").define("invertMapRotation", false);
             builder.pop();
