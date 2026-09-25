@@ -271,7 +271,20 @@ public final class MonitorNetwork {
         }
         int n = Math.floorMod(requestLocateDevice.index(), ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().size());
         ProductionMonitorBlockEntity.DeviceLocation deviceLocation = ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().get(n);
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new LocateDeviceResult(true, requestLocateDevice.dimension(), deviceLocation.pos(), deviceLocation.side(), requestLocateDevice.name(), n, ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().size()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+
+        // requestLocateDevice.dimension() is the dimension containing the linked monitor.
+        // The missing-channel device can live in any dimension of the same AE grid, so the
+        // locator result must carry the device's own recorded dimension instead.
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer,
+                (CustomPacketPayload)new LocateDeviceResult(
+                        true,
+                        deviceLocation.dimension(),
+                        deviceLocation.pos(),
+                        deviceLocation.side(),
+                        requestLocateDevice.name(),
+                        n,
+                        ((ProductionMonitorBlockEntity.DeviceGroupSnapshot)object).missingLocations().size()),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static void handleStatisticsRequest(RequestStatistics requestStatistics, IPayloadContext iPayloadContext) {
