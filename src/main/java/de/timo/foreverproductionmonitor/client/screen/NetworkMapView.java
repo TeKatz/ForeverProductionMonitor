@@ -73,10 +73,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 final class NetworkMapView {
-    private static final int DETAILS_WIDTH = 184;
-    private static final int VIEW_BUTTON_HEIGHT = 16;
-    private static final int VIEW_BUTTON_GAP = 3;
-    private static final int VIEW_TOOLBAR_HEIGHT = 70;
+    private static final int MIN_DETAILS_WIDTH = 120;
+    private static final int MAX_DETAILS_WIDTH = 150;
+    private static final int VIEW_BUTTON_HEIGHT = 14;
+    private static final int VIEW_BUTTON_GAP = 2;
+    private static final int VIEW_TOOLBAR_HEIGHT = 42;
     private static final int HELP_AREA_HEIGHT = 30;
     private static final double DRAG_THRESHOLD_SQUARED = 12.0;
     private static final float MIN_CAMERA_PITCH = 5.0f;
@@ -500,13 +501,14 @@ final class NetworkMapView {
             n9 += n10 + 3;
         }
         String[] stringArray = new String[]{"fit", "iso", "top", "front"};
-        int n11 = n6 + 16 + 4;
-        int n12 = (n8 - 9) / 4;
+        int n11 = this.sceneContentTop() + 5;
+        int n12 = Math.min(44, Math.max(34, n8 / 6));
         for (n5 = 0; n5 < stringArray.length; ++n5) {
-            n4 = n7 + n5 * (n12 + 3);
+            n4 = n3 - n12 - 5;
             this.drawToolbarButton(guiGraphics, n, n2, n4, n11, n12, (Component)Component.translatable((String)("screen.forever_production_monitor.map.view." + stringArray[n5])), false, ToolbarGroup.CAMERA);
+            n11 += VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP;
         }
-        n5 = n11 + 16 + 4;
+        n5 = n6 + VIEW_BUTTON_HEIGHT + 4;
         n4 = (n8 - 12) / 5;
         n9 = n7;
         this.drawToolbarButton(guiGraphics, n, n2, n9, n5, n4, (Component)Component.translatable((String)"screen.forever_production_monitor.map.heatmap"), this.heatmap, ToolbarGroup.DIAGNOSTIC);
@@ -524,7 +526,7 @@ final class NetworkMapView {
 
     private void drawToolbarButton(GuiGraphics guiGraphics, int n, int n2, int n3, int n4, int n5, Component component, boolean bl, ToolbarGroup toolbarGroup) {
         int n6;
-        boolean bl2 = n >= n3 && n < n3 + n5 && n2 >= n4 && n2 < n4 + 16;
+        boolean bl2 = n >= n3 && n < n3 + n5 && n2 >= n4 && n2 < n4 + VIEW_BUTTON_HEIGHT;
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         int n7 = switch (toolbarGroup) {
             default -> throw new IncompatibleClassChangeError();
@@ -539,9 +541,9 @@ final class NetworkMapView {
             case DIAGNOSTIC -> -801821408;
             case BOOKMARK -> -802216392;
         };
-        guiGraphics.fill(n3, n4, n3 + n5, n4 + 16, bl ? NetworkMapView.withAlpha(n7, 98) : (bl2 ? NetworkMapView.withAlpha(n7, 56) : n6));
-        guiGraphics.renderOutline(n3, n4, n5, 16, bl || bl2 ? n7 : NetworkMapView.withAlpha(n7, 144));
-        guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), n5 - 4), n3 + n5 / 2, n4 + 4, bl || bl2 ? -1 : -2762272);
+        guiGraphics.fill(n3, n4, n3 + n5, n4 + VIEW_BUTTON_HEIGHT, bl ? NetworkMapView.withAlpha(n7, 98) : (bl2 ? NetworkMapView.withAlpha(n7, 56) : n6));
+        guiGraphics.renderOutline(n3, n4, n5, VIEW_BUTTON_HEIGHT, bl || bl2 ? n7 : NetworkMapView.withAlpha(n7, 144));
+        guiGraphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(component.getString(), n5 - 4), n3 + n5 / 2, n4 + 3, bl || bl2 ? -1 : -2762272);
     }
 
     private static int withAlpha(int n, int n2) {
@@ -565,11 +567,12 @@ final class NetworkMapView {
             }
             n6 += n7 + 3;
         }
-        int n8 = n3 + 16 + 4;
-        int n9 = (n5 - 9) / 4;
+        int n8 = this.sceneContentTop() + 5;
+        int n9 = Math.min(44, Math.max(34, n5 / 6));
         for (n2 = 0; n2 < 4; ++n2) {
-            int n10 = n4 + n2 * (n9 + 3);
-            if (!NetworkMapView.insideButton(d, d2, n10, n8, n9)) continue;
+            int n10 = this.sceneRight() - n9 - 5;
+            int n13 = n8 + n2 * (VIEW_BUTTON_HEIGHT + VIEW_BUTTON_GAP);
+            if (!NetworkMapView.insideButton(d, d2, n10, n13, n9)) continue;
             if (n != 0) {
                 return true;
             }
@@ -594,7 +597,7 @@ final class NetworkMapView {
             return true;
         }
         n6 = n4;
-        n2 = n8 + 16 + 4;
+        n2 = n3 + VIEW_BUTTON_HEIGHT + 4;
         int n11 = (n5 - 12) / 5;
         if (NetworkMapView.insideButton(d, d2, n6, n2, n11)) {
             if (n == 0) {
@@ -626,7 +629,7 @@ final class NetworkMapView {
     }
 
     private static boolean insideButton(double d, double d2, int n, int n2, int n3) {
-        return d >= (double)n && d < (double)(n + n3) && d2 >= (double)n2 && d2 < (double)(n2 + 16);
+        return d >= (double)n && d < (double)(n + n3) && d2 >= (double)n2 && d2 < (double)(n2 + VIEW_BUTTON_HEIGHT);
     }
 
     private void drawHelp(GuiGraphics guiGraphics, int n) {
@@ -872,7 +875,7 @@ final class NetworkMapView {
     }
 
     private void recomputeFit() {
-        if (this.snapshot == null || this.snapshot.nodes().isEmpty() || this.width <= 184 || this.height <= 0) {
+        if (this.snapshot == null || this.snapshot.nodes().isEmpty() || this.width <= this.detailsWidth() || this.height <= 0) {
             return;
         }
         double d = this.centerX;
@@ -919,7 +922,11 @@ final class NetworkMapView {
     }
 
     private int sceneRight() {
-        return (Boolean)ClientConfig.VALUES.mapShowDetails.get() != false ? this.left + Math.max(80, this.width - 184 - 6) : this.left + this.width;
+        return (Boolean)ClientConfig.VALUES.mapShowDetails.get() != false ? this.left + Math.max(80, this.width - this.detailsWidth() - 6) : this.left + this.width;
+    }
+
+    private int detailsWidth() {
+        return Math.max(MIN_DETAILS_WIDTH, Math.min(MAX_DETAILS_WIDTH, this.width / 6));
     }
 
     private boolean insideScene(double d, double d2) {
@@ -931,7 +938,7 @@ final class NetworkMapView {
     }
 
     private int sceneContentTop() {
-        return this.top + 70;
+        return this.top + VIEW_TOOLBAR_HEIGHT;
     }
 
     private int sceneContentBottom() {

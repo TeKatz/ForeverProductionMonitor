@@ -47,8 +47,8 @@ extends Screen {
 
     protected void init() {
         int n;
-        this.panelWidth = Math.min(700, this.width - 20);
-        this.panelHeight = Math.min(430, this.height - 16);
+        this.panelWidth = Math.min(760, this.width - 12);
+        this.panelHeight = Math.min(520, this.height - 12);
         this.left = (this.width - this.panelWidth) / 2;
         this.top = (this.height - this.panelHeight) / 2;
         this.contentTop = this.top + 72;
@@ -168,7 +168,8 @@ extends Screen {
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, interfaceStyle, palette);
         guiGraphics.drawCenteredString(this.font, this.title, this.left + this.panelWidth / 2, this.top + 13, palette.text());
-        guiGraphics.drawCenteredString(this.font, (Component)Component.literal((String)"Forever Production Monitor 2.2.2"), this.left + this.panelWidth / 2, this.top + 25, palette.muted());
+        String version = "Forever Production Monitor 3.0.0";
+        guiGraphics.drawString(this.font, version, this.left + this.panelWidth - 18 - this.font.width(version), this.top + this.panelHeight - 43, palette.muted(), false);
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
         }
@@ -184,7 +185,10 @@ extends Screen {
         int n = this.left + 18;
         int n2 = this.contentTop + 132;
         int n3 = this.panelWidth - 36;
-        int n4 = this.panelHeight - 240;
+        int n4 = Math.max(0, this.top + this.panelHeight - 58 - n2);
+        if (n4 < 104) {
+            return;
+        }
         InterfaceTheme.drawPanel(guiGraphics, n, n2, n3, n4, interfaceStyle, palette);
         guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.theme.preview"), n + n3 / 2, n2 + 11, palette.text());
         int n5 = n + 12;

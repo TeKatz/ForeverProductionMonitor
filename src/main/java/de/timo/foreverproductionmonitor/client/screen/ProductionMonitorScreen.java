@@ -47,8 +47,8 @@ import net.minecraft.network.chat.MutableComponent;
 
 public final class ProductionMonitorScreen
 extends Screen {
-    private static final int MAX_PANEL_WIDTH = 670;
-    private static final int MAX_PANEL_HEIGHT = 454;
+    private static final int MAX_PANEL_WIDTH = 960;
+    private static final int MAX_PANEL_HEIGHT = 560;
     private static final int HEADER_HEIGHT = 32;
     private static final int ROW_HEIGHT = 17;
     private static ViewMode lastViewMode;
@@ -95,8 +95,8 @@ extends Screen {
 
     protected void init() {
         String string2 = this.search == null ? "" : this.search.getValue();
-        this.panelWidth = Math.min(670, this.width - 16);
-        this.panelHeight = Math.min(454, this.height - 16);
+        this.panelWidth = Math.min(MAX_PANEL_WIDTH, this.width - 12);
+        this.panelHeight = Math.min(MAX_PANEL_HEIGHT, this.height - 12);
         this.left = (this.width - this.panelWidth) / 2;
         this.top = (this.height - this.panelHeight) / 2;
         this.visibleRows = Math.max(6, Math.min(18, (this.panelHeight - 180) / 17));
@@ -127,7 +127,7 @@ extends Screen {
         if (this.networkMapView == null) {
             this.networkMapView = new NetworkMapView(this.minecraft, this.font);
         }
-        this.networkMapView.setBounds(this.left + 18, this.top + 88, this.panelWidth - 36, this.panelHeight - 130);
+        this.networkMapView.setBounds(this.left + 18, this.top + 62, this.panelWidth - 36, this.panelHeight - 124);
         if (this.networkMapSnapshot != null) {
             this.networkMapView.accept(this.networkMapSnapshot);
         }
@@ -193,12 +193,13 @@ extends Screen {
         this.search.active = this.search.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.DASHBOARD;
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
         int n = Math.max(150, Math.min(260, this.panelWidth * 2 / 5));
+        this.search.setY(this.viewMode == ViewMode.MAP ? this.top + this.panelHeight - 56 : this.top + 62);
         if (this.viewMode == ViewMode.COMPONENTS) {
             this.search.setX(this.left + 242);
             this.search.setWidth(Math.max(120, this.left + this.panelWidth - 144 - this.search.getX()));
         } else {
             this.search.setX(this.left + 18);
-            this.search.setWidth(this.viewMode == ViewMode.MAP ? Math.min(330, this.panelWidth - 36) : n);
+            this.search.setWidth(this.viewMode == ViewMode.MAP ? Math.min(260, this.panelWidth - 36) : n);
         }
         this.sortButton.visible = bl2 = this.viewMode == ViewMode.PRODUCTION || this.viewMode == ViewMode.DEVICES;
         this.sortButton.active = bl2;
@@ -349,10 +350,10 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
+        this.drawContent(guiGraphics, n, n2, f);
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
         }
-        this.drawContent(guiGraphics, n, n2, f);
         this.drawTitle(guiGraphics);
         if (this.settingsButton != null && this.settingsButton.isHoveredOrFocused()) {
             guiGraphics.renderTooltip(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.theme.open"), n, n2);
