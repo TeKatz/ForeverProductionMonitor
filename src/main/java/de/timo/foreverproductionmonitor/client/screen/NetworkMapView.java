@@ -97,7 +97,7 @@ final class NetworkMapView {
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
     private final Font font;
-    private final BiConsumer<ResourceLocation, BlockPos> quantumNavigator;
+    private final BiConsumer<ResourceLocation, BlockPos> pathNavigator;
     private MonitorNetwork.NetworkMapPayload snapshot;
     private int left;
     private int top;
@@ -119,7 +119,7 @@ final class NetworkMapView {
     private boolean heatmap;
     private boolean showEvents;
     private boolean detailsCollapsed;
-    private QuantumTarget followTarget;
+    private PathTarget followTarget;
     private int followButtonX;
     private int followButtonY;
     private int followButtonWidth;
@@ -137,10 +137,10 @@ final class NetworkMapView {
     private double sceneDepthSpan = 2.0;
 
     NetworkMapView(Minecraft minecraft, Font font,
-                   BiConsumer<ResourceLocation, BlockPos> quantumNavigator) {
+                   BiConsumer<ResourceLocation, BlockPos> pathNavigator) {
         this.minecraft = minecraft;
         this.font = font;
-        this.quantumNavigator = quantumNavigator;
+        this.pathNavigator = pathNavigator;
     }
 
     void setBounds(int n, int n2, int n3, int n4) {
@@ -958,24 +958,31 @@ final class NetworkMapView {
                 NetworkMapView.formatPower(selected.idlePower()), -14740);
 
         int registryY = lineY + 24;
-        QuantumTarget quantumTarget = this.quantumTarget(selected);
-        if (quantumTarget != null) {
-            int quantumY = lineY + 25;
+        PathTarget pathTarget = this.pathTarget(selected);
+        if (pathTarget != null) {
+            int pathY = lineY + 25;
+            Component linkTitle = Component.translatable(
+                    pathTarget.type() == PathType.QUANTUM
+                            ? "screen.forever_production_monitor.map.quantum_bridge"
+                            : "screen.forever_production_monitor.map.wireless_connector");
             guiGraphics.drawString(this.font,
-                    Component.translatable("screen.forever_production_monitor.map.quantum_bridge"),
-                    left, quantumY, palette.accentB(), false);
-            String destination = NetworkMapView.dimensionName(quantumTarget.dimension());
+                    this.ellipsize(linkTitle.getString(), Math.max(40, right - left)),
+                    left, pathY, palette.accentB(), false);
+
+            String destination = pathTarget.type() == PathType.QUANTUM
+                    ? NetworkMapView.dimensionName(pathTarget.dimension())
+                    : pathTarget.pos().toShortString();
             guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(
+                    this.ellipsize(
                             Component.translatable(
                                     "screen.forever_production_monitor.map.destination",
                                     destination).getString(),
                             Math.max(40, right - left)),
-                    left, quantumY + 11, palette.muted(), false);
+                    left, pathY + 11, palette.muted(), false);
 
-            this.followTarget = quantumTarget;
+            this.followTarget = pathTarget;
             this.followButtonX = left;
-            this.followButtonY = quantumY + 24;
+            this.followButtonY = pathY + 24;
             this.followButtonWidth = Math.max(40, right - left);
             guiGraphics.fill(this.followButtonX, this.followButtonY,
                     this.followButtonX + this.followButtonWidth,
@@ -995,21 +1002,39 @@ final class NetworkMapView {
                 left, registryY, Math.max(40, right - left), palette.muted());
     }
 
-    private QuantumTarget quantumTarget(MonitorNetwork.MapNode selected) {
-        if (this.snapshot == null || !NetworkMapView.isAe2QuantumBridgePart(selected)) {
+    private PathTarget pathTarget(MonitorNetwork.MapNode selected) {
+        if (this.snapshot == null) {
             return null;
         }
+
         ResourceLocation currentDimension = this.snapshot.viewDimension();
-        for (MonitorNetwork.QuantumLink link : this.snapshot.quantumLinks()) {
-            if (currentDimension.equals(link.dimensionA())
-                    && NetworkMapView.sameBridge(selected.pos(), link.posA())) {
-                return new QuantumTarget(link.dimensionB(), link.posB());
-            }
-            if (currentDimension.equals(link.dimensionB())
-                    && NetworkMapView.sameBridge(selected.pos(), link.posB())) {
-                return new QuantumTarget(link.dimensionA(), link.posA());
+        if (NetworkMapView.isAe2QuantumBridgePart(selected)) {
+            for (MonitorNetwork.QuantumLink link : this.snapshot.quantumLinks()) {
+                if (currentDimension.equals(link.dimensionA())
+                        && NetworkMapView.sameBridge(selected.pos(), link.posA())) {
+                    return new PathTarget(link.dimensionB(), link.posB(), PathType.QUANTUM);
+                }
+                if (currentDimension.equals(link.dimensionB())
+                        && NetworkMapView.sameBridge(selected.pos(), link.posB())) {
+                    return new PathTarget(link.dimensionA(), link.posA(), PathType.QUANTUM);
+                }
             }
         }
+
+        if (NetworkMapView.isExtendedAeWirelessConnector(selected)) {
+            for (MonitorNetwork.WirelessLink link : this.snapshot.wirelessLinks()) {
+                if (!currentDimension.equals(link.dimension())) {
+                    continue;
+                }
+                if (selected.pos().equals(link.posA())) {
+                    return new PathTarget(currentDimension, link.posB(), PathType.WIRELESS);
+                }
+                if (selected.pos().equals(link.posB())) {
+                    return new PathTarget(currentDimension, link.posA(), PathType.WIRELESS);
+                }
+            }
+        }
+
         return null;
     }
 
@@ -1019,6 +1044,13 @@ final class NetworkMapView {
         return "ae2".equals(blockId.getNamespace())
                 && ("quantum_link".equals(blockId.getPath())
                 || "quantum_ring".equals(blockId.getPath()));
+    }
+
+    private static boolean isExtendedAeWirelessConnector(MonitorNetwork.MapNode node) {
+        BlockState state = Block.stateById(node.blockStateId());
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        return "extendedae".equals(blockId.getNamespace())
+                && "wireless_connect".equals(blockId.getPath());
     }
 
     private static boolean sameBridge(BlockPos selected, BlockPos center) {
@@ -1142,7 +1174,7 @@ final class NetworkMapView {
                 || mouseY >= this.followButtonY + FOLLOW_BUTTON_HEIGHT) {
             return false;
         }
-        this.quantumNavigator.accept(this.followTarget.dimension(), this.followTarget.pos());
+        this.pathNavigator.accept(this.followTarget.dimension(), this.followTarget.pos());
         return true;
     }
 
@@ -1767,7 +1799,12 @@ final class NetworkMapView {
     private record CameraState(float yaw, float pitch, double zoom, double panX, double panY, double centerX, double centerY, double centerZ, boolean focused) {
     }
 
-    private record QuantumTarget(ResourceLocation dimension, BlockPos pos) {
+    private record PathTarget(ResourceLocation dimension, BlockPos pos, PathType type) {
+    }
+
+    private static enum PathType {
+        QUANTUM,
+        WIRELESS
     }
 
     private static enum ToolbarGroup {
