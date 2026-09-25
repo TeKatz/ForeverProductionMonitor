@@ -83,7 +83,7 @@ final class NetworkMapView {
     private static final int CAMERA_BUTTON_MARGIN = 4;
     private static final int ZONE_GAP = 2;
     private static final int VIEW_TOOLBAR_HEIGHT = 24;
-    private static final int HELP_AREA_HEIGHT = 30;
+    private static final int CONTROL_BAR_HEIGHT = 28;
     private static final double DRAG_THRESHOLD_SQUARED = 12.0;
     private static final float MIN_CAMERA_PITCH = 5.0f;
     private static final float MAX_CAMERA_PITCH = 85.0f;
@@ -255,18 +255,19 @@ final class NetworkMapView {
         }
         if (this.snapshot == null) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.loading"), this.left + (n3 - this.left) / 2, this.top + this.height / 2, -14740);
-            this.drawHelp(guiGraphics, n3);
+            this.drawControlBar(guiGraphics, n3);
             return;
         }
         if (this.snapshot.nodes().isEmpty()) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.map.empty"), this.left + (n3 - this.left) / 2, this.top + this.height / 2, -7366746);
+            this.drawControlBar(guiGraphics, n3);
             this.drawClippedDetails(guiGraphics);
             return;
         }
         this.updateHover(n, n2);
         this.renderScene(guiGraphics, n3);
         this.drawToolbar(guiGraphics, n, n2, n3);
-        this.drawHelp(guiGraphics, n3);
+        this.drawControlBar(guiGraphics, n3);
         this.drawClippedDetails(guiGraphics);
     }
 
@@ -398,12 +399,26 @@ final class NetworkMapView {
         }
 
         BlockPos pos = mapNode.pos();
-        Direction.Axis primaryAxis = NetworkMapView.preferredCableAxis(pos, occupied);
+        boolean xAxis = occupied.contains(pos.relative(Direction.EAST)) || occupied.contains(pos.relative(Direction.WEST));
+        boolean yAxis = occupied.contains(pos.relative(Direction.UP)) || occupied.contains(pos.relative(Direction.DOWN));
+        boolean zAxis = occupied.contains(pos.relative(Direction.NORTH)) || occupied.contains(pos.relative(Direction.SOUTH));
 
-        // AE2's own cable item model supplies the real smart/dense/glass texture. Rendering
-        // one model per cable keeps the large map affordable; secondary branches are joined
-        // with clean topology arms below instead of multiplying item-model renders at junctions.
-        this.renderCableItemAxis(poseStack, bufferSource, stack, pos, primaryAxis);
+        // Use AE2's own textured cable item model for every connected axis. The stock item
+        // mesh spans roughly 2..14 texels along its cable axis, so a 4/3 local-axis stretch
+        // closes the remaining quarter-block gap without adding synthetic connector boxes.
+        // Corners and T-junctions are therefore composed entirely from the same AE2 artwork.
+        if (!xAxis && !yAxis && !zAxis) {
+            zAxis = true;
+        }
+        if (xAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.X);
+        }
+        if (yAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.Y);
+        }
+        if (zAxis) {
+            this.renderCableItemAxis(poseStack, bufferSource, stack, pos, Direction.Axis.Z);
+        }
     }
 
     private void renderCableItemAxis(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
@@ -415,6 +430,7 @@ final class NetworkMapView {
         } else if (axis == Direction.Axis.Y) {
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
         }
+        poseStack.scale(1.0f, 1.0f, 1.334f);
         this.minecraft.getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE, 0xF000F0,
                 OverlayTexture.NO_OVERLAY, poseStack, (MultiBufferSource)bufferSource,
                 (Level)this.minecraft.level, pos.hashCode() ^ axis.ordinal());
@@ -435,71 +451,29 @@ final class NetworkMapView {
             return;
         }
 
+        if (!this.heatmap) {
+            // Normal map mode is now 100% AE2 cable-model geometry. Synthetic connector
+            // boxes were the source of the thick purple junction bands in 3.3.1.
+            return;
+        }
+
         boolean dense = path.contains("dense");
         boolean glass = path.contains("glass");
         boolean covered = path.contains("covered");
         double radius = dense ? 0.25 : (glass ? 0.125 : (covered ? 0.21875 : 0.1875));
         BlockPos pos = mapNode.pos();
 
-        if (this.heatmap) {
-            // Heatmap intentionally uses plain diagnostic geometry so its status color remains unambiguous.
-            AABB core = new AABB(
-                    (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
-                    (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
-            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, false);
-            for (Direction direction : Direction.values()) {
-                if (occupied.contains(pos.relative(direction))) {
-                    NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
-                            NetworkMapView.cableArm(pos, direction, radius), r, g, b, false);
-                }
-            }
-            return;
-        }
-
-        // The real AE2 item model spans 2..14 texels along its axis. Only fill the final
-        // connection gap to the neighbouring block; this avoids the old cage/debug-box look.
-        Direction.Axis primaryAxis = NetworkMapView.preferredCableAxis(pos, occupied);
+        // Heatmap intentionally uses plain diagnostic geometry so its status color remains unambiguous.
+        AABB core = new AABB(
+                (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
+                (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
+        NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, false);
         for (Direction direction : Direction.values()) {
-            if (!occupied.contains(pos.relative(direction))) {
-                continue;
+            if (occupied.contains(pos.relative(direction))) {
+                NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
+                        NetworkMapView.cableArm(pos, direction, radius), r, g, b, false);
             }
-            AABB connector = direction.getAxis() == primaryAxis
-                    ? NetworkMapView.cableEndCap(pos, direction, radius, 0.15)
-                    : NetworkMapView.cableArm(pos, direction, radius);
-            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, connector, r, g, b, false);
         }
-    }
-
-    private static Direction.Axis preferredCableAxis(BlockPos pos, Set<BlockPos> occupied) {
-        int x = (occupied.contains(pos.relative(Direction.EAST)) ? 1 : 0)
-                + (occupied.contains(pos.relative(Direction.WEST)) ? 1 : 0);
-        int y = (occupied.contains(pos.relative(Direction.UP)) ? 1 : 0)
-                + (occupied.contains(pos.relative(Direction.DOWN)) ? 1 : 0);
-        int z = (occupied.contains(pos.relative(Direction.NORTH)) ? 1 : 0)
-                + (occupied.contains(pos.relative(Direction.SOUTH)) ? 1 : 0);
-        if (x >= y && x >= z && x > 0) return Direction.Axis.X;
-        if (y >= z && y > 0) return Direction.Axis.Y;
-        return Direction.Axis.Z;
-    }
-
-    private static AABB cableEndCap(BlockPos pos, Direction direction, double radius, double depth) {
-        double cx = (double)pos.getX() + 0.5;
-        double cy = (double)pos.getY() + 0.5;
-        double cz = (double)pos.getZ() + 0.5;
-        return switch (direction) {
-            case DOWN -> new AABB(cx - radius, pos.getY(), cz - radius,
-                    cx + radius, pos.getY() + depth, cz + radius);
-            case UP -> new AABB(cx - radius, (double)pos.getY() + 1.0 - depth, cz - radius,
-                    cx + radius, (double)pos.getY() + 1.0, cz + radius);
-            case NORTH -> new AABB(cx - radius, cy - radius, pos.getZ(),
-                    cx + radius, cy + radius, pos.getZ() + depth);
-            case SOUTH -> new AABB(cx - radius, cy - radius, (double)pos.getZ() + 1.0 - depth,
-                    cx + radius, cy + radius, (double)pos.getZ() + 1.0);
-            case WEST -> new AABB(pos.getX(), cy - radius, cz - radius,
-                    pos.getX() + depth, cy + radius, cz + radius);
-            case EAST -> new AABB((double)pos.getX() + 1.0 - depth, cy - radius, cz - radius,
-                    (double)pos.getX() + 1.0, cy + radius, cz + radius);
-        };
     }
 
     private static boolean isCable(String string) {
@@ -792,30 +766,27 @@ final class NetworkMapView {
         return d >= (double)n && d < (double)(n + n3) && d2 >= (double)n2 && d2 < (double)(n2 + VIEW_BUTTON_HEIGHT);
     }
 
-    private void drawHelp(GuiGraphics guiGraphics, int sceneRight) {
-        if (!((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue() || this.height < 150) {
-            return;
-        }
+    private void drawControlBar(GuiGraphics guiGraphics, int sceneRight) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        int sceneWidth = Math.max(1, sceneRight - this.left);
-        int boxLeft = this.left + Math.min(260, Math.max(190, sceneWidth / 3));
-        int boxRight = sceneRight - 6;
-        if (boxRight - boxLeft < 150) {
-            return;
-        }
-        int boxTop = this.sceneContentBottom() - HELP_AREA_HEIGHT + 3;
-        int center = boxLeft + (boxRight - boxLeft) / 2;
-        int textWidth = Math.max(40, boxRight - boxLeft - 12);
-        guiGraphics.fill(boxLeft, boxTop, boxRight, this.sceneContentBottom() - 3, -1340860382);
+        int barTop = this.sceneContentBottom();
+        int barBottom = this.top + this.height - 1;
 
-        String nav = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
-        String select = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
-        guiGraphics.drawCenteredString(this.font,
-                this.font.plainSubstrByWidth(nav, textWidth),
-                center, boxTop + 4, palette.muted());
-        guiGraphics.drawCenteredString(this.font,
-                this.font.plainSubstrByWidth(select, textWidth),
-                center, boxTop + 15, palette.muted());
+        guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barBottom, palette.summary());
+        guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barTop + 1,
+                NetworkMapView.withAlpha(palette.border(), 112));
+
+        if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
+            // The search widget occupies the left ~230px of this same bar. Keep the one-line
+            // help strictly to its right so neither element can overlap or clip the other.
+            int textLeft = this.left + Math.min(252, Math.max(188, (sceneRight - this.left) / 3));
+            int textRight = sceneRight - 8;
+            int available = textRight - textLeft;
+            if (available >= 120) {
+                String help = Component.translatable("screen.forever_production_monitor.map.controls").getString();
+                String clipped = this.font.plainSubstrByWidth(help, available);
+                guiGraphics.drawString(this.font, clipped, textLeft, barTop + 9, palette.muted(), false);
+            }
+        }
 
         if (this.snapshot != null && this.snapshot.truncated()) {
             guiGraphics.drawString(this.font,
@@ -1254,8 +1225,9 @@ final class NetworkMapView {
     }
 
     private int sceneContentBottom() {
-        // Help and search are overlays in 3.3.0; they no longer permanently steal scene height.
-        return this.top + this.height - 2;
+        // Reserve one compact bottom bar for search + controls. The 3D renderer and hit
+        // testing stop above it, so no blocks, selection boxes or camera drag can overlap GUI.
+        return this.top + this.height - CONTROL_BAR_HEIGHT;
     }
 
     private boolean shouldRender(MonitorNetwork.MapNode mapNode) {
