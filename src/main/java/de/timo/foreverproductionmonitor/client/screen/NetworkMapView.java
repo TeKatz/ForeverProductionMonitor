@@ -337,6 +337,7 @@ final class NetworkMapView {
             this.drawClippedDetails(guiGraphics);
             return;
         }
+        this.prepareFrameNodeIndices();
         this.updateHover(n, n2);
         this.renderScene(guiGraphics, n3);
         this.drawToolbar(guiGraphics, n, n2, n3);
@@ -381,7 +382,6 @@ final class NetworkMapView {
 
         MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
-        this.prepareFrameNodeIndices();
 
         for (int index : this.frameNodeIndices) {
             MonitorNetwork.MapNode node = nodes.get(index);
@@ -1337,7 +1337,7 @@ final class NetworkMapView {
         double hitRadiusSquared = hitRadius * hitRadius;
         List<MonitorNetwork.MapNode> nodes = this.snapshot.nodes();
 
-        for (int index : this.performanceCache.visibleNodeIndices()) {
+        for (int index : this.frameNodeIndices) {
             double[] projected = this.project(nodes.get(index));
             double dx = (double)mouseX - projected[0];
             double dy = (double)mouseY - projected[1];
