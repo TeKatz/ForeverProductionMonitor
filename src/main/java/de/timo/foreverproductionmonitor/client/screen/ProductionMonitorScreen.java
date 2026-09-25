@@ -53,6 +53,8 @@ extends Screen {
     private static final int MAX_PANEL_HEIGHT = 560;
     private static final int HEADER_HEIGHT = 32;
     private static final int ROW_HEIGHT = 17;
+    private static final int DIMENSION_DROPDOWN_ROW_HEIGHT = 16;
+    private static final int DIMENSION_DROPDOWN_MAX_ROWS = 8;
     private static ViewMode lastViewMode;
     private final ProductionTabletItem.MonitorLink link;
     private EditBox search;
@@ -75,6 +77,18 @@ extends Screen {
     private NetworkMapView networkMapView;
     private ResourceLocation mapViewDimension;
     private BlockPos pendingMapFocus;
+    private boolean mapAutoInitialized;
+    private boolean mapAutoDimensionPending;
+    private boolean dimensionDropdownOpen;
+    private int dimensionDropdownScroll;
+    private int dimensionSelectorX;
+    private int dimensionSelectorY;
+    private int dimensionSelectorWidth;
+    private int dimensionSelectorHeight;
+    private int dimensionMenuX;
+    private int dimensionMenuY;
+    private int dimensionMenuWidth;
+    private int dimensionMenuRows;
     private MonitorNetwork.SortMode sort = MonitorNetwork.SortMode.ACTIVITY;
     private MonitorNetwork.DeviceSort deviceSort = MonitorNetwork.DeviceSort.POWER;
     private MonitorNetwork.DeviceFilter deviceFilter = MonitorNetwork.DeviceFilter.ALL;
@@ -147,8 +161,12 @@ extends Screen {
         if (this.networkMapView == null) {
             this.networkMapView = new NetworkMapView(this.minecraft, this.font, this::followQuantumPath);
         }
+        if (this.viewMode == ViewMode.MAP && !this.mapAutoInitialized) {
+            this.prepareMapForCurrentDimension();
+        }
         this.networkMapView.setBounds(this.contentLeft, this.top + 62, n2, Math.max(24, this.contentBottom - this.top - 62));
-        if (this.networkMapSnapshot != null) {
+        if (this.networkMapSnapshot != null
+                && this.networkMapSnapshot.viewDimension().equals((Object)this.mapViewDimension)) {
             this.networkMapView.accept(this.networkMapSnapshot);
         }
         this.storageCapacityButton = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.storage.section.capacity"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n, this.top + 62, n4, 20));
@@ -199,8 +217,13 @@ extends Screen {
         lastViewMode = viewMode;
         this.requestedPage = 0;
         this.statisticsSnapshot = null;
-        if (viewMode == ViewMode.MAP && this.networkMapView != null && this.search != null) {
-            this.networkMapView.setSearch(this.search.getValue());
+        if (viewMode == ViewMode.MAP) {
+            this.prepareMapForCurrentDimension();
+            if (this.networkMapView != null && this.search != null) {
+                this.networkMapView.setSearch(this.search.getValue());
+            }
+        } else {
+            this.dimensionDropdownOpen = false;
         }
         this.updateViewWidgets();
         this.requestNow();
@@ -387,7 +410,21 @@ extends Screen {
         if (networkMapPayload.dimension().equals((Object)this.link.dimension())
                 && networkMapPayload.pos().equals((Object)this.link.pos())
                 && networkMapPayload.viewDimension().equals((Object)this.mapViewDimension)) {
+            if (this.mapAutoDimensionPending) {
+                this.mapAutoDimensionPending = false;
+                if (!networkMapPayload.dimensions().isEmpty()
+                        && !networkMapPayload.dimensions().contains(this.mapViewDimension)) {
+                    ResourceLocation fallback = networkMapPayload.dimensions().contains(this.link.dimension())
+                            ? this.link.dimension()
+                            : networkMapPayload.dimensions().get(0);
+                    if (!fallback.equals(this.mapViewDimension)) {
+                        this.switchMapDimension(fallback, null, false);
+                        return;
+                    }
+                }
+            }
             this.networkMapSnapshot = networkMapPayload;
+            this.clampDimensionDropdownScroll();
             this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             if (this.networkMapView != null) {
                 this.networkMapView.accept(networkMapPayload);
@@ -400,14 +437,210 @@ extends Screen {
     }
 
     private void followQuantumPath(ResourceLocation dimension, BlockPos pos) {
+        this.switchMapDimension(dimension, pos == null ? null : pos.immutable(), true);
+    }
+
+    private void prepareMapForCurrentDimension() {
+        this.mapAutoInitialized = true;
+        this.mapAutoDimensionPending = true;
+        ResourceLocation currentDimension = this.currentPlayerDimension();
+        this.mapViewDimension = currentDimension == null ? this.link.dimension() : currentDimension;
+        this.pendingMapFocus = null;
+        this.dimensionDropdownOpen = false;
+        this.dimensionDropdownScroll = 0;
+        this.networkMapSnapshot = null;
+        if (this.networkMapView != null) {
+            this.networkMapView.clearSnapshot();
+        }
+    }
+
+    private ResourceLocation currentPlayerDimension() {
+        return this.minecraft != null && this.minecraft.level != null
+                ? this.minecraft.level.dimension().location()
+                : null;
+    }
+
+    private void switchMapDimension(ResourceLocation dimension, BlockPos focus, boolean clearSearch) {
+        if (dimension == null) {
+            return;
+        }
+        if (dimension.equals(this.mapViewDimension) && focus == null && this.networkMapSnapshot != null) {
+            this.dimensionDropdownOpen = false;
+            return;
+        }
+        this.mapAutoDimensionPending = false;
         this.mapViewDimension = dimension;
-        this.pendingMapFocus = pos.immutable();
-        if (this.search != null && !this.search.getValue().isEmpty()) {
+        this.pendingMapFocus = focus;
+        this.dimensionDropdownOpen = false;
+        this.networkMapSnapshot = null;
+        if (this.networkMapView != null) {
+            this.networkMapView.clearSnapshot();
+        }
+        if (clearSearch && this.search != null && !this.search.getValue().isEmpty()) {
             this.search.setValue("");
         }
         this.refreshTicks = Math.max(100,
                 ((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.get())).ticks());
         MonitorNetwork.requestNetworkMap(this.link, dimension);
+    }
+
+    private void clampDimensionDropdownScroll() {
+        int size = this.networkMapSnapshot == null ? 0 : this.networkMapSnapshot.dimensions().size();
+        int visible = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, size);
+        this.dimensionDropdownScroll = Math.max(0, Math.min(this.dimensionDropdownScroll, Math.max(0, size - visible)));
+    }
+
+    private boolean handleDimensionDropdownClick(double mouseX, double mouseY, int button) {
+        if (button != 0 || this.viewMode != ViewMode.MAP || this.networkMapSnapshot == null) {
+            return false;
+        }
+        List<ResourceLocation> dimensions = this.networkMapSnapshot.dimensions();
+        if (this.dimensionDropdownOpen
+                && mouseX >= this.dimensionMenuX && mouseX < this.dimensionMenuX + this.dimensionMenuWidth
+                && mouseY >= this.dimensionMenuY
+                && mouseY < this.dimensionMenuY + this.dimensionMenuRows * DIMENSION_DROPDOWN_ROW_HEIGHT) {
+            int row = (int)((mouseY - this.dimensionMenuY) / DIMENSION_DROPDOWN_ROW_HEIGHT);
+            int index = this.dimensionDropdownScroll + row;
+            if (index >= 0 && index < dimensions.size()) {
+                this.switchMapDimension(dimensions.get(index), null, false);
+            }
+            return true;
+        }
+        if (mouseX >= this.dimensionSelectorX && mouseX < this.dimensionSelectorX + this.dimensionSelectorWidth
+                && mouseY >= this.dimensionSelectorY
+                && mouseY < this.dimensionSelectorY + this.dimensionSelectorHeight) {
+            if (dimensions.size() > 1) {
+                this.dimensionDropdownOpen = !this.dimensionDropdownOpen;
+                this.clampDimensionDropdownScroll();
+            }
+            return true;
+        }
+        if (this.dimensionDropdownOpen) {
+            this.dimensionDropdownOpen = false;
+        }
+        return false;
+    }
+
+    private boolean handleDimensionDropdownScroll(double mouseX, double mouseY, double delta) {
+        if (!this.dimensionDropdownOpen || this.networkMapSnapshot == null || delta == 0.0) {
+            return false;
+        }
+        if (mouseX < this.dimensionMenuX || mouseX >= this.dimensionMenuX + this.dimensionMenuWidth
+                || mouseY < this.dimensionMenuY
+                || mouseY >= this.dimensionMenuY + this.dimensionMenuRows * DIMENSION_DROPDOWN_ROW_HEIGHT) {
+            return false;
+        }
+        int size = this.networkMapSnapshot.dimensions().size();
+        int visible = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, size);
+        int maxScroll = Math.max(0, size - visible);
+        if (delta > 0.0) {
+            this.dimensionDropdownScroll = Math.max(0, this.dimensionDropdownScroll - 1);
+        } else {
+            this.dimensionDropdownScroll = Math.min(maxScroll, this.dimensionDropdownScroll + 1);
+        }
+        return true;
+    }
+
+    private void drawDimensionSelector(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        ResourceLocation displayedDimension = this.networkMapSnapshot == null
+                ? this.mapViewDimension : this.networkMapSnapshot.viewDimension();
+        String dimensionName = NetworkMapView.dimensionName(displayedDimension);
+        int dimensionCount = this.networkMapSnapshot == null ? 0 : this.networkMapSnapshot.dimensions().size();
+        String buttonText = dimensionName + (dimensionCount > 1 ? "  ▾" : "");
+        this.dimensionSelectorX = this.left + 18;
+        this.dimensionSelectorY = this.footerY - 4;
+        this.dimensionSelectorHeight = 17;
+        this.dimensionSelectorWidth = Math.min(190, Math.max(72, this.font.width(buttonText) + 14));
+        boolean hovered = mouseX >= this.dimensionSelectorX
+                && mouseX < this.dimensionSelectorX + this.dimensionSelectorWidth
+                && mouseY >= this.dimensionSelectorY
+                && mouseY < this.dimensionSelectorY + this.dimensionSelectorHeight;
+        int selectorFill = hovered && dimensionCount > 1 ? palette.hover() : palette.rowEven();
+        guiGraphics.fill(this.dimensionSelectorX, this.dimensionSelectorY,
+                this.dimensionSelectorX + this.dimensionSelectorWidth,
+                this.dimensionSelectorY + this.dimensionSelectorHeight, selectorFill);
+        guiGraphics.fill(this.dimensionSelectorX, this.dimensionSelectorY,
+                this.dimensionSelectorX + 2,
+                this.dimensionSelectorY + this.dimensionSelectorHeight, palette.accentA());
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(buttonText, Math.max(20, this.dimensionSelectorWidth - 10)),
+                this.dimensionSelectorX + 6, this.dimensionSelectorY + 4, palette.text(), false);
+
+        if (this.networkMapSnapshot != null) {
+            Component count = Component.translatable(
+                    "screen.forever_production_monitor.map.dimension_count", dimensionCount);
+            int countX = this.dimensionSelectorX + this.dimensionSelectorWidth + 7;
+            int maxWidth = Math.max(10, this.left + this.panelWidth / 2 - countX);
+            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(count.getString(), maxWidth),
+                    countX, this.footerY, palette.muted(), false);
+        }
+    }
+
+    private void drawDimensionDropdownOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        if (!this.dimensionDropdownOpen || this.networkMapSnapshot == null
+                || this.networkMapSnapshot.dimensions().size() <= 1) {
+            this.dimensionMenuRows = 0;
+            return;
+        }
+        this.clampDimensionDropdownScroll();
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        List<ResourceLocation> dimensions = this.networkMapSnapshot.dimensions();
+        this.dimensionMenuRows = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, dimensions.size());
+
+        int widest = this.dimensionSelectorWidth;
+        for (ResourceLocation dimension : dimensions) {
+            widest = Math.max(widest, this.font.width(NetworkMapView.dimensionName(dimension)) + 34);
+        }
+        this.dimensionMenuWidth = Math.min(220, Math.max(this.dimensionSelectorWidth, widest));
+        this.dimensionMenuX = this.dimensionSelectorX;
+        int menuHeight = this.dimensionMenuRows * DIMENSION_DROPDOWN_ROW_HEIGHT;
+        this.dimensionMenuY = this.dimensionSelectorY - 2 - menuHeight;
+
+        guiGraphics.fill(this.dimensionMenuX - 1, this.dimensionMenuY - 1,
+                this.dimensionMenuX + this.dimensionMenuWidth + 1,
+                this.dimensionMenuY + menuHeight + 1, opaque(palette.border()));
+        guiGraphics.fill(this.dimensionMenuX, this.dimensionMenuY,
+                this.dimensionMenuX + this.dimensionMenuWidth,
+                this.dimensionMenuY + menuHeight, opaque(palette.tableOuter()));
+
+        ResourceLocation playerDimension = this.currentPlayerDimension();
+        for (int row = 0; row < this.dimensionMenuRows; ++row) {
+            int index = this.dimensionDropdownScroll + row;
+            if (index >= dimensions.size()) {
+                break;
+            }
+            ResourceLocation dimension = dimensions.get(index);
+            int rowY = this.dimensionMenuY + row * DIMENSION_DROPDOWN_ROW_HEIGHT;
+            boolean selected = dimension.equals(this.mapViewDimension);
+            boolean hovered = mouseX >= this.dimensionMenuX
+                    && mouseX < this.dimensionMenuX + this.dimensionMenuWidth
+                    && mouseY >= rowY && mouseY < rowY + DIMENSION_DROPDOWN_ROW_HEIGHT;
+            int rowFill = selected ? palette.summary()
+                    : (hovered ? palette.hover() : (row % 2 == 0 ? palette.rowEven() : palette.rowOdd()));
+            guiGraphics.fill(this.dimensionMenuX + 1, rowY,
+                    this.dimensionMenuX + this.dimensionMenuWidth - 1,
+                    rowY + DIMENSION_DROPDOWN_ROW_HEIGHT, opaque(rowFill));
+            if (selected) {
+                guiGraphics.fill(this.dimensionMenuX + 1, rowY,
+                        this.dimensionMenuX + 3, rowY + DIMENSION_DROPDOWN_ROW_HEIGHT,
+                        opaque(palette.accentA()));
+            }
+            String name = NetworkMapView.dimensionName(dimension);
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(name, Math.max(20, this.dimensionMenuWidth - 30)),
+                    this.dimensionMenuX + 7, rowY + 4,
+                    selected ? palette.accentA() : palette.text(), false);
+            if (dimension.equals(playerDimension)) {
+                guiGraphics.drawString(this.font, "◆",
+                        this.dimensionMenuX + this.dimensionMenuWidth - 13, rowY + 4,
+                        palette.accentB(), false);
+            }
+        }
+    }
+
+    private static int opaque(int color) {
+        return 0xFF000000 | color & 0x00FFFFFF;
     }
 
     private void updateButtons() {
@@ -459,6 +692,9 @@ extends Screen {
         }
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
+        }
+        if (this.viewMode == ViewMode.MAP) {
+            this.drawDimensionDropdownOverlay(guiGraphics, n, n2);
         }
         this.drawTitle(guiGraphics);
         if (this.settingsButton != null && this.settingsButton.isHoveredOrFocused()) {
@@ -522,20 +758,10 @@ extends Screen {
         if (this.networkMapView != null) {
             this.networkMapView.render(guiGraphics, n, n2, f);
         }
-        int n3 = this.footerY;
-        String string;
+        this.drawDimensionSelector(guiGraphics, n, n2);
         if (this.networkMapSnapshot != null) {
-            string = Component.translatable(
-                    "screen.forever_production_monitor.map.dimension_footer",
-                    NetworkMapView.dimensionName(this.networkMapSnapshot.viewDimension()),
-                    this.networkMapSnapshot.dimensions().size()).getString();
-        } else {
-            string = String.valueOf(this.mapViewDimension);
-        }
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, this.panelWidth / 2),
-                this.left + 18, n3, InterfaceTheme.current().muted(), false);
-        if (this.networkMapSnapshot != null) {
-            this.drawStatus(guiGraphics, this.networkMapSnapshot.status(), this.left + this.panelWidth - 18, n3);
+            this.drawStatus(guiGraphics, this.networkMapSnapshot.status(),
+                    this.left + this.panelWidth - 18, this.footerY);
         }
     }
 
@@ -979,6 +1205,9 @@ extends Screen {
         if (this.contentTransitionRunning()) {
             return false;
         }
+        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownScroll(d, d2, d4)) {
+            return true;
+        }
         if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isMouseOver(d, d2)) {
             return super.mouseScrolled(d, d2, d3, d4);
         }
@@ -1008,6 +1237,9 @@ extends Screen {
         int n6;
         if (this.contentTransitionRunning()) {
             return super.mouseClicked(d, d2, n);
+        }
+        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownClick(d, d2, n)) {
+            return true;
         }
         // The map search box is an overlay inside the 3D viewport in 3.3.0.
         // Give the widget first refusal so camera dragging/zoom never steals search input.
