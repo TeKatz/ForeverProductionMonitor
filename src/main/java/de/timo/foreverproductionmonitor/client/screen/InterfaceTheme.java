@@ -197,6 +197,89 @@ public final class InterfaceTheme {
         }
     }
 
+    public static void drawButtonDecoration(GuiGraphics guiGraphics, int x, int y, int width, int height, boolean active, float hoverProgress) {
+        ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
+        Palette palette = InterfaceTheme.current();
+        int accent = active ? palette.accentB() : palette.accentA();
+        switch (style) {
+            case CARBON -> {
+                for (int stripeX = x + 3; stripeX < x + width - 3; stripeX += 8) {
+                    guiGraphics.fill(stripeX, y + height - 2, Math.min(stripeX + 4, x + width - 2), y + height - 1, palette.border());
+                }
+            }
+            case TERMINAL -> {
+                guiGraphics.fill(x + 3, y + 3, x + 4, y + height - 3, accent);
+                if (hoverProgress > 0.0f) {
+                    int scanY = y + 2 + (int)((height - 4) * hoverProgress);
+                    guiGraphics.fill(x + 5, scanY, x + width - 3, scanY + 1, GuiMotion.alpha(accent, 120));
+                }
+            }
+            case DEEP_SPACE -> {
+                guiGraphics.fill(x + 4, y + 3, x + 5, y + 4, accent);
+                guiGraphics.fill(x + width - 7, y + height - 4, x + width - 5, y + height - 2, palette.accentB());
+            }
+            case COPPER -> {
+                InterfaceTheme.rivet(guiGraphics, x + 3, y + 3, accent);
+                InterfaceTheme.rivet(guiGraphics, x + width - 5, y + height - 5, palette.border());
+            }
+            case AURORA -> {
+                int split = x + width / 2;
+                guiGraphics.fill(x + 2, y + height - 2, split, y + height - 1, palette.accentA());
+                guiGraphics.fill(split, y + height - 2, x + width - 2, y + height - 1, palette.accentB());
+            }
+            case REDSTONE -> {
+                int center = x + width / 2;
+                guiGraphics.fill(x + 3, y + height - 3, center, y + height - 2, accent);
+                guiGraphics.fill(center, y + height - 5, center + 1, y + height - 2, accent);
+                guiGraphics.fill(center - 1, y + height - 6, center + 2, y + height - 4, palette.accentB());
+            }
+            case FROST -> {
+                InterfaceTheme.corner(guiGraphics, x + 2, y + 2, palette.accentB());
+                guiGraphics.fill(x + width - 5, y + height - 3, x + width - 2, y + height - 2, palette.accentA());
+            }
+            case NATURE -> {
+                guiGraphics.fill(x + 3, y + height - 3, x + width - 4, y + height - 2, palette.accentA());
+                guiGraphics.fill(x + width / 3, y + height - 5, x + width / 3 + 2, y + height - 2, palette.accentB());
+                guiGraphics.fill(x + width * 2 / 3, y + height - 6, x + width * 2 / 3 + 2, y + height - 2, palette.accentA());
+            }
+            default -> {
+            }
+        }
+    }
+
+    public static void drawTableDecoration(GuiGraphics guiGraphics, int x, int y, int width, int height) {
+        ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
+        Palette palette = InterfaceTheme.current();
+        switch (style) {
+            case CARBON -> guiGraphics.fill(x + 3, y + 3, x + width - 3, y + 4, palette.border());
+            case TERMINAL -> {
+                for (int rowY = y + 3; rowY < y + height - 2; rowY += 8) {
+                    guiGraphics.fill(x + 2, rowY, x + width - 2, rowY + 1, GuiMotion.alpha(palette.accentA(), 34));
+                }
+            }
+            case DEEP_SPACE -> {
+                guiGraphics.fill(x + width / 4, y + 5, x + width / 4 + 1, y + 6, palette.accentA());
+                guiGraphics.fill(x + width * 3 / 4, y + height - 7, x + width * 3 / 4 + 2, y + height - 5, palette.accentB());
+            }
+            case COPPER -> {
+                InterfaceTheme.rivet(guiGraphics, x + 3, y + 3, palette.accentA());
+                InterfaceTheme.rivet(guiGraphics, x + width - 5, y + height - 5, palette.accentB());
+            }
+            case AURORA -> {
+                guiGraphics.fill(x + 2, y + 2, x + width / 2, y + 3, palette.accentA());
+                guiGraphics.fill(x + width / 2, y + 2, x + width - 2, y + 3, palette.accentB());
+            }
+            case REDSTONE -> InterfaceTheme.circuit(guiGraphics, x + 6, y + height - 4, palette.accentA(), true);
+            case FROST -> InterfaceTheme.corner(guiGraphics, x + 3, y + 3, palette.accentB());
+            case NATURE -> {
+                guiGraphics.fill(x + 2, y + 3, x + 4, y + height - 3, palette.accentA());
+                guiGraphics.fill(x + 4, y + height / 2, x + 8, y + height / 2 + 2, palette.accentB());
+            }
+            default -> {
+            }
+        }
+    }
+
     private static void corner(GuiGraphics guiGraphics, int n, int n2, int n3) {
         guiGraphics.fill(n, n2, n + 7, n2 + 1, n3);
         guiGraphics.fill(n, n2, n + 1, n2 + 7, n3);
