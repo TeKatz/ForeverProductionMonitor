@@ -33,9 +33,9 @@ public final class ClientConfig {
             case InterfaceStyle.FOREVER -> HudFrameStyle.FOREVER;
             case InterfaceStyle.AE2 -> HudFrameStyle.AE2;
             case InterfaceStyle.ORITECH -> HudFrameStyle.ORITECH;
-            case InterfaceStyle.MEKANISM, InterfaceStyle.HOLOGRAPHIC -> HudFrameStyle.AE2;
-            case InterfaceStyle.QUANTUM -> HudFrameStyle.FOREVER;
-            case InterfaceStyle.MONOCHROME -> HudFrameStyle.STANDARD;
+            case InterfaceStyle.MEKANISM, InterfaceStyle.HOLOGRAPHIC, InterfaceStyle.TERMINAL, InterfaceStyle.DEEP_SPACE, InterfaceStyle.FROST -> HudFrameStyle.AE2;
+            case InterfaceStyle.QUANTUM, InterfaceStyle.AURORA, InterfaceStyle.NATURE -> HudFrameStyle.FOREVER;
+            case InterfaceStyle.MONOCHROME, InterfaceStyle.CARBON, InterfaceStyle.COPPER, InterfaceStyle.REDSTONE -> HudFrameStyle.STANDARD;
             case InterfaceStyle.MINIMAL -> HudFrameStyle.NONE;
             case InterfaceStyle.CUSTOM -> HudFrameStyle.CUSTOM;
         };
@@ -166,6 +166,14 @@ public final class ClientConfig {
         HOLOGRAPHIC,
         MONOCHROME,
         MINIMAL,
+        CARBON,
+        TERMINAL,
+        DEEP_SPACE,
+        COPPER,
+        AURORA,
+        REDSTONE,
+        FROST,
+        NATURE,
         CUSTOM;
 
 
@@ -258,4 +266,3 @@ public final class ClientConfig {
 
     }
 }
-
