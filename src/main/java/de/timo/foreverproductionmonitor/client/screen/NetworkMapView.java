@@ -89,8 +89,7 @@ final class NetworkMapView {
     private static final float MIN_CAMERA_PITCH = 5.0f;
     private static final float MAX_CAMERA_PITCH = 85.0f;
     private static final double MAX_SCENE_DEPTH = 4096.0;
-    private static String rememberedNetwork;
-    private static CameraState rememberedCamera;
+    private static final Map<String, CameraState> REMEMBERED_CAMERAS = new HashMap<>();
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
     private static boolean bookmarksLoaded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
@@ -167,14 +166,27 @@ final class NetworkMapView {
         }
         if (bl) {
             String string = this.snapshotKey(networkMapPayload);
-            if (((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue() && string.equals(rememberedNetwork) && rememberedCamera != null) {
-                this.restoreCamera(rememberedCamera);
+            CameraState remembered = REMEMBERED_CAMERAS.get(string);
+            if (((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue() && remembered != null) {
+                this.restoreCamera(remembered);
             } else {
                 this.applyDefaultView();
             }
         } else {
             this.recomputeFit();
         }
+    }
+
+    void clearSnapshot() {
+        this.rememberCamera();
+        this.snapshot = null;
+        this.hoveredIndex = -1;
+        this.selectedIndex = -1;
+        this.searchCursor = -1;
+        this.followTarget = null;
+        this.dragButton = -1;
+        this.focusedOnBlock = false;
+        this.cableLoads.clear();
     }
 
     void focusPosition(BlockPos target) {
@@ -1606,8 +1618,7 @@ final class NetworkMapView {
         if (this.snapshot == null || !((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue()) {
             return;
         }
-        rememberedNetwork = this.snapshotKey(this.snapshot);
-        rememberedCamera = this.cameraState();
+        REMEMBERED_CAMERAS.put(this.snapshotKey(this.snapshot), this.cameraState());
     }
 
     private void restoreCamera(CameraState cameraState) {
