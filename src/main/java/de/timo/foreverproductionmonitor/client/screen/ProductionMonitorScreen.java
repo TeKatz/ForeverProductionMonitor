@@ -55,6 +55,8 @@ extends Screen {
     private static final int ROW_HEIGHT = 17;
     private static final int DIMENSION_DROPDOWN_ROW_HEIGHT = 16;
     private static final int DIMENSION_DROPDOWN_MAX_ROWS = 8;
+    private static final int MAP_VIEW_TOOLBAR_HEIGHT = 24;
+    private static final int MAP_CONTROL_BAR_HEIGHT = 28;
     private static ViewMode lastViewMode;
     private final ProductionTabletItem.MonitorLink link;
     private EditBox search;
@@ -484,9 +486,27 @@ extends Screen {
         MonitorNetwork.requestNetworkMap(this.link, dimension);
     }
 
+    private int dimensionDropdownVisibleRows() {
+        int size = this.networkMapSnapshot == null ? 0 : this.networkMapSnapshot.dimensions().size();
+        if (size <= 0) {
+            return 0;
+        }
+
+        // Keep the popup completely inside the 3D scene. The NetworkMapView reserves
+        // a toolbar at the top and the search/control bar at the bottom, so the dimension
+        // list must never cross either of those GUI regions.
+        int mapTop = this.top + 62;
+        int sceneTop = mapTop + MAP_VIEW_TOOLBAR_HEIGHT;
+        int controlBarTop = this.contentBottom - MAP_CONTROL_BAR_HEIGHT;
+        int availableHeight = Math.max(DIMENSION_DROPDOWN_ROW_HEIGHT,
+                controlBarTop - sceneTop - 4);
+        int rowsByHeight = Math.max(1, availableHeight / DIMENSION_DROPDOWN_ROW_HEIGHT);
+        return Math.min(size, Math.min(DIMENSION_DROPDOWN_MAX_ROWS, rowsByHeight));
+    }
+
     private void clampDimensionDropdownScroll() {
         int size = this.networkMapSnapshot == null ? 0 : this.networkMapSnapshot.dimensions().size();
-        int visible = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, size);
+        int visible = this.dimensionDropdownVisibleRows();
         this.dimensionDropdownScroll = Math.max(0, Math.min(this.dimensionDropdownScroll, Math.max(0, size - visible)));
     }
 
@@ -531,7 +551,7 @@ extends Screen {
             return false;
         }
         int size = this.networkMapSnapshot.dimensions().size();
-        int visible = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, size);
+        int visible = this.dimensionDropdownVisibleRows();
         int maxScroll = Math.max(0, size - visible);
         if (delta > 0.0) {
             this.dimensionDropdownScroll = Math.max(0, this.dimensionDropdownScroll - 1);
@@ -586,7 +606,10 @@ extends Screen {
         this.clampDimensionDropdownScroll();
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         List<ResourceLocation> dimensions = this.networkMapSnapshot.dimensions();
-        this.dimensionMenuRows = Math.min(DIMENSION_DROPDOWN_MAX_ROWS, dimensions.size());
+        this.dimensionMenuRows = this.dimensionDropdownVisibleRows();
+        if (this.dimensionMenuRows <= 0) {
+            return;
+        }
 
         int widest = this.dimensionSelectorWidth;
         for (ResourceLocation dimension : dimensions) {
@@ -595,7 +618,12 @@ extends Screen {
         this.dimensionMenuWidth = Math.min(220, Math.max(this.dimensionSelectorWidth, widest));
         this.dimensionMenuX = this.dimensionSelectorX;
         int menuHeight = this.dimensionMenuRows * DIMENSION_DROPDOWN_ROW_HEIGHT;
-        this.dimensionMenuY = this.dimensionSelectorY - 2 - menuHeight;
+
+        // The selector itself lives in the footer, but its popup is intentionally detached
+        // by the height of the map's search/control bar. This prevents the menu from ever
+        // covering "Search devices and blocks..." or the navigation help text.
+        int controlBarTop = this.contentBottom - MAP_CONTROL_BAR_HEIGHT;
+        this.dimensionMenuY = controlBarTop - 2 - menuHeight;
 
         guiGraphics.fill(this.dimensionMenuX - 1, this.dimensionMenuY - 1,
                 this.dimensionMenuX + this.dimensionMenuWidth + 1,
