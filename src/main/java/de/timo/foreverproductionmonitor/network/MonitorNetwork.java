@@ -113,7 +113,12 @@ public final class MonitorNetwork {
     }
 
     public static void requestNetworkMap(ProductionTabletItem.MonitorLink monitorLink) {
-        PacketDistributor.sendToServer((CustomPacketPayload)new RequestNetworkMap(monitorLink.dimension(), monitorLink.pos()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+        requestNetworkMap(monitorLink, monitorLink.dimension());
+    }
+
+    public static void requestNetworkMap(ProductionTabletItem.MonitorLink monitorLink, ResourceLocation viewDimension) {
+        PacketDistributor.sendToServer((CustomPacketPayload)new RequestNetworkMap(
+                monitorLink.dimension(), monitorLink.pos(), viewDimension), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     public static void updateDashboardPin(ProductionTabletItem.MonitorLink monitorLink, DashboardAction dashboardAction, EntryKind entryKind, AEKey aEKey, ProductionMonitorBlockEntity.AlarmMode alarmMode, long l, int n, long l2) {
@@ -158,13 +163,38 @@ public final class MonitorNetwork {
         ServerPlayer serverPlayer = (ServerPlayer)object;
         object = MonitorNetwork.linkedMonitor(serverPlayer, requestNetworkMap.dimension(), requestNetworkMap.pos());
         if (object == null || !((ProductionMonitorBlockEntity)((Object)object)).isMonitorOnline()) {
-            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new NetworkMapPayload(requestNetworkMap.dimension(), requestNetworkMap.pos(), object == null ? Status.MONITOR_MISSING : Status.NETWORK_OFFLINE, false, List.of()), (CustomPacketPayload[])new CustomPacketPayload[0]);
+            PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer,
+                    (CustomPacketPayload)new NetworkMapPayload(
+                            requestNetworkMap.dimension(),
+                            requestNetworkMap.pos(),
+                            requestNetworkMap.viewDimension(),
+                            object == null ? Status.MONITOR_MISSING : Status.NETWORK_OFFLINE,
+                            false,
+                            List.of(requestNetworkMap.viewDimension()),
+                            List.of(),
+                            List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
             return;
         }
-        ProductionMonitorBlockEntity.NetworkMapSnapshot networkMapSnapshot = ((ProductionMonitorBlockEntity)((Object)object)).networkMapSnapshot();
-        List<MapNode> list = networkMapSnapshot.nodes().stream().map(MapNode::from).toList();
-        Status status = ((ProductionMonitorBlockEntity)((Object)object)).isWarmingUp() ? Status.WARMING_UP : Status.ONLINE;
-        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer, (CustomPacketPayload)new NetworkMapPayload(requestNetworkMap.dimension(), requestNetworkMap.pos(), status, networkMapSnapshot.truncated(), list), (CustomPacketPayload[])new CustomPacketPayload[0]);
+
+        ProductionMonitorBlockEntity.NetworkMapSnapshot networkMapSnapshot =
+                ((ProductionMonitorBlockEntity)((Object)object)).networkMapSnapshot(requestNetworkMap.viewDimension());
+        List<MapNode> nodes = networkMapSnapshot.nodes().stream().map(MapNode::from).toList();
+        List<QuantumLink> quantumLinks = networkMapSnapshot.quantumLinks().stream().map(QuantumLink::from).toList();
+        Status status = ((ProductionMonitorBlockEntity)((Object)object)).isWarmingUp()
+                ? Status.WARMING_UP : Status.ONLINE;
+
+        PacketDistributor.sendToPlayer((ServerPlayer)serverPlayer,
+                (CustomPacketPayload)new NetworkMapPayload(
+                        requestNetworkMap.dimension(),
+                        requestNetworkMap.pos(),
+                        networkMapSnapshot.viewDimension(),
+                        status,
+                        networkMapSnapshot.truncated(),
+                        networkMapSnapshot.dimensions(),
+                        quantumLinks,
+                        nodes),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static void handleDashboardUpdate(UpdateDashboardPin updateDashboardPin, IPayloadContext iPayloadContext) {
@@ -916,43 +946,91 @@ public final class MonitorNetwork {
         }
     }
 
-    public record RequestNetworkMap(ResourceLocation dimension, BlockPos pos) implements CustomPacketPayload
+    public record RequestNetworkMap(ResourceLocation dimension, BlockPos pos,
+                                    ResourceLocation viewDimension) implements CustomPacketPayload
     {
-        public static final CustomPacketPayload.Type<RequestNetworkMap> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("request_network_map"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, RequestNetworkMap> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, requestNetworkMap) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, requestNetworkMap.dimension);
-            registryFriendlyByteBuf.writeBlockPos(requestNetworkMap.pos);
-        }, registryFriendlyByteBuf -> new RequestNetworkMap((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readBlockPos()));
+        public static final CustomPacketPayload.Type<RequestNetworkMap> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("request_network_map"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RequestNetworkMap> STREAM_CODEC =
+                StreamCodec.of((buf, request) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.dimension);
+                    buf.writeBlockPos(request.pos);
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.viewDimension);
+                }, buf -> new RequestNetworkMap(
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos(),
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf)));
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
             return TYPE;
         }
     }
 
-    public record NetworkMapPayload(ResourceLocation dimension, BlockPos pos, Status status, boolean truncated, List<MapNode> nodes) implements CustomPacketPayload
+    public record NetworkMapPayload(ResourceLocation dimension,
+                                    BlockPos pos,
+                                    ResourceLocation viewDimension,
+                                    Status status,
+                                    boolean truncated,
+                                    List<ResourceLocation> dimensions,
+                                    List<QuantumLink> quantumLinks,
+                                    List<MapNode> nodes) implements CustomPacketPayload
     {
-        public static final CustomPacketPayload.Type<NetworkMapPayload> TYPE = new CustomPacketPayload.Type(MonitorNetwork.id("network_map_snapshot"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, NetworkMapPayload> STREAM_CODEC = StreamCodec.of((registryFriendlyByteBuf, networkMapPayload) -> {
-            ResourceLocation.STREAM_CODEC.encode(registryFriendlyByteBuf, networkMapPayload.dimension);
-            registryFriendlyByteBuf.writeBlockPos(networkMapPayload.pos);
-            registryFriendlyByteBuf.writeEnum((Enum)networkMapPayload.status);
-            registryFriendlyByteBuf.writeBoolean(networkMapPayload.truncated);
-            registryFriendlyByteBuf.writeVarInt(Math.min(4096, networkMapPayload.nodes.size()));
-            networkMapPayload.nodes.stream().limit(4096L).forEach(mapNode -> mapNode.write((RegistryFriendlyByteBuf)registryFriendlyByteBuf));
-        }, registryFriendlyByteBuf -> {
-            ResourceLocation resourceLocation = (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(registryFriendlyByteBuf);
-            BlockPos blockPos = registryFriendlyByteBuf.readBlockPos();
-            Status status = (Status)registryFriendlyByteBuf.readEnum(Status.class);
-            boolean bl = registryFriendlyByteBuf.readBoolean();
-            int n = Math.min(4096, registryFriendlyByteBuf.readVarInt());
-            ArrayList<MapNode> arrayList = new ArrayList<MapNode>(n);
-            for (int i = 0; i < n; ++i) {
-                arrayList.add(MapNode.read(registryFriendlyByteBuf));
-            }
-            return new NetworkMapPayload(resourceLocation, blockPos, status, bl, arrayList);
-        });
+        public static final CustomPacketPayload.Type<NetworkMapPayload> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("network_map_snapshot"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, NetworkMapPayload> STREAM_CODEC =
+                StreamCodec.of((buf, payload) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, payload.dimension);
+                    buf.writeBlockPos(payload.pos);
+                    ResourceLocation.STREAM_CODEC.encode(buf, payload.viewDimension);
+                    buf.writeEnum((Enum)payload.status);
+                    buf.writeBoolean(payload.truncated);
+
+                    buf.writeVarInt(Math.min(32, payload.dimensions.size()));
+                    payload.dimensions.stream().limit(32L)
+                            .forEach(dimension -> ResourceLocation.STREAM_CODEC.encode(buf, dimension));
+
+                    buf.writeVarInt(Math.min(128, payload.quantumLinks.size()));
+                    payload.quantumLinks.stream().limit(128L)
+                            .forEach(link -> link.write(buf));
+
+                    buf.writeVarInt(Math.min(4096, payload.nodes.size()));
+                    payload.nodes.stream().limit(4096L)
+                            .forEach(node -> node.write(buf));
+                }, buf -> {
+                    ResourceLocation dimension =
+                            (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf);
+                    BlockPos pos = buf.readBlockPos();
+                    ResourceLocation viewDimension =
+                            (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf);
+                    Status status = (Status)buf.readEnum(Status.class);
+                    boolean truncated = buf.readBoolean();
+
+                    int dimensionCount = Math.min(32, buf.readVarInt());
+                    ArrayList<ResourceLocation> dimensions = new ArrayList<>(dimensionCount);
+                    for (int i = 0; i < dimensionCount; ++i) {
+                        dimensions.add((ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf));
+                    }
+
+                    int linkCount = Math.min(128, buf.readVarInt());
+                    ArrayList<QuantumLink> quantumLinks = new ArrayList<>(linkCount);
+                    for (int i = 0; i < linkCount; ++i) {
+                        quantumLinks.add(QuantumLink.read(buf));
+                    }
+
+                    int nodeCount = Math.min(4096, buf.readVarInt());
+                    ArrayList<MapNode> nodes = new ArrayList<>(nodeCount);
+                    for (int i = 0; i < nodeCount; ++i) {
+                        nodes.add(MapNode.read(buf));
+                    }
+
+                    return new NetworkMapPayload(
+                            dimension, pos, viewDimension, status, truncated,
+                            dimensions, quantumLinks, nodes);
+                });
 
         public NetworkMapPayload {
+            dimensions = List.copyOf(dimensions.subList(0, Math.min(32, dimensions.size())));
+            quantumLinks = List.copyOf(quantumLinks.subList(0, Math.min(128, quantumLinks.size())));
             nodes = List.copyOf(nodes.subList(0, Math.min(4096, nodes.size())));
         }
 
@@ -1226,6 +1304,30 @@ public final class MonitorNetwork {
 
         private static DashboardEntry read(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
             return new DashboardEntry((EntryKind)registryFriendlyByteBuf.readEnum(EntryKind.class), (AEKey)AEKey.STREAM_CODEC.decode(registryFriendlyByteBuf), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarLong(), registryFriendlyByteBuf.readBoolean(), (ProductionMonitorBlockEntity.AlarmMode)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmMode.class), registryFriendlyByteBuf.readLong(), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarLong(), (ProductionMonitorBlockEntity.AlarmState)registryFriendlyByteBuf.readEnum(ProductionMonitorBlockEntity.AlarmState.class));
+        }
+    }
+
+    public record QuantumLink(ResourceLocation dimensionA, BlockPos posA,
+                              ResourceLocation dimensionB, BlockPos posB) {
+        private void write(RegistryFriendlyByteBuf buf) {
+            ResourceLocation.STREAM_CODEC.encode(buf, this.dimensionA);
+            buf.writeBlockPos(this.posA);
+            ResourceLocation.STREAM_CODEC.encode(buf, this.dimensionB);
+            buf.writeBlockPos(this.posB);
+        }
+
+        private static QuantumLink read(RegistryFriendlyByteBuf buf) {
+            return new QuantumLink(
+                    (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                    buf.readBlockPos(),
+                    (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                    buf.readBlockPos());
+        }
+
+        private static QuantumLink from(ProductionMonitorBlockEntity.NetworkMapLink link) {
+            return new QuantumLink(
+                    link.dimensionA(), link.posA(),
+                    link.dimensionB(), link.posB());
         }
     }
 

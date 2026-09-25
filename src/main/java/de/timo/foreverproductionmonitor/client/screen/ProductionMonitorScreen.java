@@ -43,7 +43,9 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ProductionMonitorScreen
 extends Screen {
@@ -71,6 +73,8 @@ extends Screen {
     private MonitorNetwork.DashboardSnapshot dashboardSnapshot;
     private MonitorNetwork.NetworkMapPayload networkMapSnapshot;
     private NetworkMapView networkMapView;
+    private ResourceLocation mapViewDimension;
+    private BlockPos pendingMapFocus;
     private MonitorNetwork.SortMode sort = MonitorNetwork.SortMode.ACTIVITY;
     private MonitorNetwork.DeviceSort deviceSort = MonitorNetwork.DeviceSort.POWER;
     private MonitorNetwork.DeviceFilter deviceFilter = MonitorNetwork.DeviceFilter.ALL;
@@ -102,6 +106,7 @@ extends Screen {
     public ProductionMonitorScreen(ProductionTabletItem.MonitorLink monitorLink) {
         super((Component)Component.translatable((String)"screen.forever_production_monitor.title"));
         this.link = monitorLink;
+        this.mapViewDimension = monitorLink.dimension();
         this.viewMode = (Boolean)ClientConfig.VALUES.rememberLastTab.get() != false && lastViewMode != null ? lastViewMode : ViewMode.valueOf(((ClientConfig.DefaultTab)((Object)ClientConfig.VALUES.defaultTab.get())).name());
     }
 
@@ -140,7 +145,7 @@ extends Screen {
         this.search.setValue(string2);
         this.addRenderableWidget(this.search);
         if (this.networkMapView == null) {
-            this.networkMapView = new NetworkMapView(this.minecraft, this.font);
+            this.networkMapView = new NetworkMapView(this.minecraft, this.font, this::followQuantumPath);
         }
         this.networkMapView.setBounds(this.contentLeft, this.top + 62, n2, Math.max(24, this.contentBottom - this.top - 62));
         if (this.networkMapSnapshot != null) {
@@ -323,7 +328,7 @@ extends Screen {
         } else if (this.viewMode == ViewMode.PRODUCTION) {
             MonitorNetwork.request(this.link, this.search == null ? "" : this.search.getValue(), this.sort, this.requestedPage, this.visibleRows, n);
         } else if (this.viewMode == ViewMode.MAP) {
-            MonitorNetwork.requestNetworkMap(this.link);
+            MonitorNetwork.requestNetworkMap(this.link, this.mapViewDimension);
         } else {
             MonitorNetwork.StatisticsPage statisticsPage = switch (this.viewMode) {
                 default -> throw new IncompatibleClassChangeError();
@@ -379,13 +384,30 @@ extends Screen {
     }
 
     public void acceptNetworkMap(MonitorNetwork.NetworkMapPayload networkMapPayload) {
-        if (networkMapPayload.dimension().equals((Object)this.link.dimension()) && networkMapPayload.pos().equals((Object)this.link.pos())) {
+        if (networkMapPayload.dimension().equals((Object)this.link.dimension())
+                && networkMapPayload.pos().equals((Object)this.link.pos())
+                && networkMapPayload.viewDimension().equals((Object)this.mapViewDimension)) {
             this.networkMapSnapshot = networkMapPayload;
             this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
             if (this.networkMapView != null) {
                 this.networkMapView.accept(networkMapPayload);
+                if (this.pendingMapFocus != null) {
+                    this.networkMapView.focusPosition(this.pendingMapFocus);
+                    this.pendingMapFocus = null;
+                }
             }
         }
+    }
+
+    private void followQuantumPath(ResourceLocation dimension, BlockPos pos) {
+        this.mapViewDimension = dimension;
+        this.pendingMapFocus = pos.immutable();
+        if (this.search != null && !this.search.getValue().isEmpty()) {
+            this.search.setValue("");
+        }
+        this.refreshTicks = Math.max(100,
+                ((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.get())).ticks());
+        MonitorNetwork.requestNetworkMap(this.link, dimension);
     }
 
     private void updateButtons() {
@@ -501,8 +523,17 @@ extends Screen {
             this.networkMapView.render(guiGraphics, n, n2, f);
         }
         int n3 = this.footerY;
-        String string = String.valueOf(this.link.dimension()) + "  " + this.link.pos().toShortString();
-        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, this.panelWidth / 2), this.left + 18, n3, InterfaceTheme.current().muted(), false);
+        String string;
+        if (this.networkMapSnapshot != null) {
+            string = Component.translatable(
+                    "screen.forever_production_monitor.map.dimension_footer",
+                    NetworkMapView.dimensionName(this.networkMapSnapshot.viewDimension()),
+                    this.networkMapSnapshot.dimensions().size()).getString();
+        } else {
+            string = String.valueOf(this.mapViewDimension);
+        }
+        guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(string, this.panelWidth / 2),
+                this.left + 18, n3, InterfaceTheme.current().muted(), false);
         if (this.networkMapSnapshot != null) {
             this.drawStatus(guiGraphics, this.networkMapSnapshot.status(), this.left + this.panelWidth - 18, n3);
         }

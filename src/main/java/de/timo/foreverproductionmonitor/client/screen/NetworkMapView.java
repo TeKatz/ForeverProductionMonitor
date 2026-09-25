@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -96,6 +97,7 @@ final class NetworkMapView {
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
     private final Font font;
+    private final BiConsumer<ResourceLocation, BlockPos> quantumNavigator;
     private MonitorNetwork.NetworkMapPayload snapshot;
     private int left;
     private int top;
@@ -117,6 +119,11 @@ final class NetworkMapView {
     private boolean heatmap;
     private boolean showEvents;
     private boolean detailsCollapsed;
+    private QuantumTarget followTarget;
+    private int followButtonX;
+    private int followButtonY;
+    private int followButtonWidth;
+    private static final int FOLLOW_BUTTON_HEIGHT = 16;
     private MapFilter filter = MapFilter.ALL;
     private String search = "";
     private int searchCursor = -1;
@@ -129,9 +136,11 @@ final class NetworkMapView {
     private double fitScale = 8.0;
     private double sceneDepthSpan = 2.0;
 
-    NetworkMapView(Minecraft minecraft, Font font) {
+    NetworkMapView(Minecraft minecraft, Font font,
+                   BiConsumer<ResourceLocation, BlockPos> quantumNavigator) {
         this.minecraft = minecraft;
         this.font = font;
+        this.quantumNavigator = quantumNavigator;
     }
 
     void setBounds(int n, int n2, int n3, int n4) {
@@ -144,7 +153,10 @@ final class NetworkMapView {
 
     void accept(MonitorNetwork.NetworkMapPayload networkMapPayload) {
         boolean bl;
-        boolean bl2 = bl = this.snapshot == null || !this.snapshot.dimension().equals((Object)networkMapPayload.dimension()) || !this.snapshot.pos().equals((Object)networkMapPayload.pos());
+        boolean bl2 = bl = this.snapshot == null
+                || !this.snapshot.dimension().equals((Object)networkMapPayload.dimension())
+                || !this.snapshot.pos().equals((Object)networkMapPayload.pos())
+                || !this.snapshot.viewDimension().equals((Object)networkMapPayload.viewDimension());
         if (!bl && this.snapshot != null) {
             this.recordEvents(this.snapshot, networkMapPayload);
         }
@@ -154,7 +166,7 @@ final class NetworkMapView {
             this.selectedIndex = -1;
         }
         if (bl) {
-            String string = String.valueOf(networkMapPayload.dimension()) + "@" + networkMapPayload.pos().asLong();
+            String string = this.snapshotKey(networkMapPayload);
             if (((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue() && string.equals(rememberedNetwork) && rememberedCamera != null) {
                 this.restoreCamera(rememberedCamera);
             } else {
@@ -162,6 +174,33 @@ final class NetworkMapView {
             }
         } else {
             this.recomputeFit();
+        }
+    }
+
+    void focusPosition(BlockPos target) {
+        if (this.snapshot == null || target == null) {
+            return;
+        }
+        int bestIndex = -1;
+        int bestDistance = Integer.MAX_VALUE;
+        for (int i = 0; i < this.snapshot.nodes().size(); ++i) {
+            MonitorNetwork.MapNode node = this.snapshot.nodes().get(i);
+            int dx = Math.abs(node.pos().getX() - target.getX());
+            int dy = Math.abs(node.pos().getY() - target.getY());
+            int dz = Math.abs(node.pos().getZ() - target.getZ());
+            int distance = Math.max(dx, Math.max(dy, dz));
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestIndex = i;
+                if (distance == 0) {
+                    break;
+                }
+            }
+        }
+        if (bestIndex >= 0 && bestDistance <= 1) {
+            this.selectedIndex = bestIndex;
+            this.selectedAtNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
+            this.focusSelected();
         }
     }
 
@@ -829,6 +868,7 @@ final class NetworkMapView {
         }
 
         InterfaceTheme.Palette palette = InterfaceTheme.current();
+        this.followTarget = null;
         int left = this.detailLeft() + 8;
         int right = this.left + this.width - 8;
         this.drawDetailsToggle(guiGraphics);
@@ -889,8 +929,93 @@ final class NetworkMapView {
                 Component.translatable("screen.forever_production_monitor.map.power"),
                 NetworkMapView.formatPower(selected.idlePower()), -14740);
 
+        int registryY = lineY + 24;
+        QuantumTarget quantumTarget = this.quantumTarget(selected);
+        if (quantumTarget != null) {
+            int quantumY = lineY + 25;
+            guiGraphics.drawString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.quantum_bridge"),
+                    left, quantumY, palette.accentB(), false);
+            String destination = NetworkMapView.dimensionName(quantumTarget.dimension());
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(
+                            Component.translatable(
+                                    "screen.forever_production_monitor.map.destination",
+                                    destination).getString(),
+                            Math.max(40, right - left)),
+                    left, quantumY + 11, palette.muted(), false);
+
+            this.followTarget = quantumTarget;
+            this.followButtonX = left;
+            this.followButtonY = quantumY + 24;
+            this.followButtonWidth = Math.max(40, right - left);
+            guiGraphics.fill(this.followButtonX, this.followButtonY,
+                    this.followButtonX + this.followButtonWidth,
+                    this.followButtonY + FOLLOW_BUTTON_HEIGHT,
+                    palette.rowOdd());
+            guiGraphics.fill(this.followButtonX, this.followButtonY,
+                    this.followButtonX + this.followButtonWidth,
+                    this.followButtonY + 1, palette.accentA());
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.follow_path"),
+                    this.followButtonX + this.followButtonWidth / 2,
+                    this.followButtonY + 4, palette.text());
+            registryY = this.followButtonY + FOLLOW_BUTTON_HEIGHT + 9;
+        }
+
         guiGraphics.drawWordWrap(this.font, Component.literal(selected.visualId().toString()),
-                left, lineY + 24, Math.max(40, right - left), palette.muted());
+                left, registryY, Math.max(40, right - left), palette.muted());
+    }
+
+    private QuantumTarget quantumTarget(MonitorNetwork.MapNode selected) {
+        if (this.snapshot == null || !NetworkMapView.isAe2QuantumBridgePart(selected)) {
+            return null;
+        }
+        ResourceLocation currentDimension = this.snapshot.viewDimension();
+        for (MonitorNetwork.QuantumLink link : this.snapshot.quantumLinks()) {
+            if (currentDimension.equals(link.dimensionA())
+                    && NetworkMapView.sameBridge(selected.pos(), link.posA())) {
+                return new QuantumTarget(link.dimensionB(), link.posB());
+            }
+            if (currentDimension.equals(link.dimensionB())
+                    && NetworkMapView.sameBridge(selected.pos(), link.posB())) {
+                return new QuantumTarget(link.dimensionA(), link.posA());
+            }
+        }
+        return null;
+    }
+
+    private static boolean isAe2QuantumBridgePart(MonitorNetwork.MapNode node) {
+        BlockState state = Block.stateById(node.blockStateId());
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        return "ae2".equals(blockId.getNamespace())
+                && ("quantum_link".equals(blockId.getPath())
+                || "quantum_ring".equals(blockId.getPath()));
+    }
+
+    private static boolean sameBridge(BlockPos selected, BlockPos center) {
+        return Math.abs(selected.getX() - center.getX()) <= 1
+                && Math.abs(selected.getY() - center.getY()) <= 1
+                && Math.abs(selected.getZ() - center.getZ()) <= 1;
+    }
+
+    static String dimensionName(ResourceLocation dimension) {
+        if ("minecraft".equals(dimension.getNamespace())) {
+            if ("overworld".equals(dimension.getPath())) return "Overworld";
+            if ("the_nether".equals(dimension.getPath())) return "The Nether";
+            if ("the_end".equals(dimension.getPath())) return "The End";
+        }
+        String[] words = dimension.getPath().replace('/', ' ').replace('_', ' ').split(" ");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isBlank()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        if (!"minecraft".equals(dimension.getNamespace())) {
+            result.append(" (").append(dimension.getNamespace()).append(')');
+        }
+        return result.toString();
     }
 
     private String nodeDisplayName(MonitorNetwork.MapNode mapNode) {
@@ -957,6 +1082,18 @@ final class NetworkMapView {
         return d < 1000.0 ? String.format(Locale.ROOT, "%.2f AE/t", d) : String.format(Locale.ROOT, "%.2fk AE/t", d / 1000.0);
     }
 
+    private boolean clickFollowPath(double mouseX, double mouseY) {
+        if (this.followTarget == null
+                || mouseX < this.followButtonX
+                || mouseX >= this.followButtonX + this.followButtonWidth
+                || mouseY < this.followButtonY
+                || mouseY >= this.followButtonY + FOLLOW_BUTTON_HEIGHT) {
+            return false;
+        }
+        this.quantumNavigator.accept(this.followTarget.dimension(), this.followTarget.pos());
+        return true;
+    }
+
     private boolean clickDetailsToggle(double mouseX, double mouseY) {
         if (!((Boolean)ClientConfig.VALUES.mapShowDetails.get()).booleanValue()) {
             return false;
@@ -973,6 +1110,9 @@ final class NetworkMapView {
     }
 
     boolean mouseClicked(double d, double d2, int n) {
+        if (n == 0 && this.clickFollowPath(d, d2)) {
+            return true;
+        }
         if (n == 0 && this.clickDetailsToggle(d, d2)) {
             return true;
         }
@@ -1400,7 +1540,12 @@ final class NetworkMapView {
     }
 
     private String networkKey() {
-        return this.snapshot == null ? "none" : String.valueOf(this.snapshot.dimension()) + "@" + this.snapshot.pos().asLong();
+        return this.snapshot == null ? "none" : this.snapshotKey(this.snapshot);
+    }
+
+    private String snapshotKey(MonitorNetwork.NetworkMapPayload payload) {
+        return String.valueOf(payload.dimension()) + "@" + payload.pos().asLong()
+                + "#" + payload.viewDimension();
     }
 
     private ArrayDeque<MapEvent> currentEvents() {
@@ -1416,7 +1561,8 @@ final class NetworkMapView {
         for (MonitorNetwork.MapNode mapNode : networkMapPayload2.nodes()) {
             hashMap2.put(NodeKey.of(mapNode), mapNode);
         }
-        ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(String.valueOf(networkMapPayload2.dimension()) + "@" + networkMapPayload2.pos().asLong(), string -> new ArrayDeque());
+        ArrayDeque<MapEvent> arrayDeque = EVENT_LOGS.computeIfAbsent(
+                this.snapshotKey(networkMapPayload2), string -> new ArrayDeque());
         long l = System.currentTimeMillis();
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
@@ -1455,7 +1601,7 @@ final class NetworkMapView {
         if (this.snapshot == null || !((Boolean)ClientConfig.VALUES.mapRememberCamera.get()).booleanValue()) {
             return;
         }
-        rememberedNetwork = String.valueOf(this.snapshot.dimension()) + "@" + this.snapshot.pos().asLong();
+        rememberedNetwork = this.snapshotKey(this.snapshot);
         rememberedCamera = this.cameraState();
     }
 
@@ -1524,6 +1670,9 @@ final class NetworkMapView {
     }
 
     private record CameraState(float yaw, float pitch, double zoom, double panX, double panY, double centerX, double centerY, double centerZ, boolean focused) {
+    }
+
+    private record QuantumTarget(ResourceLocation dimension, BlockPos pos) {
     }
 
     private static enum ToolbarGroup {
