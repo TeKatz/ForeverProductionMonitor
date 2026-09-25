@@ -26,7 +26,7 @@ public final class InterfaceTheme {
             default -> throw new IncompatibleClassChangeError();
             case ClientConfig.InterfaceStyle.STANDARD -> new Palette(1510542095, -2063597568, -16118768, -233037784, -14078408, -15723751, -13617599, -14670804, -15065563, 1716344420, -14209995, -986379, -7103576, -8484972, -4406324, -9932418);
             case ClientConfig.InterfaceStyle.FOREVER -> new Palette(1695024397, -2063597568, -16054256, -233105373, -14015949, -15725290, -13423810, -14607318, -15001822, 1717452408, -14015436, -724745, -6647388, -2516414, -6591279, -10926747);
-            case ClientConfig.InterfaceStyle.AE2 -> new Palette(1610877970, -2063597568, -16379879, -233826272, -15257539, -16248037, -14928575, -15456721, -15720665, 1715515339, -15126212, -1378053, -7820876, -11941400, -6263328, -13214613);
+            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x700A0B0E, -2063597568, 0xFF25282E, 0xF1181A1F, 0xFF30333A, 0xFF111318, 0xFF343840, 0xFF202329, 0xFF1A1D22, 0x665A479E, 0xFF292C33, 0xFFF3F3F3, 0xFFA6A8AE, 0xFF915DCD, 0xFFE2A3E3, 0xFF5A479E);
             case ClientConfig.InterfaceStyle.ORITECH -> new Palette(1611466756, -2063597568, -15594745, -232974831, -13097705, -15594231, -12440805, -14148846, -14608881, 1718566173, -13294824, -3875, -5005171, -1606867, -1920177, -9354461);
             case ClientConfig.InterfaceStyle.MEKANISM -> new Palette(1610943760, -2063597568, -16314348, -233759712, -15125702, -16313833, -14597046, -15455697, -15719639, 1716709329, -15059395, -983041, -7227465, -14295865, -9633934, -13276048);
             case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(1694893072, -2063597568, -16251631, -233237975, -13623228, -15923177, -12573350, -14412240, -14937816, 1719616216, -13492410, -462593, -5794122, -5026561, -19922, -9944441);
@@ -87,19 +87,27 @@ public final class InterfaceTheme {
                 int n6 = n + n3 / 2;
                 guiGraphics.fill(n, n2, n6, n2 + 2, palette.accentA());
                 guiGraphics.fill(n6, n2, n + n3, n2 + 2, palette.accentB());
-                guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.accentA());
-                guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.accentB());
-                for (int cellX = n + 10; cellX < n + Math.min(n3 / 3, 118); cellX += 13) {
-                    guiGraphics.fill(cellX, n2 + 7, cellX + 9, n2 + 15, InterfaceTheme.darken(palette.tableHeader(), 0.82f));
-                    guiGraphics.fill(cellX + 2, n2 + 9, cellX + 7, n2 + 13, cellX / 13 % 2 == 0 ? palette.accentA() : palette.accentB());
+                guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.border());
+                guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.border());
+
+                // Smart-cable-like Fluix strip under the title bar.
+                guiGraphics.fill(n + 9, n2 + 27, n + n3 - 52, n2 + 30, 0xFF24272D);
+                guiGraphics.fill(n + 10, n2 + 28, n + n3 - 53, n2 + 29, palette.border());
+                for (int channelX = n + 16; channelX < n + n3 - 60; channelX += 18) {
+                    guiGraphics.fill(channelX, n2 + 24, channelX + 5, n2 + 27,
+                            channelX / 18 % 2 == 0 ? palette.accentA() : palette.accentB());
                 }
-                int crystalX = n + n3 - 17;
-                int crystalY = n2 + 15;
-                guiGraphics.fill(crystalX, crystalY - 4, crystalX + 1, crystalY + 5, palette.accentB());
-                guiGraphics.fill(crystalX - 4, crystalY, crystalX + 5, crystalY + 1, palette.accentB());
-                guiGraphics.fill(crystalX - 2, crystalY - 2, crystalX + 3, crystalY + 3, palette.accentA());
-                InterfaceTheme.circuit(guiGraphics, n + 7, n2 + n4 - 5, palette.accentA(), true);
-                InterfaceTheme.circuit(guiGraphics, n + n3 - 7, n2 + n4 - 5, palette.accentB(), false);
+
+                // Mini ME Drive bank in the header with real AE2 status colors.
+                int driveX = n + n3 - 47;
+                guiGraphics.fill(driveX, n2 + 6, n + n3 - 8, n2 + 25, 0xFF30333A);
+                guiGraphics.fill(driveX + 2, n2 + 8, n + n3 - 10, n2 + 23, 0xFF17191E);
+                int[] ledColors = {0xFF00FF00, 0xFF00AAFF, 0xFF00AAFF, 0xFFFFAA00, 0xFFFF0000};
+                for (int i = 0; i < 5; ++i) {
+                    int cellX = driveX + 4 + i * 6;
+                    guiGraphics.fill(cellX, n2 + 10, cellX + 4, n2 + 20, 0xFF292C32);
+                    guiGraphics.fill(cellX + 1, n2 + 17, cellX + 3, n2 + 19, ledColors[i]);
+                }
                 break;
             }
             case ORITECH: {

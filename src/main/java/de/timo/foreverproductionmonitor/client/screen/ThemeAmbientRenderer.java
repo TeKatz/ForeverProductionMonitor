@@ -12,6 +12,13 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 final class ThemeAmbientRenderer {
     private static final int BODY_INSET = 3;
+    private static final int AE2_FLUIX_DARK = 0xFF5A479E;
+    private static final int AE2_FLUIX_MEDIUM = 0xFF915DCD;
+    private static final int AE2_FLUIX_BRIGHT = 0xFFE2A3E3;
+    private static final int AE2_CELL_EMPTY = 0xFF00FF00;
+    private static final int AE2_CELL_USED = 0xFF00AAFF;
+    private static final int AE2_CELL_TYPES_FULL = 0xFFFFAA00;
+    private static final int AE2_CELL_FULL = 0xFFFF0000;
 
     private ThemeAmbientRenderer() {
     }
@@ -75,46 +82,52 @@ final class ThemeAmbientRenderer {
             }
             case FOREVER -> {
                 int split = x + width * 3 / 5;
-                graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 90));
-                graphics.fill(split, bottom, x + width - 3, bottom + 1, alpha(b, 90));
-                if (GuiMotion.ambientMotionEnabled()) {
-                    int px = x + 3 + (int)((width - 7) * phase(2300L, 0.5f));
-                    graphics.fill(px, bottom - 1, Math.min(x + width - 3, px + 2), bottom + 1, alpha(palette.text(), 125));
-                }
+                graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 84));
+                graphics.fill(split, bottom, x + width - 3, bottom + 1, alpha(b, 84));
+                int breathe = GuiMotion.ambientMotionEnabled()
+                        ? 1 + (int)Math.round((0.5 + 0.5 * Math.sin(phase(9000L, 0.25f) * Math.PI * 2.0)) * 2.0)
+                        : 2;
+                corner(graphics, x + 4, y + 3, 4 + breathe, alpha(a, 60), true, true);
+                corner(graphics, x + width - 5, y + height - 4, 4 + breathe, alpha(b, 60), false, false);
+                diamond(graphics, split, y + height / 2, 1, alpha(palette.text(), 74));
             }
             case AE2 -> {
                 int cy = y + height / 2;
-                int leftNode = x + 7;
-                int rightNode = x + width - 8;
-                graphics.fill(leftNode + 2, cy, rightNode - 1, cy + 1, alpha(palette.border(), 76));
-                diamond(graphics, leftNode, cy, 2, subtle);
-                diamond(graphics, rightNode, cy, 2, bright);
-                int cellCount = Math.max(2, Math.min(5, (width - 24) / 16));
+                graphics.fill(x + 4, cy, x + width - 5, cy + 1, alpha(AE2_FLUIX_DARK, 96));
+                int cellCount = Math.max(2, Math.min(5, (width - 24) / 15));
                 for (int i = 0; i < cellCount; ++i) {
-                    int cellX = x + 13 + i * Math.max(12, (width - 28) / cellCount);
-                    meCell(graphics, cellX, y + 3, 8, height - 6, i % 2 == 0 ? palette.accentA() : palette.accentB(), palette.border(), 54);
+                    int cellX = x + 8 + i * Math.max(12, (width - 18) / cellCount);
+                    int led = ae2CellColor(i);
+                    graphics.fill(cellX, y + 4, Math.min(cellX + 8, x + width - 5), y + height - 4, alpha(0xFF22252B, 180));
+                    graphics.fill(cellX + 2, y + height - 6, Math.min(cellX + 6, x + width - 6), y + height - 4, alpha(led, 122));
                 }
-                int pulseX = leftNode + 3 + (int)((Math.max(1, rightNode - leftNode - 6)) * phase(1900L, 0.35f));
-                diamond(graphics, pulseX, cy, 1, alpha(palette.text(), motionAlpha(58, 128)));
+                int channels = Math.max(2, Math.min(4, width / 34));
+                for (int i = 0; i < channels; ++i) {
+                    int px = x + 6 + i * Math.max(15, (width - 14) / channels);
+                    graphics.fill(px, cy - 2, px + 4, cy - 1, alpha(i % 2 == 0 ? AE2_FLUIX_MEDIUM : AE2_FLUIX_BRIGHT, 74));
+                }
             }
             case ORITECH -> {
-                for (int px = x + 3; px < x + width - 13; px += 12) {
-                    graphics.fill(px, y + 2, Math.min(px + 8, x + width - 14), y + 3, (px / 12 & 1) == 0 ? subtle : alpha(b, 65));
-                    graphics.fill(px + 2, bottom, Math.min(px + 7, x + width - 14), bottom + 1, alpha(palette.border(), 58));
+                graphics.fill(x + 3, y + 3, x + width - 13, y + 4, alpha(palette.border(), 64));
+                graphics.fill(x + 3, bottom, x + width - 13, bottom + 1, alpha(palette.border(), 58));
+                for (int px = x + 8; px < x + width - 18; px += 16) {
+                    rivet(graphics, px, y + height / 2 - 1, alpha(palette.accentA(), 62));
                 }
-                rotor(graphics, x + width - 8, y + height / 2, 4, subtle, bright, phase(2400L, 0.18f));
-                rivet(graphics, x + 4, y + height / 2 - 1, alpha(palette.border(), 82));
+                rotor(graphics, x + width - 8, y + height / 2, 4, alpha(palette.border(), 84), bright, phase(7600L, 0.18f));
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(a, 76));
-                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(b, 76));
-                graphics.fill(x + 4, cy, x + width - 4, cy + 1, alpha(palette.border(), 60));
-                energyCore(graphics, x + width / 2, cy, 4, palette, phase(2700L, 0.22f), 76);
-                int leftPulseY = y + 3 + (int)((height - 7) * phase(1500L, 0.28f));
-                int rightPulseY = y + 3 + (int)((height - 7) * phase(1900L, 0.74f));
-                graphics.fill(x + 2, leftPulseY, x + 5, Math.min(y + height - 3, leftPulseY + 2), alpha(palette.accentB(), motionAlpha(46, 118)));
-                graphics.fill(x + width - 5, rightPulseY, x + width - 2, Math.min(y + height - 3, rightPulseY + 2), alpha(palette.accentA(), motionAlpha(42, 104)));
+                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(a, 70));
+                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(b, 70));
+                graphics.fill(x + 4, cy, x + width - 4, cy + 1, alpha(palette.border(), 54));
+                energyCore(graphics, x + width / 2, cy, 4, palette, phase(9200L, 0.22f), 68);
+                int tankTop = y + 4;
+                int tankBottom = y + height - 4;
+                graphics.fill(x + 7, tankTop, x + 11, tankBottom, alpha(palette.border(), 66));
+                graphics.fill(x + width - 11, tankTop, x + width - 7, tankBottom, alpha(palette.border(), 66));
+                int fill = Math.max(2, (tankBottom - tankTop - 2) * 2 / 3);
+                graphics.fill(x + 8, tankBottom - fill, x + 10, tankBottom - 1, alpha(palette.accentA(), 60));
+                graphics.fill(x + width - 10, tankBottom - fill / 2, x + width - 8, tankBottom - 1, alpha(palette.accentB(), 56));
             }
             case QUANTUM -> {
                 int cx = x + width / 2;
@@ -181,9 +194,11 @@ final class ThemeAmbientRenderer {
             }
             case REDSTONE -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 3, cy, x + width - 8, cy + 1, alpha(a, 72));
-                graphics.fill(x + width - 9, cy - 2, x + width - 8, cy + 1, alpha(a, 72));
-                node(graphics, x + width - 8, cy - 1, bright);
+                boolean powered = phase(6800L, 0.2f) < 0.56f;
+                int dust = alpha(powered ? palette.accentA() : palette.border(), powered ? 108 : 52);
+                graphics.fill(x + 3, cy, x + width - 12, cy + 1, dust);
+                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, powered, palette);
+                redstoneLamp(graphics, x + width - 9, cy - 3, powered, palette);
             }
             case FROST -> {
                 crystal(graphics, x + 4, y + height / 2, 4, subtle);
@@ -238,33 +253,35 @@ final class ThemeAmbientRenderer {
                 for (int i = 0; i < cells; ++i) {
                     int cellX = x + 6 + i * usable / cells;
                     int cellW = Math.max(12, usable / cells - 4);
-                    meCell(graphics, cellX, y + 3, cellW, Math.min(12, height - 6), i % 2 == 0 ? palette.accentA() : palette.accentB(), palette.border(), 50);
-                    if (i + 1 < cells) {
-                        graphics.fill(cellX + cellW, y + 8, x + 6 + (i + 1) * usable / cells, y + 9, alpha(palette.border(), 34));
-                    }
+                    int led = ae2CellColor(i);
+                    graphics.fill(cellX, y + 3, cellX + cellW, Math.min(bottom - 3, y + 14), alpha(0xFF24272D, 176));
+                    graphics.fill(cellX + 2, y + 5, cellX + cellW - 2, y + 6, alpha(AE2_FLUIX_DARK, 70));
+                    graphics.fill(cellX + 2, Math.min(bottom - 6, y + 10), cellX + cellW - 2, Math.min(bottom - 4, y + 12), alpha(led, 108));
                 }
-                int pulse = (int)(phase(2500L, 0.32f) * Math.max(1, usable - 10));
-                diamond(graphics, x + 9 + pulse, y + 8, 1, alpha(palette.text(), motionAlpha(42, 100)));
+                graphics.fill(x + 5, bottom - 3, right - 5, bottom - 2, alpha(AE2_FLUIX_MEDIUM, 42));
             }
             case ORITECH -> {
                 rivet(graphics, x + 4, y + 4, a);
                 rivet(graphics, right - 6, bottom - 6, b);
                 int seam = x + width * 2 / 3;
-                graphics.fill(seam, y + 2, seam + 1, bottom - 2, alpha(palette.border(), 38));
+                graphics.fill(seam, y + 2, seam + 1, bottom - 2, alpha(palette.border(), 42));
                 for (int px = x + 12; px < seam - 5; px += 18) {
-                    graphics.fill(px, bottom - 4, Math.min(px + 10, seam - 4), bottom - 3, alpha(palette.border(), 42));
+                    graphics.fill(px, bottom - 4, Math.min(px + 10, seam - 4), bottom - 3, alpha(palette.border(), 44));
                 }
-                rotor(graphics, right - 12, y + Math.min(10, height / 2), 4, a, b, phase(3300L, 0.21f));
-                piston(graphics, seam + 8, bottom - 5, Math.max(8, right - seam - 24), true, a, b, phase(2100L, 0.4f));
+                rotor(graphics, right - 12, y + Math.min(10, height / 2), 4, alpha(palette.border(), 76), b, phase(8800L, 0.21f));
+                piston(graphics, seam + 8, bottom - 5, Math.max(8, right - seam - 24), true,
+                        alpha(palette.border(), 68), alpha(palette.accentA(), 72), phase(7200L, 0.4f));
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
                 segmentedRail(graphics, x + 3, y + 3, bottom - 3, palette.accentA(), palette.border());
                 segmentedRail(graphics, right - 4, y + 3, bottom - 3, palette.accentB(), palette.border());
-                graphics.fill(x + 5, cy, right - 5, cy + 1, alpha(palette.border(), 36));
-                energyCore(graphics, x + Math.min(width - 14, Math.max(14, width / 5)), cy, 5, palette, phase(3000L, 0.32f), 68);
-                int pulseX = x + 12 + (int)((Math.max(1, width - 26)) * phase(2300L, 0.57f));
-                graphics.fill(pulseX, cy - 2, Math.min(right - 5, pulseX + 5), cy + 3, alpha(palette.accentB(), motionAlpha(28, 74)));
+                graphics.fill(x + 5, cy, right - 5, cy + 1, alpha(palette.border(), 34));
+                energyCore(graphics, x + Math.min(width - 14, Math.max(14, width / 5)), cy, 5, palette, phase(10500L, 0.32f), 62);
+                int gaugeX = right - Math.min(18, Math.max(10, width / 8));
+                graphics.fill(gaugeX, y + 4, gaugeX + 6, bottom - 4, alpha(palette.border(), 58));
+                int gaugeH = Math.max(2, (height - 10) * 3 / 5);
+                graphics.fill(gaugeX + 1, bottom - 5 - gaugeH, gaugeX + 5, bottom - 5, alpha(palette.accentB(), 54));
             }
             case QUANTUM -> {
                 int cx = x + width / 2;
@@ -316,9 +333,11 @@ final class ThemeAmbientRenderer {
             }
             case REDSTONE -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 3, cy, right - 10, cy + 1, a);
-                graphics.fill(right - 11, cy - 4, right - 10, cy + 1, a);
-                node(graphics, right - 10, cy - 4, alpha(palette.accentB(), 70));
+                boolean powered = phase(7600L, 0.2f) < 0.52f;
+                int dust = alpha(powered ? palette.accentA() : palette.border(), powered ? 88 : 40);
+                graphics.fill(x + 3, cy, right - 12, cy + 1, dust);
+                redstoneRepeater(graphics, x + width / 2 - 4, cy - 4, powered, palette);
+                redstoneLamp(graphics, right - 9, cy - 3, powered, palette);
             }
             case FROST -> {
                 crystal(graphics, x + 5, y + 7, 4, a);
@@ -363,84 +382,100 @@ final class ThemeAmbientRenderer {
     private static void foreverPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int split = l + width * 3 / 5;
+        int cx = l + width * 3 / 5;
+        int cy = t + height / 2;
 
-        // Signature segmented rails: geometric rather than free-floating particles.
-        for (int x = l + 7; x < r - 7; x += 24) {
-            int color = x < split ? p.accentA() : p.accentB();
-            g.fill(x, t + 7, Math.min(x + 12, r - 6), t + 8, alpha(color, 34));
-            g.fill(x + 5, b - 8, Math.min(x + 17, r - 6), b - 7, alpha(color, 30));
+        // Forever's own visual language: paired geometric frames that slowly breathe,
+        // with no data packets or matrix-like sweeps.
+        int maxInset = Math.max(8, Math.min(28, Math.min(width, height) / 7));
+        float breathe = 0.5f + 0.5f * (float)Math.sin(phase(18000L, 0.28f) * Math.PI * 2.0);
+        int inset = 6 + (int)(maxInset * breathe * 0.45f);
+        corner(g, l + inset, t + inset, 13, alpha(p.accentA(), 50), true, true);
+        corner(g, r - inset - 1, b - inset - 1, 13, alpha(p.accentB(), 50), false, false);
+        corner(g, r - inset - 1, t + inset, 8, alpha(p.accentB(), 30), false, true);
+        corner(g, l + inset, b - inset - 1, 8, alpha(p.accentA(), 30), true, false);
+
+        int ringW = Math.max(18, Math.min(width / 5, 42));
+        int ringH = Math.max(12, Math.min(height / 5, 28));
+        rectFrame(g, cx - ringW, cy - ringH, cx + ringW, cy + ringH, alpha(p.border(), 28));
+        rectFrame(g, cx - ringW / 2, cy - ringH / 2, cx + ringW / 2, cy + ringH / 2, alpha(p.accentA(), 34));
+        diamond(g, cx, cy, 3, alpha(p.accentB(), 68));
+
+        // Slow symmetric shutters open and close around the central mark.
+        int travel = Math.max(5, ringW / 2);
+        int shutter = (int)(travel * (0.25f + 0.75f * breathe));
+        g.fill(cx - ringW - 7, cy - 1, cx - ringW - 7 + shutter, cy + 2, alpha(p.accentA(), 42));
+        g.fill(cx + ringW + 7 - shutter, cy - 1, cx + ringW + 7, cy + 2, alpha(p.accentB(), 42));
+
+        for (int x = l + 9; x < r - 9; x += 26) {
+            g.fill(x, b - 6, Math.min(x + 12, r - 7), b - 5, alpha(x < cx ? p.accentA() : p.accentB(), 24));
         }
-        g.fill(l + 6, t + 8, l + 7, b - 8, alpha(p.accentA(), 25));
-        g.fill(r - 7, t + 8, r - 6, b - 8, alpha(p.accentB(), 25));
-
-        // Two long, slow data sweeps with opposite directions.
-        if (GuiMotion.ambientMotionEnabled()) {
-            float a = phase(9800L, 0.22f);
-            float c = 1.0f - phase(12700L, 0.64f);
-            int x1 = l + 8 + (int)((width - 17) * a);
-            int x2 = l + 8 + (int)((width - 17) * c);
-            g.fill(x1, t + 5, Math.min(x1 + 18, r - 7), t + 7, alpha(x1 < split ? p.accentA() : p.accentB(), motionAlpha(24, 64)));
-            g.fill(x2, b - 7, Math.min(x2 + 13, r - 7), b - 5, alpha(x2 < split ? p.accentA() : p.accentB(), motionAlpha(20, 54)));
-        }
-
-        // Fixed geometric anchor marks.
-        corner(g, l + 6, t + 6, 8, alpha(p.accentA(), 58), true, true);
-        corner(g, r - 7, b - 7, 8, alpha(p.accentB(), 58), false, false);
-        diamond(g, split, t + height / 2, 2, alpha(p.accentB(), 62));
     }
 
     private static void ae2Panel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int networkRight = l + width * 3 / 5;
-        int cols = 4;
-        int rows = 4;
-        int dx = Math.max(22, (networkRight - l - 18) / Math.max(1, cols - 1));
-        int dy = Math.max(20, (height - 18) / Math.max(1, rows - 1));
 
-        // Explicit ME-like network topology. Motion is constrained to actual paths.
-        for (int row = 0; row < rows; ++row) {
-            int y = t + 9 + row * dy;
-            for (int col = 0; col < cols; ++col) {
-                int x = l + 9 + col * dx;
-                if (x >= networkRight - 3 || y >= b - 3) continue;
-                if (col + 1 < cols && x + dx < networkRight) {
-                    g.fill(x + 3, y, x + dx, y + 1, alpha(p.border(), 26));
-                }
-                if (row + 1 < rows && y + dy < b) {
-                    g.fill(x, y + 3, x + 1, y + dy, alpha(p.border(), 22));
-                }
-                diamond(g, x, y, 2, alpha((row + col & 1) == 0 ? p.accentA() : p.accentB(), 58));
-            }
+        // Closer to AE2: neutral machine surfaces, Fluix-colored smart-cable backbone,
+        // channel indicators and a recognizable 10-cell ME Drive bank.
+        int cableY = t + Math.max(18, height / 3);
+        int cableLeft = l + 9;
+        int driveLeft = l + width * 3 / 5;
+        g.fill(cableLeft, cableY - 2, driveLeft - 8, cableY + 3, alpha(0xFF24272D, 170));
+        g.fill(cableLeft, cableY - 1, driveLeft - 8, cableY + 2, alpha(AE2_FLUIX_DARK, 105));
+
+        // Smart-cable channel bars, based on Fluix bright/medium variants.
+        int channelCount = Math.max(4, Math.min(8, (driveLeft - cableLeft - 10) / 18));
+        for (int i = 0; i < channelCount; ++i) {
+            int px = cableLeft + 7 + i * Math.max(12, (driveLeft - cableLeft - 16) / channelCount);
+            int channelColor = (i & 1) == 0 ? AE2_FLUIX_MEDIUM : AE2_FLUIX_BRIGHT;
+            int h = 3 + (i % 3);
+            g.fill(px, cableY - 5 - h, px + 4, cableY - 5, alpha(channelColor, 72));
         }
 
-        // A packet changes node-to-node, rather than drifting freely across the screen.
-        int routeLength = cols * rows;
-        float routePhase = phase(7200L, 0.28f);
-        int pathIndex = Math.min(routeLength - 1, (int)(routePhase * routeLength));
-        int pathCol = pathIndex % cols;
-        int pathRow = pathIndex / cols;
-        int pulseX = l + 9 + pathCol * dx;
-        int pulseY = t + 9 + pathRow * dy;
-        if (pulseX < networkRight - 2 && pulseY < b - 2) {
-            diamond(g, pulseX, pulseY, 3, alpha(p.text(), motionAlpha(52, 126)));
+        // Terminal-like attached panels.
+        int termY = cableY + 11;
+        for (int i = 0; i < 3; ++i) {
+            int tx = cableLeft + i * 31;
+            if (tx + 24 >= driveLeft - 7) break;
+            g.fill(tx, termY, tx + 24, termY + 15, alpha(0xFF30333A, 180));
+            g.fill(tx + 1, termY + 1, tx + 23, termY + 14, alpha(0xFF17191E, 188));
+            g.fill(tx + 4, termY + 4, tx + 19, termY + 6, alpha(AE2_FLUIX_MEDIUM, 54));
+            g.fill(tx + 4, termY + 9, tx + 14, termY + 10, alpha(AE2_FLUIX_BRIGHT, 40));
         }
 
-        // Storage-cell bay gives AE2 a recognizable storage-system silhouette.
-        int bayLeft = networkRight + 8;
-        g.fill(bayLeft - 5, t + 5, bayLeft - 4, b - 5, alpha(p.accentA(), 32));
-        int cellW = Math.max(14, (r - bayLeft - 12) / 2);
-        int cellH = Math.max(14, Math.min(24, (height - 24) / 3));
-        for (int row = 0; row < 3; ++row) {
-            for (int col = 0; col < 2; ++col) {
-                int cellX = bayLeft + col * (cellW + 4);
-                int cellY = t + 7 + row * (cellH + 4);
-                if (cellX + cellW >= r - 3 || cellY + cellH >= b - 3) continue;
-                int glow = (row + col & 1) == 0 ? p.accentA() : p.accentB();
-                meCell(g, cellX, cellY, cellW, cellH, glow, p.border(), 54);
-                int meter = 3 + mod(hash(211 + row * 17 + col * 31), Math.max(4, cellH - 7));
-                g.fill(cellX + cellW - 3, cellY + cellH - meter - 2, cellX + cellW - 2, cellY + cellH - 2, alpha(glow, 72));
+        // ME Drive silhouette: 10 slots, with official LED state colors:
+        // green empty, blue used, orange types full, red bytes full.
+        int driveTop = t + 7;
+        int driveRight = r - 8;
+        int driveWidth = Math.max(34, driveRight - driveLeft);
+        g.fill(driveLeft, driveTop, driveRight, b - 8, alpha(0xFF3A3D44, 182));
+        g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, b - 10, alpha(0xFF17191E, 190));
+
+        int slotW = Math.max(11, (driveWidth - 10) / 2);
+        int slotH = Math.max(9, Math.min(18, (height - 30) / 5));
+        for (int i = 0; i < 10; ++i) {
+            int col = i % 2;
+            int row = i / 2;
+            int sx = driveLeft + 4 + col * (slotW + 2);
+            int sy = driveTop + 4 + row * (slotH + 2);
+            if (sx + slotW >= driveRight - 2 || sy + slotH >= b - 10) continue;
+            int led = ae2CellColor(i);
+            g.fill(sx, sy, sx + slotW, sy + slotH, alpha(0xFF292C32, 188));
+            g.fill(sx + 2, sy + 2, sx + slotW - 2, sy + 3, alpha(AE2_FLUIX_DARK, 52));
+            g.fill(sx + 2, sy + slotH - 4, sx + slotW - 2, sy + slotH - 2, alpha(led, 116));
+        }
+
+        // Very subtle activity: one drive LED briefly brightens; no moving blob.
+        if (GuiMotion.ambientMotionEnabled()) {
+            int active = Math.floorMod((int)(phase(12000L, 0.3f) * 10.0f), 10);
+            int col = active % 2;
+            int row = active / 2;
+            int sx = driveLeft + 4 + col * (slotW + 2);
+            int sy = driveTop + 4 + row * (slotH + 2);
+            if (sx + slotW < driveRight - 2 && sy + slotH < b - 10) {
+                int led = ae2CellColor(active);
+                g.fill(sx + 2, sy + slotH - 5, sx + slotW - 2, sy + slotH - 1, alpha(led, motionAlpha(72, 145)));
             }
         }
     }
@@ -451,77 +486,85 @@ final class ThemeAmbientRenderer {
         int seamA = l + width / 3;
         int seamB = l + width * 2 / 3;
 
-        // Heavy metal plate construction.
-        g.fill(seamA, t + 4, seamA + 1, b - 4, alpha(p.border(), 44));
-        g.fill(seamB, t + 4, seamB + 1, b - 4, alpha(p.border(), 44));
-        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 36));
-        rivet(g, l + 6, t + 6, alpha(p.accentB(), 70));
+        // Heavy plate construction: seams, bolts and machine housings.
+        g.fill(seamA, t + 4, seamA + 1, b - 4, alpha(p.border(), 48));
+        g.fill(seamB, t + 4, seamB + 1, b - 4, alpha(p.border(), 48));
+        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 38));
+        rivet(g, l + 6, t + 6, alpha(p.accentB(), 68));
         rivet(g, r - 8, t + 6, alpha(p.accentA(), 64));
         rivet(g, l + 6, b - 8, alpha(p.accentA(), 64));
-        rivet(g, r - 8, b - 8, alpha(p.accentB(), 70));
+        rivet(g, r - 8, b - 8, alpha(p.accentB(), 68));
 
-        // Actual mechanical movement only: rotors, shafts and actuator.
-        float turnA = phase(8400L, 0.14f);
-        float turnB = 1.0f - phase(11200L, 0.67f);
-        rotor(g, l + width / 4, t + height / 3, 9, alpha(p.accentA(), 64), alpha(p.accentB(), 76), turnA);
-        rotor(g, l + width / 2, t + height * 2 / 3, 7, alpha(p.accentB(), 60), alpha(p.accentA(), 72), turnB);
+        // Slow mechanical drive: gears connected by a physical belt and shaft.
+        float turnA = phase(15000L, 0.14f);
+        float turnB = 1.0f - phase(19000L, 0.67f);
+        int gearAX = l + width / 4;
+        int gearAY = t + height / 3;
+        int gearBX = l + width / 2;
+        int gearBY = t + height * 2 / 3;
+        rotor(g, gearAX, gearAY, 9, alpha(p.border(), 92), alpha(p.accentB(), 74), turnA);
+        rotor(g, gearBX, gearBY, 7, alpha(p.border(), 88), alpha(p.accentA(), 70), turnB);
+        belt(g, gearAX + 9, gearAY, gearBX - 7, gearBY, alpha(p.border(), 62));
 
         int shaftY = t + height / 3;
-        g.fill(l + width / 4 + 10, shaftY - 1, seamB - 4, shaftY + 2, alpha(p.border(), 54));
-        for (int x = l + width / 4 + 16; x < seamB - 6; x += 13) {
-            g.fill(x, shaftY - 2, x + 2, shaftY + 3, alpha(p.accentA(), 34));
+        g.fill(gearAX + 10, shaftY - 1, seamB - 4, shaftY + 2, alpha(p.border(), 58));
+        for (int x = gearAX + 16; x < seamB - 6; x += 13) {
+            g.fill(x, shaftY - 2, x + 2, shaftY + 3, alpha(p.accentA(), 32));
         }
 
+        // Hydraulic-looking actuator. Motion is deliberately slow and physical.
         int pistonY = t + height / 2 + 11;
         piston(g, seamB + 7, pistonY, Math.max(12, r - seamB - 18), true,
-               alpha(p.border(), 72), alpha(p.accentB(), 90), phase(6200L, 0.42f));
+               alpha(p.border(), 74), alpha(p.accentB(), 82), phase(12000L, 0.42f));
 
-        // Fixed machine rail, no matrix-style particles.
+        // Machine feet / lower rail.
         for (int x = l + 10; x < r - 10; x += 18) {
             g.fill(x, b - 6, Math.min(x + 11, r - 8), b - 4,
-                    alpha((x / 18 & 1) == 0 ? p.accentA() : p.border(), 42));
+                    alpha((x / 18 & 1) == 0 ? p.accentA() : p.border(), 40));
         }
     }
 
     private static void mekanismPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int leftRail = l + 11;
-        int rightRail = r - 12;
+        int leftRail = l + 12;
+        int rightRail = r - 13;
         int cx = l + width / 2;
         int cy = t + height / 2;
 
-        // Enclosed energy conduits and machine rails.
-        segmentedRail(g, leftRail, t + 6, b - 6, p.accentA(), p.border());
-        segmentedRail(g, rightRail, t + 6, b - 6, p.accentB(), p.border());
-        g.fill(leftRail + 3, cy, cx - 11, cy + 1, alpha(p.accentA(), 46));
-        g.fill(cx + 11, cy, rightRail - 2, cy + 1, alpha(p.accentB(), 46));
-        g.fill(cx, t + 8, cx + 1, cy - 10, alpha(p.border(), 32));
-        g.fill(cx, cy + 10, cx + 1, b - 8, alpha(p.border(), 32));
+        // Mekanism as an industrial process machine, not a digital network.
+        segmentedRail(g, leftRail, t + 7, b - 7, p.accentA(), p.border());
+        segmentedRail(g, rightRail, t + 7, b - 7, p.accentB(), p.border());
 
-        // Central reactor-like core; its animation is a contained power cycle.
-        energyCore(g, cx, cy, 10, p, phase(12800L, 0.24f), 94);
+        // Central contained power core with slow reactor-like breathing.
+        g.fill(leftRail + 3, cy, cx - 12, cy + 1, alpha(p.border(), 38));
+        g.fill(cx + 12, cy, rightRail - 2, cy + 1, alpha(p.border(), 38));
+        energyCore(g, cx, cy, 10, p, phase(18000L, 0.24f), 86);
 
-        // Power packets remain inside conduits and are deliberately slow.
-        int leftPulse = leftRail + 4 + (int)((Math.max(1, cx - leftRail - 17)) * phase(6800L, 0.18f));
-        int rightPulse = cx + 11 + (int)((Math.max(1, rightRail - cx - 17)) * phase(8200L, 0.61f));
-        g.fill(leftPulse, cy - 2, Math.min(leftPulse + 7, cx - 8), cy + 3, alpha(p.accentB(), motionAlpha(34, 96)));
-        g.fill(rightPulse, cy - 2, Math.min(rightPulse + 7, rightRail - 2), cy + 3, alpha(p.accentA(), motionAlpha(32, 88)));
-
-        // Tank / process gauges: fixed machinery with gently changing fill levels.
-        int gaugeTop = t + 10;
-        int gaugeBottom = Math.min(b - 10, gaugeTop + 30);
-        int[] gaugeXs = {l + width / 4, l + width * 3 / 4};
-        for (int i = 0; i < gaugeXs.length; ++i) {
-            int gx = gaugeXs[i];
-            int gc = i == 0 ? p.accentA() : p.accentB();
-            g.fill(gx - 5, gaugeTop, gx + 6, gaugeBottom, alpha(p.border(), 54));
-            g.fill(gx - 4, gaugeTop + 1, gx + 5, gaugeBottom - 1, alpha(p.tableOuter(), 80));
-            float gaugePhase = phase(17000L + i * 4200L, 0.34f + i * 0.18f);
-            int fill = 4 + (int)((gaugeBottom - gaugeTop - 7) * (0.35f + 0.45f * (0.5f + 0.5f * (float)Math.sin(gaugePhase * Math.PI * 2.0))));
-            g.fill(gx - 3, gaugeBottom - 2 - fill, gx + 4, gaugeBottom - 2, alpha(gc, 58));
-            g.fill(gx - 2, gaugeTop + 4, gx + 3, gaugeTop + 5, alpha(p.text(), 24));
+        // Process tanks with slowly changing levels.
+        int tankTop = t + 10;
+        int tankBottom = Math.min(b - 11, tankTop + Math.max(30, height / 2));
+        int[] tankXs = {l + width / 4, l + width * 3 / 4};
+        for (int i = 0; i < tankXs.length; ++i) {
+            int tx = tankXs[i];
+            int fluid = i == 0 ? p.accentA() : p.accentB();
+            g.fill(tx - 7, tankTop, tx + 8, tankBottom, alpha(p.border(), 64));
+            g.fill(tx - 6, tankTop + 1, tx + 7, tankBottom - 1, alpha(p.tableOuter(), 100));
+            float tankPhase = phase(26000L + i * 7000L, 0.21f + i * 0.28f);
+            int innerH = Math.max(4, tankBottom - tankTop - 5);
+            int fill = 4 + (int)(innerH * (0.28f + 0.46f * (0.5f + 0.5f * (float)Math.sin(tankPhase * Math.PI * 2.0))));
+            g.fill(tx - 5, tankBottom - 2 - fill, tx + 6, tankBottom - 2, alpha(fluid, 56));
+            g.fill(tx - 4, tankTop + 5, tx + 5, tankTop + 6, alpha(p.text(), 22));
         }
+
+        // Pressure / process gauge with a rotating needle, not a moving packet.
+        int gaugeX = cx;
+        int gaugeY = Math.min(b - 18, t + 18);
+        gauge(g, gaugeX, gaugeY, 7, p, phase(21000L, 0.33f));
+
+        // Fixed pipe joints.
+        pipeJoint(g, leftRail, cy, alpha(p.accentA(), 70), alpha(p.border(), 76));
+        pipeJoint(g, rightRail - 1, cy, alpha(p.accentB(), 70), alpha(p.border(), 76));
     }
 
     private static void quantumPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -746,28 +789,32 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Physical copper plate seams and rivets.
-        g.fill(l + width / 3, t + 4, l + width / 3 + 1, b - 4, alpha(p.border(), 38));
-        g.fill(l + width * 2 / 3, t + 4, l + width * 2 / 3 + 1, b - 4, alpha(p.border(), 38));
-        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 30));
+        // Copper is material-first: plate seams, rivets and static patina.
+        g.fill(l + width / 3, t + 4, l + width / 3 + 1, b - 4, alpha(p.border(), 40));
+        g.fill(l + width * 2 / 3, t + 4, l + width * 2 / 3 + 1, b - 4, alpha(p.border(), 40));
+        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 32));
         rivet(g, l + 6, t + 6, alpha(p.accentA(), 76));
         rivet(g, r - 8, t + 6, alpha(p.accentA(), 64));
         rivet(g, l + 6, b - 8, alpha(p.accentB(), 60));
         rivet(g, r - 8, b - 8, alpha(p.accentB(), 72));
 
-        // Patina patches are static material detail.
-        int patina = alpha(p.accentB(), 26);
+        int patina = alpha(p.accentB(), 24);
         for (int i = 0; i < 7; ++i) {
             int px = l + 12 + mod(hash(4021 + i * 43), Math.max(1, width - 24));
             int py = t + 10 + mod(hash(5099 + i * 37), Math.max(1, height - 20));
-            g.fill(px, py, px + 4 + i % 3, py + 2, patina);
-            if ((i & 1) == 0) g.fill(px + 2, py - 2, px + 4, py + 4, alpha(p.accentB(), 18));
+            g.fill(px, py, px + 5 + i % 3, py + 2, patina);
+            if ((i & 1) == 0) {
+                g.fill(px + 2, py - 2, px + 4, py + 4, alpha(p.accentB(), 16));
+            }
         }
 
-        // Only a broad, slow material reflection moves.
-        int sheen = l - 36 + (int)((width + 72) * phase(24000L, 0.31f));
-        diagonal(g, sheen, t + 5, sheen + 36, b - 5, alpha(p.text(), motionAlpha(4, 18)));
-        diagonal(g, sheen + 4, t + 5, sheen + 40, b - 5, alpha(p.accentA(), motionAlpha(5, 20)));
+        // Replaces the previous particle-like diagonal sheen with a broad heat/reflection band.
+        float warm = 0.5f + 0.5f * (float)Math.sin(phase(26000L, 0.31f) * Math.PI * 2.0);
+        int bandAlpha = motionAlpha(5, 18 + (int)(warm * 12));
+        int bandWidth = Math.max(20, width / 5);
+        int bandX = l + (width - bandWidth) / 2;
+        g.fill(bandX, t + 5, bandX + bandWidth, b - 5, alpha(p.accentA(), bandAlpha));
+        g.fill(bandX + 3, t + 7, bandX + bandWidth - 3, t + 8, alpha(p.text(), Math.max(3, bandAlpha / 2)));
     }
 
     private static void auroraPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -798,54 +845,50 @@ final class ThemeAmbientRenderer {
     private static void redstonePanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int x1 = l + width / 4;
-        int x2 = l + width / 2;
-        int x3 = l + width * 3 / 4;
-        int y1 = t + height / 3;
-        int y2 = t + height * 2 / 3;
+        int midY = t + height / 2;
+        int upperY = t + height / 3;
+        int lowerY = t + height * 2 / 3;
 
-        // Fixed circuit board routes.
-        g.fill(l + 6, y1, x1, y1 + 1, alpha(p.accentA(), 38));
-        g.fill(x1, y1, x1 + 1, y2, alpha(p.accentA(), 38));
-        g.fill(x1, y2, x3, y2 + 1, alpha(p.accentA(), 38));
-        g.fill(x2, t + 7, x2 + 1, y1, alpha(p.accentB(), 32));
-        g.fill(x2, y1, r - 7, y1 + 1, alpha(p.accentB(), 32));
-        g.fill(x3, y2, x3 + 1, b - 8, alpha(p.accentA(), 30));
+        // Discrete Minecraft-like redstone circuit states. Nothing travels like a data packet.
+        float cycle = phase(12000L, 0.18f);
+        boolean inputOn = cycle < 0.62f;
+        boolean branchOn = cycle > 0.18f && cycle < 0.76f;
+        boolean outputOn = cycle > 0.34f && cycle < 0.90f;
 
-        node(g, x1 - 1, y1 - 1, alpha(p.accentB(), 78));
-        node(g, x1 - 1, y2 - 1, alpha(p.accentA(), 74));
-        node(g, x2 - 1, y1 - 1, alpha(p.accentB(), 68));
-        node(g, x3 - 1, y2 - 1, alpha(p.accentA(), 68));
+        int dustOff = alpha(p.border(), 52);
+        int dustOn = alpha(p.accentA(), 112);
 
-        // Pulses travel only along defined traces.
-        float p1 = phase(6400L, 0.18f);
-        int route1 = (x1 - (l + 6)) + (y2 - y1) + (x3 - x1);
-        int d1 = (int)(p1 * Math.max(1, route1));
-        if (d1 < x1 - (l + 6)) {
-            int px = l + 6 + d1;
-            g.fill(px, y1 - 2, px + 4, y1 + 3, alpha(p.accentB(), motionAlpha(38, 98)));
-        } else if (d1 < x1 - (l + 6) + y2 - y1) {
-            int py = y1 + d1 - (x1 - (l + 6));
-            g.fill(x1 - 2, py, x1 + 3, py + 4, alpha(p.accentB(), motionAlpha(38, 98)));
-        } else {
-            int px = x1 + d1 - (x1 - (l + 6)) - (y2 - y1);
-            g.fill(px, y2 - 2, Math.min(px + 4, x3 + 1), y2 + 3, alpha(p.accentB(), motionAlpha(38, 98)));
-        }
+        // Main dust line.
+        g.fill(l + 7, midY, r - 14, midY + 1, inputOn ? dustOn : dustOff);
+        redstoneRepeater(g, l + width / 3 - 4, midY - 4, inputOn, p);
+        redstoneRepeater(g, l + width * 2 / 3 - 4, midY - 4, branchOn, p);
 
-        // Lamp-like endpoints blink only when a trace completes.
-        int lampAlpha = phase(6400L, 0.18f) > 0.9f ? motionAlpha(52, 122) : 34;
-        g.fill(x3 - 3, b - 12, x3 + 4, b - 7, alpha(p.accentB(), lampAlpha));
-        g.fill(x3 - 1, b - 11, x3 + 2, b - 8, alpha(p.text(), Math.max(18, lampAlpha - 28)));
+        // Two branches with torch/repeater style logic.
+        int branchX = l + width / 2;
+        g.fill(branchX, upperY, branchX + 1, midY, branchOn ? dustOn : dustOff);
+        g.fill(branchX, midY, branchX + 1, lowerY, outputOn ? dustOn : dustOff);
+        g.fill(branchX, upperY, r - 15, upperY + 1, branchOn ? dustOn : dustOff);
+        g.fill(branchX, lowerY, r - 15, lowerY + 1, outputOn ? dustOn : dustOff);
+        redstoneTorch(g, branchX - 1, upperY - 4, branchOn, p);
+        redstoneTorch(g, branchX - 1, lowerY + 2, outputOn, p);
+
+        // Lamps turn on/off as circuit states change.
+        redstoneLamp(g, r - 11, midY - 4, outputOn, p);
+        redstoneLamp(g, r - 11, upperY - 4, branchOn, p);
+        redstoneLamp(g, r - 11, lowerY - 4, outputOn && inputOn, p);
+
+        // Lever-like input switch at the left.
+        redstoneLever(g, l + 9, midY - 5, inputOn, p);
     }
 
     private static void frostPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
+
+        // Growing ice veins remain the main animation.
         float grow = growthCycle(phase(34000L, 0.74f));
         int reachX = Math.max(6, (int)(width * 0.42f * grow));
         int reachY = Math.max(6, (int)(height * 0.56f * grow));
-
-        // Ice veins visibly grow from opposite corners.
         int leftBaseX = l + 5;
         int leftBaseY = t + 7;
         diagonal(g, leftBaseX, leftBaseY, leftBaseX + reachX, leftBaseY + Math.min(reachY, height / 2), alpha(p.accentB(), 54));
@@ -869,11 +912,30 @@ final class ThemeAmbientRenderer {
             crystal(g, bx, by, Math.max(3, Math.min(6, 2 + (int)(grow2 * 5))), alpha(p.text(), 38));
         }
 
-        // Sparse static frost specks, not a continuous falling particle loop.
-        for (int i = 0; i < 8; ++i) {
-            int px = l + 8 + mod(hash(8011 + i * 73), Math.max(1, width - 16));
-            int py = t + 8 + mod(hash(9109 + i * 53), Math.max(1, height - 16));
-            star(g, px, py, 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 22 + (i % 3) * 5));
+        // Proper lightweight snowfall with deterministic wrap inside the clipped panel.
+        if (GuiMotion.ambientMotionEnabled()) {
+            for (int i = 0; i < 10; ++i) {
+                int px = l + 7 + mod(hash(13007 + i * 83), Math.max(1, width - 14));
+                long duration = 18000L + i * 1700L;
+                float fall = phase(duration, i / 10.0f);
+                int py = t - 5 + (int)(fall * (height + 12));
+                int drift = (int)Math.round(Math.sin((fall + i * 0.17f) * Math.PI * 2.0) * (1 + i % 3));
+                snowflake(g, px + drift, py, i % 4 == 0 ? 2 : 1, alpha(i % 3 == 0 ? p.accentB() : p.text(), 38 + (i % 4) * 8));
+            }
+        } else {
+            for (int i = 0; i < 6; ++i) {
+                int px = l + 9 + mod(hash(14009 + i * 71), Math.max(1, width - 18));
+                int py = t + 8 + mod(hash(15013 + i * 59), Math.max(1, height - 16));
+                snowflake(g, px, py, 1, alpha(p.text(), 34));
+            }
+        }
+
+        // Small scenic details, intentionally tucked into the lower edge.
+        int snowY = b - 8;
+        g.fill(l + 5, snowY, r - 5, b - 5, alpha(p.text(), 18));
+        if (width > 150 && height > 90) {
+            snowman(g, l + 26, b - 13, p);
+            igloo(g, r - 35, b - 7, p);
         }
     }
 
@@ -885,7 +947,7 @@ final class ThemeAmbientRenderer {
         float swayPhase = phase(17000L, 0.31f);
         int sway = GuiMotion.ambientMotionEnabled() ? (int)Math.round(Math.sin(swayPhase * Math.PI * 2.0) * 2.0) : 0;
 
-        // Main vine grows down the left edge over tens of seconds.
+        // Main vine grows down the left edge.
         int vineX = l + 10;
         int maxVine = Math.max(10, height - 12);
         int grown = Math.max(3, (int)(maxVine * growth));
@@ -909,7 +971,7 @@ final class ThemeAmbientRenderer {
             }
         }
 
-        // Hanging vine grows from the opposite top corner on a different cycle.
+        // Independent hanging vine on the opposite side.
         float hangingGrowth = growthCycle(phase(53000L, 0.41f));
         int rightVine = r - 13;
         int hangingLength = Math.max(4, (int)(Math.min(height * 2 / 3, 96) * hangingGrowth));
@@ -928,7 +990,7 @@ final class ThemeAmbientRenderer {
                     alpha(p.text(), 34 + (int)(bloom * 54)));
         }
 
-        // Ground-cover spreads horizontally after the main vine is established.
+        // Ground cover spreads only after the main vine has established itself.
         float groundGrowth = Math.max(0.0f, Math.min(1.0f, (growth - 0.35f) / 0.55f));
         int groundY = b - 7;
         int groundEnd = l + 8 + (int)((width - 16) * groundGrowth);
@@ -943,11 +1005,19 @@ final class ThemeAmbientRenderer {
             }
         }
 
-        // One larger bloom slowly opens and closes; no free-floating light particles.
+        // A small tree now grows through a full trunk -> branches -> crown cycle.
+        if (width > 150 && height > 100) {
+            float treeGrowth = growthCycle(phase(72000L, 0.18f));
+            int treeX = l + width * 2 / 3;
+            int treeBase = b - 9;
+            growingTree(g, treeX, treeBase, Math.min(48, Math.max(28, height / 3)), treeGrowth, sway, p);
+        }
+
+        // One larger flower opens/closes independently.
         float bloomCycle = phase(28000L, 0.36f);
         float bloomSize = 0.45f + 0.55f * (0.5f + 0.5f * (float)Math.sin(bloomCycle * Math.PI * 2.0));
-        int bx = l + width * 2 / 3;
-        int by = t + height / 2 + sway;
+        int bx = l + width / 2;
+        int by = t + height * 2 / 3 + sway;
         if (growth > 0.64f) {
             if (bloomSize > 0.62f) {
                 flower(g, bx, by, alpha(p.accentB(), 78 + (int)(bloomSize * 28)), alpha(p.text(), 66));
@@ -974,6 +1044,142 @@ final class ThemeAmbientRenderer {
         corner(g, r - 8, b - 8, 9, alpha(p.accentB(), 42), false, false);
         g.fill(l + width / 2, t + height / 2 - 3, l + width / 2 + 1, t + height / 2 + 4, alpha(p.text(), 22));
         g.fill(l + width / 2 - 3, t + height / 2, l + width / 2 + 4, t + height / 2 + 1, alpha(p.text(), 22));
+    }
+
+    private static int ae2CellColor(int index) {
+        return switch (Math.floorMod(index, 5)) {
+            case 0 -> AE2_CELL_EMPTY;
+            case 1, 2 -> AE2_CELL_USED;
+            case 3 -> AE2_CELL_TYPES_FULL;
+            default -> AE2_CELL_FULL;
+        };
+    }
+
+    private static void belt(GuiGraphics g, int x1, int y1, int x2, int y2, int color) {
+        diagonal(g, x1, y1 - 3, x2, y2 - 3, color);
+        diagonal(g, x1, y1 + 3, x2, y2 + 3, alpha(color, Math.max(18, (color >>> 24) - 12)));
+        for (int i = 1; i < 5; ++i) {
+            int x = x1 + (x2 - x1) * i / 5;
+            int y = y1 + (y2 - y1) * i / 5;
+            g.fill(x - 1, y - 4, x + 1, y + 5, alpha(color, 34));
+        }
+    }
+
+    private static void gauge(GuiGraphics g, int cx, int cy, int radius, InterfaceTheme.Palette p, float turn) {
+        int r = Math.max(4, radius);
+        g.fill(cx - r, cy, cx + r + 1, cy + 1, alpha(p.border(), 48));
+        g.fill(cx, cy - r, cx + 1, cy + 2, alpha(p.border(), 42));
+        diagonal(g, cx - r + 2, cy - 2, cx, cy - r + 2, alpha(p.accentA(), 40));
+        diagonal(g, cx, cy - r + 2, cx + r - 2, cy - 2, alpha(p.accentB(), 40));
+        double angle = Math.PI * (1.1 + 0.8 * (0.5 + 0.5 * Math.sin(turn * Math.PI * 2.0)));
+        int nx = cx + (int)Math.round(Math.cos(angle) * (r - 2));
+        int ny = cy + (int)Math.round(Math.sin(angle) * (r - 2));
+        diagonal(g, cx, cy, nx, ny, alpha(p.text(), 72));
+        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, alpha(p.accentB(), 70));
+    }
+
+    private static void pipeJoint(GuiGraphics g, int cx, int cy, int accent, int border) {
+        g.fill(cx - 3, cy - 3, cx + 4, cy + 4, border);
+        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, accent);
+    }
+
+    private static void redstoneRepeater(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+        g.fill(x, y, x + 9, y + 7, alpha(0xFF6E6E6E, 110));
+        g.fill(x + 1, y + 1, x + 8, y + 6, alpha(0xFFB9B9B9, 92));
+        int torch = alpha(powered ? p.accentA() : p.border(), powered ? 124 : 58);
+        g.fill(x + 2, y + 2, x + 4, y + 4, torch);
+        g.fill(x + 6, y + 3, x + 8, y + 5, torch);
+    }
+
+    private static void redstoneTorch(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+        g.fill(x, y + 2, x + 2, y + 7, alpha(0xFF6B3B22, 130));
+        g.fill(x - 1, y, x + 3, y + 3, alpha(powered ? p.accentA() : p.border(), powered ? 128 : 54));
+    }
+
+    private static void redstoneLamp(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+        g.fill(x, y, x + 8, y + 8, alpha(0xFF3A1B14, 140));
+        int lamp = powered ? 0xFFFF7A24 : 0xFF5B241C;
+        g.fill(x + 2, y + 2, x + 6, y + 6, alpha(lamp, powered ? 132 : 76));
+        if (powered) {
+            g.fill(x + 3, y + 1, x + 5, y + 7, alpha(p.accentB(), 36));
+            g.fill(x + 1, y + 3, x + 7, y + 5, alpha(p.accentB(), 30));
+        }
+    }
+
+    private static void redstoneLever(GuiGraphics g, int x, int y, boolean powered, InterfaceTheme.Palette p) {
+        g.fill(x - 2, y + 5, x + 5, y + 8, alpha(0xFF6E6E6E, 110));
+        if (powered) {
+            diagonal(g, x, y + 5, x + 4, y, alpha(0xFF7A5135, 150));
+            g.fill(x + 3, y - 1, x + 5, y + 1, alpha(p.accentA(), 94));
+        } else {
+            diagonal(g, x + 2, y + 5, x - 1, y, alpha(0xFF7A5135, 150));
+            g.fill(x - 2, y - 1, x, y + 1, alpha(p.border(), 68));
+        }
+    }
+
+    private static void snowflake(GuiGraphics g, int cx, int cy, int size, int color) {
+        int r = Math.max(1, size);
+        g.fill(cx - r, cy, cx + r + 1, cy + 1, color);
+        g.fill(cx, cy - r, cx + 1, cy + r + 1, color);
+        if (r > 1) {
+            g.fill(cx - 1, cy - 1, cx, cy, alpha(color, Math.max(20, (color >>> 24) - 12)));
+            g.fill(cx + 1, cy + 1, cx + 2, cy + 2, alpha(color, Math.max(20, (color >>> 24) - 12)));
+        }
+    }
+
+    private static void snowman(GuiGraphics g, int cx, int groundY, InterfaceTheme.Palette p) {
+        int snow = alpha(p.text(), 88);
+        g.fill(cx - 5, groundY - 9, cx + 6, groundY + 1, snow);
+        g.fill(cx - 3, groundY - 16, cx + 4, groundY - 8, snow);
+        g.fill(cx - 2, groundY - 21, cx + 3, groundY - 15, snow);
+        g.fill(cx - 1, groundY - 19, cx, groundY - 18, alpha(0xFF20242A, 140));
+        g.fill(cx + 1, groundY - 19, cx + 2, groundY - 18, alpha(0xFF20242A, 140));
+        g.fill(cx + 3, groundY - 17, cx + 6, groundY - 16, alpha(0xFFE88947, 120));
+        g.fill(cx - 4, groundY - 23, cx + 5, groundY - 21, alpha(0xFF20242A, 120));
+        g.fill(cx - 2, groundY - 27, cx + 3, groundY - 23, alpha(0xFF20242A, 120));
+    }
+
+    private static void igloo(GuiGraphics g, int cx, int groundY, InterfaceTheme.Palette p) {
+        int ice = alpha(p.text(), 52);
+        int shade = alpha(p.accentA(), 42);
+        for (int row = 0; row < 5; ++row) {
+            int half = 12 - row * 2;
+            g.fill(cx - half, groundY - 3 - row * 4, cx + half + 1, groundY - row * 4, row % 2 == 0 ? ice : shade);
+        }
+        g.fill(cx - 4, groundY - 10, cx + 5, groundY + 1, alpha(0xFF203344, 100));
+        g.fill(cx - 2, groundY - 8, cx + 3, groundY + 1, alpha(0xFF101A22, 130));
+    }
+
+    private static void growingTree(GuiGraphics g, int x, int baseY, int maxHeight, float growth, int sway,
+                                    InterfaceTheme.Palette p) {
+        float clamped = Math.max(0.0f, Math.min(1.0f, growth));
+        int trunkHeight = Math.max(2, (int)(maxHeight * Math.min(1.0f, clamped / 0.58f)));
+        int trunkColor = alpha(0xFF6A4728, 92);
+        g.fill(x - 1, baseY - trunkHeight, x + 2, baseY, trunkColor);
+
+        if (clamped > 0.28f) {
+            int branchY = baseY - trunkHeight * 2 / 3;
+            int branch = Math.max(4, trunkHeight / 4);
+            diagonal(g, x, branchY, x - branch, branchY - branch / 2, trunkColor);
+            diagonal(g, x, branchY - 3, x + branch + sway, branchY - branch / 2 - 3, trunkColor);
+        }
+        if (clamped > 0.48f) {
+            int topY = baseY - trunkHeight;
+            int crown = Math.max(4, (int)(10 * Math.min(1.0f, (clamped - 0.48f) / 0.30f)));
+            leafCluster(g, x + sway, topY, crown, alpha(p.accentA(), 74));
+            leafCluster(g, x - crown + sway / 2, topY + crown / 2, Math.max(3, crown - 2), alpha(p.accentA(), 62));
+            leafCluster(g, x + crown - sway / 2, topY + crown / 2, Math.max(3, crown - 2), alpha(p.accentA(), 66));
+            if (clamped > 0.78f) {
+                flower(g, x + crown - 2, topY + 1, alpha(p.accentB(), 78), alpha(p.text(), 58));
+                flower(g, x - crown + 3, topY + crown / 2, alpha(p.accentB(), 68), alpha(p.text(), 52));
+            }
+        }
+    }
+
+    private static void leafCluster(GuiGraphics g, int cx, int cy, int radius, int color) {
+        int r = Math.max(2, radius);
+        g.fill(cx - r, cy - r / 2, cx + r + 1, cy + r / 2 + 1, color);
+        g.fill(cx - r / 2, cy - r, cx + r / 2 + 1, cy + r + 1, alpha(color, Math.max(24, (color >>> 24) - 8)));
     }
 
     private static float growthCycle(float phase) {
