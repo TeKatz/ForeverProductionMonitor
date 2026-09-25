@@ -91,7 +91,7 @@ final class NetworkMapView {
     private static final double MAX_SCENE_DEPTH = 4096.0;
     private static final Map<String, CameraState> REMEMBERED_CAMERAS = new HashMap<>();
     private static final Map<String, CameraState[]> CAMERA_BOOKMARKS;
-    private static boolean bookmarksLoaded;
+    private static String loadedBookmarksEncoded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
@@ -1493,12 +1493,22 @@ final class NetworkMapView {
     }
 
     private static void loadPersistedBookmarks() {
-        if (bookmarksLoaded) {
+        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
+        if (encoded == null) {
+            encoded = "";
+        }
+
+        // Client configs can finish loading after this screen class has already been
+        // initialized. The old one-shot boolean permanently cached the default empty value
+        // in that case, which made all three bookmark slots look erased after a restart.
+        // Re-sync whenever the actual config value changes instead.
+        if (Objects.equals(encoded, loadedBookmarksEncoded)) {
             return;
         }
-        bookmarksLoaded = true;
-        String encoded = (String)ClientConfig.VALUES.mapCameraBookmarks.get();
-        if (encoded == null || encoded.isBlank()) {
+        loadedBookmarksEncoded = encoded;
+        CAMERA_BOOKMARKS.clear();
+
+        if (encoded.isBlank()) {
             return;
         }
 
@@ -1548,8 +1558,10 @@ final class NetworkMapView {
                         .append(state.focused());
             }
         }
-        ClientConfig.VALUES.mapCameraBookmarks.set(encoded.toString());
+        String serialized = encoded.toString();
+        ClientConfig.VALUES.mapCameraBookmarks.set(serialized);
         ClientConfig.VALUES.mapCameraBookmarks.save();
+        loadedBookmarksEncoded = serialized;
     }
 
     private CameraState cameraState() {
