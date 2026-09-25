@@ -278,4 +278,13 @@
   ,"screen.forever_production_monitor.map.event.power_lost": "Stromversorgung verloren"
   ,"screen.forever_production_monitor.map.event.power_restored": "Stromversorgung wiederhergestellt"
   ,"screen.forever_production_monitor.map.event.state_changed": "Status geändert"
+  ,"screen.forever_production_monitor.settings.hud.theme": "HUD-Theme: %s"
+  ,"screen.forever_production_monitor.settings.hud.theme_matched": "HUD-Theme: %s (gekoppelt)"
+  ,"screen.forever_production_monitor.settings.hud.layout": "Rahmen: %s"
+  ,"screen.forever_production_monitor.settings.hud.layout.full": "Voll"
+  ,"screen.forever_production_monitor.settings.hud.layout.compact": "Kompakt"
+  ,"screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal"
+  ,"screen.forever_production_monitor.settings.hud.layout.none": "Ohne"
+  ,"screen.forever_production_monitor.settings.hud.animations": "HUD-Animationen: %s"
+  ,"screen.forever_production_monitor.settings.hud.animation_intensity": "HUD-Bewegung: %s"
 }
