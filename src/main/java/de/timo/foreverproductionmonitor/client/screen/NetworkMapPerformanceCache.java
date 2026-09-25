@@ -22,13 +22,14 @@ final class NetworkMapPerformanceCache {
     private final ArrayList<Integer> visibleNodeIndices = new ArrayList<>();
     private final HashSet<BlockPos> visiblePositions = new HashSet<>();
     private final HashMap<Long, Integer> cableLoads = new HashMap<>();
+    private List<MonitorNetwork.MapNode> snapshotNodes = List.of();
+    private boolean cableLoadsValid;
 
     void acceptSnapshot(MonitorNetwork.NetworkMapPayload snapshot,
                         Predicate<MonitorNetwork.MapNode> visibilityPredicate) {
+        this.snapshotNodes = snapshot == null ? List.of() : snapshot.nodes();
         this.cableLoads.clear();
-        if (snapshot != null) {
-            this.rebuildCableLoads(snapshot.nodes());
-        }
+        this.cableLoadsValid = false;
         this.rebuildVisibility(snapshot, visibilityPredicate);
     }
 
@@ -55,6 +56,8 @@ final class NetworkMapPerformanceCache {
         this.visibleNodeIndices.clear();
         this.visiblePositions.clear();
         this.cableLoads.clear();
+        this.snapshotNodes = List.of();
+        this.cableLoadsValid = false;
     }
 
     List<Integer> visibleNodeIndices() {
@@ -66,7 +69,17 @@ final class NetworkMapPerformanceCache {
     }
 
     int cableLoad(BlockPos pos) {
+        this.ensureCableLoads();
         return this.cableLoads.getOrDefault(pos.asLong(), 0);
+    }
+
+    private void ensureCableLoads() {
+        if (this.cableLoadsValid) {
+            return;
+        }
+        this.cableLoadsValid = true;
+        this.cableLoads.clear();
+        this.rebuildCableLoads(this.snapshotNodes);
     }
 
     private void rebuildCableLoads(List<MonitorNetwork.MapNode> nodes) {
