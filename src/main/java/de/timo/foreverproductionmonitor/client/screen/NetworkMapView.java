@@ -94,6 +94,7 @@ final class NetworkMapView {
     private static String loadedBookmarksEncoded;
     private static final Map<String, ArrayDeque<MapEvent>> EVENT_LOGS;
     private static final Map<String, MonitorNetwork.NetworkMapPayload> LAST_EVENT_SNAPSHOTS = new HashMap<>();
+    private static Object eventConnection;
     private static final DateTimeFormatter EVENT_TIME;
     private final Minecraft minecraft;
     private final Font font;
@@ -1659,10 +1660,17 @@ final class NetworkMapView {
     }
 
     private String eventKey(MonitorNetwork.NetworkMapPayload payload) {
-        // Connection identity scopes events to the current play session/world connection.
-        // Bookmark keys intentionally remain stable across restarts; event keys should not.
-        int connectionId = this.minecraft == null || this.minecraft.getConnection() == null
-                ? 0 : System.identityHashCode(this.minecraft.getConnection());
+        Object currentConnection = this.minecraft == null ? null : this.minecraft.getConnection();
+        if (currentConnection != eventConnection) {
+            // Events and their comparison baselines are session-only by design. Clearing them
+            // when the client connection changes prevents stale world/server snapshots from
+            // accumulating for the lifetime of the Minecraft process.
+            EVENT_LOGS.clear();
+            LAST_EVENT_SNAPSHOTS.clear();
+            eventConnection = currentConnection;
+        }
+
+        int connectionId = currentConnection == null ? 0 : System.identityHashCode(currentConnection);
         return connectionId + "|" + this.snapshotKey(payload);
     }
 
