@@ -26,10 +26,10 @@ public final class InterfaceTheme {
             default -> throw new IncompatibleClassChangeError();
             case ClientConfig.InterfaceStyle.STANDARD -> new Palette(1510542095, -2063597568, -16118768, -233037784, -14078408, -15723751, -13617599, -14670804, -15065563, 1716344420, -14209995, -986379, -7103576, -8484972, -4406324, -9932418);
             case ClientConfig.InterfaceStyle.FOREVER -> new Palette(1695024397, -2063597568, -16054256, -233105373, -14015949, -15725290, -13423810, -14607318, -15001822, 1717452408, -14015436, -724745, -6647388, -2516414, -6591279, -10926747);
-            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x700A0B0E, -2063597568, 0xFF25282E, 0xF1181A1F, 0xFF30333A, 0xFF111318, 0xFF343840, 0xFF202329, 0xFF1A1D22, 0x665A479E, 0xFF292C33, 0xFFF3F3F3, 0xFFA6A8AE, 0xFF915DCD, 0xFFE2A3E3, 0xFF5A479E);
+            case ClientConfig.InterfaceStyle.AE2 -> new Palette(0x7007080A, -2063597568, 0xFF292B30, 0xF132343A, 0xFF3A3C42, 0xFF15171B, 0xFF40434A, 0xFF25282D, 0xFF1D2025, 0x664C405F, 0xFF302D38, 0xFFF1F1F3, 0xFFA0A3AA, 0xFF8355B2, 0xFFCDA7D1, 0xFF514664);
             case ClientConfig.InterfaceStyle.ORITECH -> new Palette(1611466756, -2063597568, -15594745, -232974831, -13097705, -15594231, -12440805, -14148846, -14608881, 1718566173, -13294824, -3875, -5005171, -1606867, -1920177, -9354461);
             case ClientConfig.InterfaceStyle.MEKANISM -> new Palette(1610943760, -2063597568, -16314348, -233759712, -15125702, -16313833, -14597046, -15455697, -15719639, 1716709329, -15059395, -983041, -7227465, -14295865, -9633934, -13276048);
-            case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(1694893072, -2063597568, -16251631, -233237975, -13623228, -15923177, -12573350, -14412240, -14937816, 1719616216, -13492410, -462593, -5794122, -5026561, -19922, -9944441);
+            case ClientConfig.InterfaceStyle.QUANTUM -> new Palette(0x76040308, -2063597568, 0xFF17151C, 0xF11D1A23, 0xFF2A2631, 0xFF0E0C12, 0xFF322D3A, 0xFF201C27, 0xFF18151E, 0x665C2B83, 0xFF28222F, 0xFFF1ECF6, 0xFFA39DA9, 0xFF8C43D6, 0xFFD39DFF, 0xFF54415F);
             case ClientConfig.InterfaceStyle.HOLOGRAPHIC -> new Palette(1207962642, 0x65000000, -16576233, -653254616, -652592314, -653978341, -534754215, -921423816, -921885652, 1885140223, -652658108, -1442049, -7617847, -11671041, -6264321, -13009782);
             case ClientConfig.InterfaceStyle.MONOCHROME -> new Palette(0x58000000, Integer.MIN_VALUE, -16250614, -233169889, -14013135, -15921391, -13091775, -14539479, -15000031, 1717528174, -13947085, -723724, -6578525, -2631204, -8551800, -10788762);
             case ClientConfig.InterfaceStyle.MINIMAL -> new Palette(0x39000000, 0x45000000, 0, -401139168, -400744151, -653389546, -400085963, -652533978, -652862944, 1429881164, -400480722, -855051, -7169628, -4866873, -9142903, -12564654);
@@ -77,10 +77,11 @@ public final class InterfaceTheme {
                 int n5 = n + n3 * 3 / 5;
                 guiGraphics.fill(n, n2, n5, n2 + 2, palette.accentA());
                 guiGraphics.fill(n5, n2, n + n3, n2 + 2, palette.accentB());
-                guiGraphics.fill(n + 1, n2 + 32, n5, n2 + 33, InterfaceTheme.darken(palette.accentA(), 0.72f));
-                guiGraphics.fill(n5, n2 + 32, n + n3 - 1, n2 + 33, InterfaceTheme.darken(palette.accentB(), 0.72f));
-                InterfaceTheme.corner(guiGraphics, n + 4, n2 + 5, palette.accentA());
-                InterfaceTheme.corner(guiGraphics, n + n3 - 8, n2 + n4 - 9, palette.accentB());
+                guiGraphics.fill(n + 1, n2 + 32, n5 - 10, n2 + 33, InterfaceTheme.darken(palette.accentA(), 0.68f));
+                guiGraphics.fill(n5 + 10, n2 + 32, n + n3 - 1, n2 + 33, InterfaceTheme.darken(palette.accentB(), 0.68f));
+                guiGraphics.fill(n5 - 1, n2 + 27, n5 + 1, n2 + 34, palette.text());
+                guiGraphics.fill(n + 12, n2 + n4 - 5, n + Math.min(n3 / 3, 84), n2 + n4 - 4,
+                        InterfaceTheme.darken(palette.accentA(), 0.70f));
                 break;
             }
             case AE2: {
@@ -90,24 +91,12 @@ public final class InterfaceTheme {
                 guiGraphics.fill(n + 1, n2 + 2, n + 2, n2 + n4, palette.border());
                 guiGraphics.fill(n + n3 - 2, n2 + 2, n + n3 - 1, n2 + n4, palette.border());
 
-                // Smart-cable-like Fluix strip under the title bar.
-                guiGraphics.fill(n + 9, n2 + 27, n + n3 - 52, n2 + 30, 0xFF24272D);
-                guiGraphics.fill(n + 10, n2 + 28, n + n3 - 53, n2 + 29, palette.border());
-                for (int channelX = n + 16; channelX < n + n3 - 60; channelX += 18) {
-                    guiGraphics.fill(channelX, n2 + 24, channelX + 5, n2 + 27,
-                            channelX / 18 % 2 == 0 ? palette.accentA() : palette.accentB());
-                }
-
-                // Mini ME Drive bank in the header with real AE2 status colors.
-                int driveX = n + n3 - 47;
-                guiGraphics.fill(driveX, n2 + 6, n + n3 - 8, n2 + 25, 0xFF30333A);
-                guiGraphics.fill(driveX + 2, n2 + 8, n + n3 - 10, n2 + 23, 0xFF17191E);
-                int[] ledColors = {0xFF00FF00, 0xFF00AAFF, 0xFF00AAFF, 0xFFFFAA00, 0xFFFF0000};
-                for (int i = 0; i < 5; ++i) {
-                    int cellX = driveX + 4 + i * 6;
-                    guiGraphics.fill(cellX, n2 + 10, cellX + 4, n2 + 20, 0xFF292C32);
-                    guiGraphics.fill(cellX + 1, n2 + 17, cellX + 3, n2 + 19, ledColors[i]);
-                }
+                // A single restrained smart-cable-like rail under the header.
+                guiGraphics.fill(n + 12, n2 + 28, n + n3 - 12, n2 + 30, 0xFF25282D);
+                guiGraphics.fill(n + 13, n2 + 28, n + n3 - 13, n2 + 29, palette.border());
+                int mark = n + Math.max(30, n3 / 4);
+                guiGraphics.fill(mark, n2 + 25, mark + 7, n2 + 28, palette.accentA());
+                guiGraphics.fill(mark + 13, n2 + 25, mark + 18, n2 + 28, palette.accentB());
                 break;
             }
             case ORITECH: {
@@ -145,12 +134,22 @@ public final class InterfaceTheme {
                 break;
             }
             case QUANTUM: {
-                int n7 = n + n3 / 2;
-                guiGraphics.fill(n, n2, n7, n2 + 2, palette.accentA());
-                guiGraphics.fill(n7, n2, n + n3, n2 + 2, palette.accentB());
-                InterfaceTheme.corner(guiGraphics, n + 4, n2 + 5, palette.accentA());
-                InterfaceTheme.corner(guiGraphics, n + n3 - 11, n2 + 5, palette.accentB());
-                guiGraphics.fill(n7 - 2, n2 + n4 - 2, n7 + 2, n2 + n4, palette.accentB());
+                guiGraphics.fill(n, n2, n + n3, n2 + 2, 0xFF8C43D6);
+                guiGraphics.fill(n + 2, n2 + 3, n + 4, n2 + n4 - 3, 0xFF777981);
+                guiGraphics.fill(n + n3 - 4, n2 + 3, n + n3 - 2, n2 + n4 - 3, 0xFF777981);
+
+                // Industrial hazard seam distinguishes the AdvancedAE-inspired multiblock from Forever.
+                int seamY = n2 + 31;
+                guiGraphics.fill(n + 10, seamY, n + n3 - 10, seamY + 2, 0xFF17151C);
+                for (int hx = n + 12; hx < n + n3 - 12; hx += 10) {
+                    guiGraphics.fill(hx, seamY, Math.min(hx + 5, n + n3 - 12), seamY + 2, 0xFFD2A62B);
+                }
+
+                // Small purple core plate in the title area.
+                int coreX = n + n3 - 31;
+                guiGraphics.fill(coreX - 7, n2 + 8, coreX + 8, n2 + 23, 0xFF24212A);
+                guiGraphics.fill(coreX - 4, n2 + 11, coreX + 5, n2 + 20, 0xFF3A1B58);
+                guiGraphics.fill(coreX - 2, n2 + 13, coreX + 3, n2 + 18, 0xFF8C43D6);
                 break;
             }
             case HOLOGRAPHIC: {
