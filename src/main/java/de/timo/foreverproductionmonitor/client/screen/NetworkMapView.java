@@ -279,6 +279,8 @@ final class NetworkMapView {
 
     void render(GuiGraphics guiGraphics, int n, int n2, float f) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
+        // Follow Path is only clickable in frames where its details button is actually drawn.
+        this.followTarget = null;
         int n3 = this.sceneRight();
         int detailLeft = this.detailLeft();
         int cameraLeft = this.cameraToolbarLeft();
@@ -868,7 +870,6 @@ final class NetworkMapView {
         }
 
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        this.followTarget = null;
         int left = this.detailLeft() + 8;
         int right = this.left + this.width - 8;
         this.drawDetailsToggle(guiGraphics);
