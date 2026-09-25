@@ -65,6 +65,7 @@ public final class InterfaceTheme {
         }
         guiGraphics.fill(n, n2, n + n3, n2 + n4, palette.panel());
         guiGraphics.fill(n + 1, n2 + 1, n + n3 - 1, n2 + 32, palette.header());
+        ThemeAmbientRenderer.drawPanel(guiGraphics, n, n2, n3, n4, interfaceStyle, palette);
         switch (interfaceStyle) {
             case STANDARD: {
                 guiGraphics.fill(n, n2, n + n3, n2 + 2, palette.accentA());
@@ -201,6 +202,7 @@ public final class InterfaceTheme {
         ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
         Palette palette = InterfaceTheme.current();
         int accent = active ? palette.accentB() : palette.accentA();
+        ThemeAmbientRenderer.drawButton(guiGraphics, x, y, width, height, style, palette, active, hoverProgress);
         switch (style) {
             case CARBON -> {
                 for (int stripeX = x + 3; stripeX < x + width - 3; stripeX += 8) {
@@ -250,6 +252,7 @@ public final class InterfaceTheme {
     public static void drawTableDecoration(GuiGraphics guiGraphics, int x, int y, int width, int height) {
         ClientConfig.InterfaceStyle style = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
         Palette palette = InterfaceTheme.current();
+        ThemeAmbientRenderer.drawTable(guiGraphics, x, y, width, height, style, palette);
         switch (style) {
             case CARBON -> guiGraphics.fill(x + 3, y + 3, x + width - 3, y + 4, palette.border());
             case TERMINAL -> {
