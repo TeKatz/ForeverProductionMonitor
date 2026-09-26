@@ -76,10 +76,13 @@ The Network Map periodically requests a fresh snapshot while its tab is open. La
 
 If a device reports **Missing Channel**, use the locator from the diagnostics view to identify its actual position. On multidimensional AE2 grids, the locator retains the device's real dimension instead of assuming the dimension of the linked monitor.
 
-<!--
-A real in-game screenshot gallery will be inserted here before the public launch.
-No generated promotional screenshots are intended for the project page.
--->
+## Screenshots
+
+![Forever Production Monitor feature gallery](docs/images/feature-gallery.webp)
+
+*Real in-game captures from the development and test worlds. From top to bottom: the interactive 3D Network Map, multidimensional network navigation, Network Events with an alternate theme, Storage Capacity diagnostics, Missing Channel diagnostics, and live item/fluid production monitoring.*
+
+The screenshots above are ungenerated gameplay captures. They were selected from the same development and test sessions used to validate the mod; the gallery only combines and scales those captures for presentation.
 
 ## Development and AI disclosure
 
