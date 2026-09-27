@@ -71,6 +71,7 @@ final class ThemeAmbientRenderer {
             case REDSTONE -> redstonePanel(graphics, left, top, right, bottom, palette);
             case FROST -> frostPanel(graphics, left, top, right, bottom, palette);
             case NATURE -> naturePanel(graphics, left, top, right, bottom, palette);
+            case CAT -> catPanel(graphics, left, top, right, bottom, palette);
             case CUSTOM -> customPanel(graphics, left, top, right, bottom, palette);
         }
         graphics.disableScissor();
@@ -229,6 +230,24 @@ final class ThemeAmbientRenderer {
                     bud(graphics, x + width - 8, stemY - 2, alpha(palette.accentB(), 82));
                 }
             }
+            case CAT -> {
+                int cy = y + height / 2;
+                float walk = phase(7600L, 0.28f);
+                int drift = GuiMotion.ambientMotionEnabled()
+                        ? Math.round((float)Math.sin(walk * Math.PI * 2.0) * 2.0f)
+                        : 0;
+                catPaw(graphics, x + 7 + drift, cy - 2, alpha(a, 82), 1);
+                if (width > 54) {
+                    catPaw(graphics, x + width - 15 - drift, cy - 2, alpha(b, 74), 1);
+                }
+                int whiskerAlpha = Math.round(36 + hoverProgress * 70.0f);
+                graphics.fill(x + width - 11, cy - 3, x + width - 4, cy - 2, alpha(palette.accentB(), whiskerAlpha));
+                graphics.fill(x + width - 12, cy + 2, x + width - 4, cy + 3, alpha(palette.accentA(), whiskerAlpha));
+                if (active || hoverProgress > 0.45f) {
+                    catHeart(graphics, x + width / 2, y + 4,
+                            alpha(palette.accentA(), Math.round(54 + hoverProgress * 70.0f)));
+                }
+            }
             case CUSTOM -> {
                 int split = x + width / 2;
                 graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 75));
@@ -360,6 +379,19 @@ final class ThemeAmbientRenderer {
                 flower(graphics, right - 9, y + 7, alpha(palette.accentB(), 78), alpha(palette.text(), 64));
                 graphics.fill(x + 7, bottom - 4, right - 14, bottom - 3, alpha(palette.accentA(), 30));
                 leaf(graphics, x + width / 2, bottom - 4, alpha(palette.accentA(), 45), true);
+            }
+            case CAT -> {
+                int step = Math.max(28, width / 5);
+                for (int i = 0; i < 4; ++i) {
+                    int px = x + 10 + i * step;
+                    if (px > right - 12) break;
+                    int py = y + 6 + (i & 1) * Math.max(5, height / 3);
+                    catPaw(graphics, px, py, alpha(i % 2 == 0 ? palette.accentA() : palette.accentB(), 34), 1);
+                }
+                if (width > 90 && height > 30) {
+                    float tail = phase(9000L, 0.22f);
+                    catTail(graphics, right - 18, bottom - 5, 12, 4, tail, alpha(palette.accentA(), 54));
+                }
             }
             case CUSTOM -> {
                 graphics.fill(x + 2, y + 2, x + width / 2, y + 3, a);
@@ -1056,6 +1088,86 @@ final class ThemeAmbientRenderer {
         }
     }
 
+    private static void catPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
+        int width = r - l;
+        int height = b - t;
+
+        // A soft trail of paws walks through the background. The low alpha keeps
+        // rows and labels readable while still making the theme unmistakably feline.
+        float walk = phase(26000L, 0.18f);
+        for (int i = 0; i < 8; ++i) {
+            float progress = (walk + i * 0.135f) % 1.0f;
+            int px = l + 10 + Math.round(progress * Math.max(1, width - 24));
+            double arc = Math.sin(progress * Math.PI);
+            int py = b - 18 - (int)Math.round(arc * Math.min(52.0, height * 0.42))
+                    + (int)Math.round(Math.sin((progress + i * 0.17f) * Math.PI * 4.0) * 3.0);
+            int color = (i & 1) == 0 ? p.accentA() : p.accentB();
+            catPaw(g, px, py, alpha(color, 22 + (i % 3) * 7), 1);
+        }
+
+        // A yarn ball rolls and gently bounces along the bottom edge. Its thread
+        // follows behind it and sways independently.
+        float yarnCycle = phase(18000L, 0.32f);
+        float pingPong = 1.0f - Math.abs(yarnCycle * 2.0f - 1.0f);
+        int yarnX = l + 24 + Math.round(pingPong * Math.max(1, width - 58));
+        int yarnBase = b - 15;
+        int yarnY = yarnBase - Math.round(Math.abs((float)Math.sin(yarnCycle * Math.PI * 4.0)) * 5.0f);
+        int threadStart = Math.max(l + 8, yarnX - 34);
+        int prevX = threadStart;
+        int prevY = yarnBase + 2;
+        for (int step = 1; step <= 6; ++step) {
+            int nx = threadStart + (yarnX - threadStart) * step / 6;
+            int ny = yarnBase + 2 + (int)Math.round(Math.sin(step * 0.85 + yarnCycle * Math.PI * 2.0) * 3.0);
+            diagonal(g, prevX, prevY, nx, ny, alpha(p.accentB(), 38));
+            prevX = nx;
+            prevY = ny;
+        }
+        yarnBall(g, yarnX, yarnY, 7, p, yarnCycle);
+
+        // A peeking cat occasionally blinks from the lower-left edge.
+        if (width > 150 && height > 78) {
+            float blinkPhase = phase(6200L, 0.41f);
+            boolean blink = blinkPhase > 0.91f && blinkPhase < 0.965f;
+            int faceX = l + Math.min(54, Math.max(34, width / 7));
+            int faceY = b - 8;
+            float bob = GuiMotion.ambientMotionEnabled()
+                    ? (float)Math.sin(phase(12500L, 0.20f) * Math.PI * 2.0) * 1.5f
+                    : 0.0f;
+            g.pose().pushPose();
+            g.pose().translate(0.0f, bob, 0.0f);
+            catFace(g, faceX, faceY, p, blink, 64);
+            g.pose().popPose();
+        }
+
+        // On larger panels a curled-up sleeping cat breathes slowly in the far
+        // corner while its tail makes a lazy sweep.
+        if (width > 260 && height > 130) {
+            float breathPhase = phase(8400L, 0.26f);
+            float breath = 0.5f + 0.5f * (float)Math.sin(breathPhase * Math.PI * 2.0);
+            int sleepX = r - 58;
+            int sleepY = b - 19;
+            sleepingCat(g, sleepX, sleepY, p, breath);
+            catTail(g, sleepX + 15, sleepY + 5, 24, 7, phase(11200L, 0.34f),
+                    alpha(p.accentA(), motionAlpha(34, 68)));
+
+            // Dream hearts drift upward and fade instead of using generic particles.
+            for (int i = 0; i < 3; ++i) {
+                float dream = (phase(15000L + i * 900L, 0.2f + i * 0.18f) + i * 0.27f) % 1.0f;
+                int hx = sleepX + 18 + i * 7 + (int)Math.round(Math.sin(dream * Math.PI * 2.0) * 3.0);
+                int hy = sleepY - 8 - Math.round(dream * 24.0f);
+                catHeart(g, hx, hy, alpha(i == 1 ? p.accentB() : p.accentA(),
+                        Math.max(12, Math.round((1.0f - dream) * 62.0f))));
+            }
+        }
+
+        // Gentle whisker strokes on both sides frame the panel without becoming a grid.
+        int whiskerY = t + Math.max(22, height / 3);
+        diagonal(g, l + 6, whiskerY, l + 28, whiskerY - 4, alpha(p.accentA(), 25));
+        diagonal(g, l + 6, whiskerY + 5, l + 30, whiskerY + 7, alpha(p.accentB(), 20));
+        diagonal(g, r - 6, whiskerY, r - 28, whiskerY - 4, alpha(p.accentB(), 25));
+        diagonal(g, r - 6, whiskerY + 5, r - 30, whiskerY + 7, alpha(p.accentA(), 20));
+    }
+
     private static void customPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
@@ -1568,6 +1680,104 @@ final class ThemeAmbientRenderer {
         g.fill(cx, cy, cx + 1, cy + 1, alpha(p.text(), Math.min(190, strength + 42)));
     }
 
+
+    private static void catPaw(GuiGraphics g, int cx, int cy, int color, int scale) {
+        int s = Math.max(1, scale);
+        g.fill(cx - 2 * s, cy + s, cx + 3 * s, cy + 4 * s, color);
+        g.fill(cx - 4 * s, cy - 2 * s, cx - 2 * s, cy, color);
+        g.fill(cx - s, cy - 4 * s, cx + s, cy - 2 * s, color);
+        g.fill(cx + 2 * s, cy - 2 * s, cx + 4 * s, cy, color);
+    }
+
+    private static void catHeart(GuiGraphics g, int cx, int cy, int color) {
+        g.fill(cx - 3, cy - 2, cx, cy + 1, color);
+        g.fill(cx + 1, cy - 2, cx + 4, cy + 1, color);
+        g.fill(cx - 2, cy, cx + 3, cy + 3, color);
+        g.fill(cx - 1, cy + 3, cx + 2, cy + 5, color);
+        g.fill(cx, cy + 5, cx + 1, cy + 6, color);
+    }
+
+    private static void catFace(GuiGraphics g, int cx, int baseY, InterfaceTheme.Palette p,
+                                boolean blink, int strength) {
+        int fur = alpha(p.accentB(), strength);
+        int inner = alpha(p.accentA(), Math.min(110, strength + 24));
+        int detail = alpha(p.text(), Math.min(120, strength + 34));
+
+        // Head and ears.
+        g.fill(cx - 11, baseY - 18, cx + 12, baseY + 2, fur);
+        g.fill(cx - 10, baseY - 24, cx - 4, baseY - 17, fur);
+        g.fill(cx + 5, baseY - 24, cx + 11, baseY - 17, fur);
+        g.fill(cx - 8, baseY - 22, cx - 5, baseY - 18, inner);
+        g.fill(cx + 6, baseY - 22, cx + 9, baseY - 18, inner);
+
+        // Eyes blink independently from the general ambient pulse.
+        if (blink) {
+            g.fill(cx - 6, baseY - 9, cx - 2, baseY - 8, detail);
+            g.fill(cx + 3, baseY - 9, cx + 7, baseY - 8, detail);
+        } else {
+            g.fill(cx - 5, baseY - 11, cx - 3, baseY - 7, detail);
+            g.fill(cx + 4, baseY - 11, cx + 6, baseY - 7, detail);
+            g.fill(cx - 5, baseY - 9, cx - 4, baseY - 8, alpha(p.accentA(), 130));
+            g.fill(cx + 4, baseY - 9, cx + 5, baseY - 8, alpha(p.accentA(), 130));
+        }
+
+        g.fill(cx, baseY - 6, cx + 2, baseY - 4, inner);
+        diagonal(g, cx + 1, baseY - 4, cx - 2, baseY - 2, detail);
+        diagonal(g, cx + 1, baseY - 4, cx + 4, baseY - 2, detail);
+
+        // Whiskers.
+        diagonal(g, cx - 3, baseY - 5, cx - 15, baseY - 8, alpha(p.text(), 48));
+        diagonal(g, cx - 3, baseY - 3, cx - 16, baseY - 2, alpha(p.text(), 42));
+        diagonal(g, cx + 4, baseY - 5, cx + 16, baseY - 8, alpha(p.text(), 48));
+        diagonal(g, cx + 4, baseY - 3, cx + 17, baseY - 2, alpha(p.text(), 42));
+    }
+
+    private static void yarnBall(GuiGraphics g, int cx, int cy, int radius,
+                                 InterfaceTheme.Palette p, float turn) {
+        int r = Math.max(4, radius);
+        int body = alpha(p.accentA(), 74);
+        int light = alpha(p.accentB(), 88);
+        diamond(g, cx, cy, r, body);
+        int offset = Math.round((float)Math.sin(turn * Math.PI * 2.0) * 2.0f);
+        diagonal(g, cx - r + 2, cy - 2 + offset, cx + r - 2, cy + 2 + offset, light);
+        diagonal(g, cx - r + 2, cy + 3 - offset, cx + r - 2, cy - 3 - offset, alpha(p.text(), 42));
+        g.fill(cx - 1, cy - r + 2, cx + 1, cy + r - 1, alpha(p.accentB(), 36));
+    }
+
+    private static void catTail(GuiGraphics g, int startX, int startY, int length, int amplitude,
+                                float turn, int color) {
+        int len = Math.max(6, length);
+        int prevX = startX;
+        int prevY = startY;
+        for (int i = 1; i <= len; i += 2) {
+            int x = startX + i;
+            double wave = Math.sin((i / (double)len) * Math.PI * 1.35 + turn * Math.PI * 2.0);
+            int y = startY - (int)Math.round(wave * amplitude * (i / (double)len));
+            diagonal(g, prevX, prevY, x, y, color);
+            prevX = x;
+            prevY = y;
+        }
+    }
+
+    private static void sleepingCat(GuiGraphics g, int cx, int cy, InterfaceTheme.Palette p, float breath) {
+        int fur = alpha(p.accentB(), 54);
+        int warm = alpha(p.accentA(), 62);
+        int detail = alpha(p.text(), 48);
+        int lift = GuiMotion.ambientMotionEnabled() ? Math.round(breath * 2.0f) : 1;
+
+        // Curled body.
+        g.fill(cx - 18, cy - 6 - lift, cx + 11, cy + 7, fur);
+        g.fill(cx - 13, cy - 10 - lift, cx + 7, cy + 5, alpha(p.accentB(), 42));
+        // Head resting on the body.
+        g.fill(cx + 3, cy - 9 - lift, cx + 16, cy + 3, warm);
+        g.fill(cx + 4, cy - 13 - lift, cx + 8, cy - 9 - lift, warm);
+        g.fill(cx + 11, cy - 13 - lift, cx + 15, cy - 9 - lift, warm);
+        // Closed eye and tiny nose.
+        g.fill(cx + 7, cy - 4 - lift, cx + 11, cy - 3 - lift, detail);
+        g.fill(cx + 13, cy - 1 - lift, cx + 15, cy + 1 - lift, alpha(p.accentA(), 76));
+        // Front paw.
+        g.fill(cx + 7, cy + 2, cx + 14, cy + 5, alpha(p.accentB(), 46));
+    }
 
     private static void flower(GuiGraphics g, int cx, int cy, int petal, int center) {
         g.fill(cx - 1, cy - 3, cx + 2, cy, petal);
