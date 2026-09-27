@@ -1,3 +1,25 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  com.mojang.serialization.MapCodec
+ *  net.minecraft.core.BlockPos
+ *  net.minecraft.network.chat.Component
+ *  net.minecraft.world.InteractionResult
+ *  net.minecraft.world.entity.player.Player
+ *  net.minecraft.world.level.Level
+ *  net.minecraft.world.level.block.BaseEntityBlock
+ *  net.minecraft.world.level.block.RenderShape
+ *  net.minecraft.world.level.block.SoundType
+ *  net.minecraft.world.level.block.entity.BlockEntity
+ *  net.minecraft.world.level.block.entity.BlockEntityTicker
+ *  net.minecraft.world.level.block.entity.BlockEntityType
+ *  net.minecraft.world.level.block.state.BlockBehaviour$Properties
+ *  net.minecraft.world.level.block.state.BlockState
+ *  net.minecraft.world.level.material.MapColor
+ *  net.minecraft.world.phys.BlockHitResult
+ *  org.jetbrains.annotations.Nullable
+ */
 package de.timo.foreverproductionmonitor.block;
 
 import com.mojang.serialization.MapCodec;
@@ -28,92 +50,65 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-public final class ProductionMonitorBlock extends BaseEntityBlock {
-    public static final MapCodec<ProductionMonitorBlock> CODEC =
-            ProductionMonitorBlock.simpleCodec(ignored -> new ProductionMonitorBlock());
-
+public final class ProductionMonitorBlock
+extends BaseEntityBlock {
+    public static final MapCodec<ProductionMonitorBlock> CODEC = ProductionMonitorBlock.simpleCodec(ignored -> new ProductionMonitorBlock());
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final EnumProperty<VisualState> VISUAL_STATE =
-            EnumProperty.create("visual_state", VisualState.class);
+    public static final EnumProperty<VisualState> VISUAL_STATE = EnumProperty.create("visual_state", VisualState.class);
 
     public ProductionMonitorBlock() {
-        super(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .sound(SoundType.METAL)
-                .strength(3.5f, 8.0f)
-                .requiresCorrectToolForDrops());
-
-        this.registerDefaultState(this.stateDefinition.any()
-                .setValue(FACING, Direction.NORTH)
-                .setValue(VISUAL_STATE, VisualState.OFFLINE));
+        super(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL).strength(3.5f, 8.0f).requiresCorrectToolForDrops());
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(VISUAL_STATE, VisualState.OFFLINE));
     }
 
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, VISUAL_STATE);
     }
 
-    @Override
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState()
-                .setValue(FACING, context.getHorizontalDirection().getOpposite())
-                .setValue(VISUAL_STATE, VisualState.OFFLINE);
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()).setValue(VISUAL_STATE, VisualState.OFFLINE);
     }
 
-    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
     protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
-    @Override
     @Nullable
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ProductionMonitorBlockEntity(pos, state);
     }
 
-    @Override
     @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide
-                ? null
-                : ProductionMonitorBlock.createTickerHelper(
-                        type,
-                        ModContent.PRODUCTION_MONITOR_BLOCK_ENTITY.get(),
-                        ProductionMonitorBlockEntity::serverTick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? null : ProductionMonitorBlock.createTickerHelper(type, (BlockEntityType)((BlockEntityType)ModContent.PRODUCTION_MONITOR_BLOCK_ENTITY.get()), ProductionMonitorBlockEntity::serverTick);
     }
 
-    @Override
-    protected InteractionResult useWithoutItem(
-            BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide) {
-            player.displayClientMessage(
-                    Component.translatable("message.forever_production_monitor.use_tablet"),
-                    true);
+            player.displayClientMessage((Component)Component.translatable((String)"message.forever_production_monitor.use_tablet"), true);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.sidedSuccess((boolean)level.isClientSide);
     }
 
-    public enum VisualState implements StringRepresentable {
+    public static enum VisualState implements StringRepresentable {
         OFFLINE("offline"),
         ONLINE("online"),
         LINKED("linked");
 
         private final String serializedName;
 
-        VisualState(String serializedName) {
+        private VisualState(String serializedName) {
             this.serializedName = serializedName;
         }
 
-        @Override
         public String getSerializedName() {
             return this.serializedName;
         }
     }
 }
+
