@@ -408,7 +408,6 @@ public final class CraftingDiagnosticsScreen extends Screen {
             icons.put(0, pattern.outputIcon());
             if (pattern.outputIcon() != null) {
                 craftHits.add(new CraftHit(lines.size(), pattern.outputIcon()));
-                icons.put(lines.size(), pattern.outputIcon());
                 lines.add("▶ " + tr("craft"));
             }
             lines.add(tr("inputs") + ":");
