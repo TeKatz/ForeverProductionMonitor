@@ -338,4 +338,8 @@
   ,"screen.forever_production_monitor.crafting.pattern_count": "Patterns"
   ,"screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse dependencies"
   ,"screen.forever_production_monitor.crafting.identical_copies": "Identical pattern copies (informational)"
+  ,"screen.forever_production_monitor.crafting.hint_jobs": "Select a CPU for technical details."
+  ,"screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern; click a provider on the right to locate it on the map."
+  ,"screen.forever_production_monitor.crafting.hint_dependents": "Select a pattern to inspect prerequisites and reverse dependencies."
+  ,"screen.forever_production_monitor.crafting.hint_providers": "Select a provider, then click Locate in Network Map."
 }

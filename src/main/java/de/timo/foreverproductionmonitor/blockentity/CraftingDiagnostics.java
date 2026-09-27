@@ -52,7 +52,9 @@ public final class CraftingDiagnostics {
             jobs.add(new Job(cpu.getName() == null ? "Unnamed CPU" : cpu.getName().getString(),
                     cpu.getAvailableStorage(), cpu.getCoProcessors(),
                     status == null || status.crafting() == null ? "Job details unavailable"
-                            : label(status.crafting().what()) + " × " + status.crafting().amount()));
+                            : label(status.crafting().what()) + " × " + status.crafting().amount(),
+                    status == null || status.crafting() == null ? null
+                            : icon(status.crafting().what())));
         }
 
         List<Provider> providers = new ArrayList<>();
@@ -73,7 +75,8 @@ public final class CraftingDiagnostics {
             int index = providers.size();
             providers.add(new Provider(name, loc == null ? null : loc.dimension(),
                     loc == null ? null : loc.pos(), node.isPowered(), node.meetsChannelRequirements(),
-                    node.hasGridBooted(), node.isActive(), service.getPatternPriority()));
+                    node.hasGridBooted(), node.isActive(), service.getPatternPriority(),
+                    visual == null ? null : icon(visual)));
             // Offline node inventories can be observed, but are not claimed to be craftable.
             for (IPatternDetails details : service.getAvailablePatterns()) {
                 if (++slots > MAX_PATTERN_SLOTS) {
@@ -124,7 +127,8 @@ public final class CraftingDiagnostics {
                     pattern.primary.amount(), pattern.inputText, pattern.outputText,
                     List.copyOf(pattern.providers), ordered, pattern.copies,
                     pattern.providers.size() > 1,
-                    inputVariants.get(pattern.primary.what()).size() > 1));
+                    inputVariants.get(pattern.primary.what()).size() > 1,
+                    icon(pattern.primary.what()), pattern.inputIcons, pattern.outputIcons));
         }
         return new Snapshot(true, limited, jobs, providers, result);
     }
@@ -132,6 +136,12 @@ public final class CraftingDiagnostics {
     private static String label(AEKey key) {
         String display = key.getDisplayName().getString();
         return display.length() > 90 ? display.substring(0, 90) : display;
+    }
+
+    private static AEKey icon(AEKey key) {
+        // The item/fluid type is enough for the GUI icon. Strip components so
+        // large NBT payloads are never copied into a diagnostics snapshot.
+        return key.dropSecondary();
     }
 
     private record InputSpec(List<GenericStack> options, long multiplier) {}
@@ -143,6 +153,8 @@ public final class CraftingDiagnostics {
         final List<InputSpec> inputSpecs = new ArrayList<>();
         final List<String> inputText = new ArrayList<>();
         final List<String> outputText = new ArrayList<>();
+        final List<AEKey> inputIcons = new ArrayList<>();
+        final List<AEKey> outputIcons = new ArrayList<>();
         final List<Integer> providers = new ArrayList<>();
         int copies;
         boolean truncated;
@@ -161,23 +173,26 @@ public final class CraftingDiagnostics {
                     GenericStack first = options.get(0);
                     inputText.add(label(first.what()) + " × " + (first.amount() * input.getMultiplier())
                             + (options.size() > 1 ? " (+" + (options.size() - 1) + " alternatives)" : ""));
+                    inputIcons.add(icon(first.what()));
                 }
             }
             for (GenericStack output : outputs) {
                 if (outputText.size() >= 8) { truncated = true; break; }
                 outputText.add(label(output.what()) + " × " + output.amount());
+                outputIcons.add(icon(output.what()));
             }
         }
     }
 
     public record Snapshot(boolean online, boolean limited, List<Job> jobs,
                            List<Provider> providers, List<Pattern> patterns) {}
-    public record Job(String cpuName, long storage, int coProcessors, String target) {}
+    public record Job(String cpuName, long storage, int coProcessors, String target, AEKey targetIcon) {}
     public record Provider(String name, ResourceLocation dimension, BlockPos pos,
                            boolean powered, boolean channel, boolean booted,
-                           boolean active, int priority) {}
+                           boolean active, int priority, AEKey visualIcon) {}
     public record Pattern(String type, String output, long amount, List<String> inputs,
                           List<String> outputs, List<Integer> providers,
                           List<Integer> dependencies, int copies, boolean multipleProviders,
-                          boolean outputVariants) {}
+                          boolean outputVariants, AEKey outputIcon,
+                          List<AEKey> inputIcons, List<AEKey> outputIcons) {}
 }

@@ -1,5 +1,6 @@
 package de.timo.foreverproductionmonitor.network;
 
+import appeng.api.stacks.AEKey;
 import de.timo.foreverproductionmonitor.blockentity.CraftingDiagnostics;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.client.ClientCraftingDiagnosticsState;
@@ -77,6 +78,18 @@ public final class CraftingDiagnosticsNetwork {
         for (int value : values) buf.writeVarInt(value);
     }
 
+    private static void writeIcons(RegistryFriendlyByteBuf buf, List<AEKey> icons) {
+        buf.writeVarInt(icons.size());
+        for (AEKey icon : icons) AEKey.STREAM_CODEC.encode(buf, icon);
+    }
+
+    private static List<AEKey> readIcons(RegistryFriendlyByteBuf buf) {
+        int size = Response.bounded(buf.readVarInt(), 32);
+        List<AEKey> icons = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) icons.add(AEKey.STREAM_CODEC.decode(buf));
+        return icons;
+    }
+
     public record Request(ResourceLocation dimension, BlockPos pos) implements CustomPacketPayload {
         public static final Type<Request> TYPE = new Type<>(
                 ResourceLocation.fromNamespaceAndPath("forever_production_monitor", "request_crafting_diagnostics"));
@@ -105,6 +118,7 @@ public final class CraftingDiagnosticsNetwork {
                         buf.writeVarLong(job.storage());
                         buf.writeVarInt(job.coProcessors());
                         writeText(buf, job.target());
+                        AEKey.OPTIONAL_STREAM_CODEC.encode(buf, job.targetIcon());
                     }
                     buf.writeVarInt(data.providers().size());
                     for (var provider : data.providers()) {
@@ -119,6 +133,7 @@ public final class CraftingDiagnosticsNetwork {
                         buf.writeBoolean(provider.booted());
                         buf.writeBoolean(provider.active());
                         buf.writeVarInt(provider.priority());
+                        AEKey.OPTIONAL_STREAM_CODEC.encode(buf, provider.visualIcon());
                     }
                     buf.writeVarInt(data.patterns().size());
                     for (var pattern : data.patterns()) {
@@ -132,6 +147,9 @@ public final class CraftingDiagnosticsNetwork {
                         buf.writeVarInt(pattern.copies());
                         buf.writeBoolean(pattern.multipleProviders());
                         buf.writeBoolean(pattern.outputVariants());
+                        AEKey.STREAM_CODEC.encode(buf, pattern.outputIcon());
+                        writeIcons(buf, pattern.inputIcons());
+                        writeIcons(buf, pattern.outputIcons());
                     }
                 }, buf -> {
                     ResourceLocation dimension = ResourceLocation.STREAM_CODEC.decode(buf);
@@ -142,7 +160,8 @@ public final class CraftingDiagnosticsNetwork {
                     List<CraftingDiagnostics.Job> jobs = new ArrayList<>(jobCount);
                     for (int i = 0; i < jobCount; i++) {
                         jobs.add(new CraftingDiagnostics.Job(buf.readUtf(120), buf.readVarLong(),
-                                buf.readVarInt(), buf.readUtf(120)));
+                                buf.readVarInt(), buf.readUtf(120),
+                                AEKey.OPTIONAL_STREAM_CODEC.decode(buf)));
                     }
                     int providerCount = bounded(buf.readVarInt(), CraftingDiagnostics.MAX_PROVIDERS);
                     List<CraftingDiagnostics.Provider> providers = new ArrayList<>(providerCount);
@@ -154,14 +173,15 @@ public final class CraftingDiagnosticsNetwork {
                         BlockPos locationPos = hasLocation ? buf.readBlockPos() : null;
                         providers.add(new CraftingDiagnostics.Provider(name, locationDimension, locationPos,
                                 buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(),
-                                buf.readVarInt()));
+                                buf.readVarInt(), AEKey.OPTIONAL_STREAM_CODEC.decode(buf)));
                     }
                     int patternCount = bounded(buf.readVarInt(), CraftingDiagnostics.MAX_PATTERNS);
                     List<CraftingDiagnostics.Pattern> patterns = new ArrayList<>(patternCount);
                     for (int i = 0; i < patternCount; i++) {
                         patterns.add(new CraftingDiagnostics.Pattern(buf.readUtf(120), buf.readUtf(120),
                                 buf.readVarLong(), readTexts(buf), readTexts(buf), readIndexes(buf),
-                                readIndexes(buf), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
+                                readIndexes(buf), buf.readVarInt(), buf.readBoolean(), buf.readBoolean(),
+                                AEKey.STREAM_CODEC.decode(buf), readIcons(buf), readIcons(buf)));
                     }
                     return new Response(dimension, pos,
                             new CraftingDiagnostics.Snapshot(online, limited, jobs, providers, patterns));

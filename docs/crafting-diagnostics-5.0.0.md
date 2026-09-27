@@ -52,6 +52,15 @@ reports cycles in the visible graph. Crafting and processing patterns are
 marked separately; unknown pattern implementations are labeled `Other`.
 Duplicates and variants are information, not automatic errors.
 
+The four inspector tabs have distinct AE2/vanilla item symbols. Job targets,
+pattern inputs/outputs and providers show their item or fluid icon via AE2's
+existing GUI renderer. Only the visual key with secondary components removed
+travels in the diagnostics response; exact keys remain on the server for
+duplicate and dependency analysis. Tooltip and wrapped explanatory text
+help distinguish the sections without changing AE2's own crafting screen.
+Both client and server must use the same 5.0.0 test JAR because this update
+extends the new diagnostics response format.
+
 Snapshots are requested when the screen opens or the user presses Refresh.
 They are captured on the server thread, limited to 64 busy CPUs, 256 provider
 nodes, 256 distinct encoded patterns and 2,048 encountered pattern slots.
@@ -72,7 +81,9 @@ limit.
 1. Open a linked tablet and switch among all original tabs; verify the
    Crafting tab opens and Back returns to the same monitor.
 2. Start several AE2 autocrafts, inspect busy CPU targets, names, storage
-   and co-processors; check that no ETA or cancel button appears.
+   and co-processors; check the icons, tab labels at different GUI scales,
+   hover tooltips and fully readable explanatory text. No ETA or cancel button
+   should appear.
 3. Place identical patterns on two providers and two different recipes for
    the same output. Check informational diagnostics and both provider traces.
 4. Build chained and cyclical patterns; verify direct/transitive reverse

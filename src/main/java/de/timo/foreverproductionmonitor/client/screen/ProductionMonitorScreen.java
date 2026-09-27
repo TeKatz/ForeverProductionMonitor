@@ -20,6 +20,7 @@ package de.timo.foreverproductionmonitor.client.screen;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
+import appeng.core.definitions.AEItems;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.screen.AlarmRuleScreen;
@@ -729,6 +730,10 @@ extends Screen {
         }
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
+        }
+        if (this.craftingTab != null && this.craftingTab.getWidth() >= 110) {
+            guiGraphics.renderItem(AEItems.BLANK_PATTERN.stack(),
+                    this.craftingTab.getX() + 5, this.craftingTab.getY() + 1);
         }
         if (this.viewMode == ViewMode.MAP) {
             this.drawDimensionDropdownOverlay(guiGraphics, n, n2);
