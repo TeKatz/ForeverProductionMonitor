@@ -1,5 +1,18 @@
 {
   "variants": {
-    "": { "model": "forever_production_monitor:block/production_monitor" }
+    "facing=north,visual_state=offline": { "model": "forever_production_monitor:block/production_monitor" },
+    "facing=east,visual_state=offline": { "model": "forever_production_monitor:block/production_monitor", "y": 90 },
+    "facing=south,visual_state=offline": { "model": "forever_production_monitor:block/production_monitor", "y": 180 },
+    "facing=west,visual_state=offline": { "model": "forever_production_monitor:block/production_monitor", "y": 270 },
+
+    "facing=north,visual_state=online": { "model": "forever_production_monitor:block/production_monitor_online" },
+    "facing=east,visual_state=online": { "model": "forever_production_monitor:block/production_monitor_online", "y": 90 },
+    "facing=south,visual_state=online": { "model": "forever_production_monitor:block/production_monitor_online", "y": 180 },
+    "facing=west,visual_state=online": { "model": "forever_production_monitor:block/production_monitor_online", "y": 270 },
+
+    "facing=north,visual_state=linked": { "model": "forever_production_monitor:block/production_monitor_linked" },
+    "facing=east,visual_state=linked": { "model": "forever_production_monitor:block/production_monitor_linked", "y": 90 },
+    "facing=south,visual_state=linked": { "model": "forever_production_monitor:block/production_monitor_linked", "y": 180 },
+    "facing=west,visual_state=linked": { "model": "forever_production_monitor:block/production_monitor_linked", "y": 270 }
   }
 }
