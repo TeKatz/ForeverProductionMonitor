@@ -23,7 +23,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 /**
  * Read-only craft diagnostics. AE2's own crafting screen remains responsible for
@@ -50,7 +49,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private AEKey hoveredIcon;
     private Component hoveredTab;
 
-    private enum Section { JOBS, PATTERNS, DEPENDENTS, PROVIDERS }
+    private enum Section { JOBS, PATTERNS, PROVIDERS }
     private record ProviderHit(int y, int providerIndex) {}
 
     public CraftingDiagnosticsScreen(ProductionMonitorScreen parent, ProductionTabletItem.MonitorLink link) {
@@ -161,14 +160,14 @@ public final class CraftingDiagnosticsScreen extends Screen {
             AEKey icon = switch (section) {
                 case JOBS -> snapshot.jobs().get(index).targetIcon();
                 case PROVIDERS -> snapshot.providers().get(index).visualIcon();
-                case PATTERNS, DEPENDENTS -> snapshot.patterns().get(index).outputIcon();
+                case PATTERNS -> snapshot.patterns().get(index).outputIcon();
             };
             drawIcon(g, icon, listLeft + 3, y, mouseX, mouseY);
             String label = switch (section) {
                 case JOBS -> snapshot.jobs().get(index).cpuName() + " · " + snapshot.jobs().get(index).target();
                 case PROVIDERS -> snapshot.providers().get(index).name()
                         + (snapshot.providers().get(index).active() ? "" : " · " + tr("inactive"));
-                case PATTERNS, DEPENDENTS -> {
+                case PATTERNS -> {
                     var pattern = snapshot.patterns().get(index);
                     yield "[" + pattern.type() + "] " + pattern.output()
                             + (pattern.multipleProviders() ? " · ×" + pattern.providers().size() : "");
@@ -248,23 +247,22 @@ public final class CraftingDiagnosticsScreen extends Screen {
             if (pattern.multipleProviders()) lines.add(tr("multiple_providers"));
             if (pattern.copies() > 1) lines.add(tr("identical_copies") + ": " + pattern.copies());
             if (pattern.outputVariants()) lines.add(tr("output_variants"));
-            if (section == Section.DEPENDENTS) {
-                updateGraph(selectedPattern);
-                lines.add("");
-                lines.add(tr("requires") + ":");
-                for (int dep : pattern.dependencies()) {
-                    if (dep >= 0 && dep < snapshot.patterns().size()) {
-                        icons.put(lines.size(), snapshot.patterns().get(dep).outputIcon());
-                        lines.add("→ " + snapshot.patterns().get(dep).output());
-                    }
+            updateGraph(selectedPattern);
+            lines.add("");
+            lines.add(tr("dependencies") + ":");
+            lines.add(tr("requires") + ":");
+            for (int dep : pattern.dependencies()) {
+                if (dep >= 0 && dep < snapshot.patterns().size()) {
+                    icons.put(lines.size(), snapshot.patterns().get(dep).outputIcon());
+                    lines.add("→ " + snapshot.patterns().get(dep).output());
                 }
-                lines.add(tr("reverse_dependencies") + ":");
-                for (int dependent : cachedDependents) {
-                    icons.put(lines.size(), snapshot.patterns().get(dependent).outputIcon());
-                    lines.add("← " + snapshot.patterns().get(dependent).output());
-                }
-                if (cachedCycle) lines.add(tr("cycle"));
             }
+            lines.add(tr("reverse_dependencies") + ":");
+            for (int dependent : cachedDependents) {
+                icons.put(lines.size(), snapshot.patterns().get(dependent).outputIcon());
+                lines.add("← " + snapshot.patterns().get(dependent).output());
+            }
+            if (cachedCycle) lines.add(tr("cycle"));
             if (snapshot.limited()) lines.add(tr("partial"));
         } else lines.add(tr("select_pattern"));
 
@@ -438,7 +436,6 @@ public final class CraftingDiagnosticsScreen extends Screen {
             this.icon = switch (target) {
                 case JOBS -> AEBlocks.CRAFTING_UNIT.stack();
                 case PATTERNS -> AEItems.BLANK_PATTERN.stack();
-                case DEPENDENTS -> new ItemStack(Items.CHAIN);
                 case PROVIDERS -> AEBlocks.PATTERN_PROVIDER.stack();
             };
         }
