@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "forever_production_monitor:block/production_monitor_bottom",
+    "up": "forever_production_monitor:block/production_monitor_online_top",
+    "north": "forever_production_monitor:block/production_monitor_linked_front",
+    "south": "forever_production_monitor:block/production_monitor_back",
+    "east": "forever_production_monitor:block/production_monitor_online_side",
+    "west": "forever_production_monitor:block/production_monitor_online_side",
+    "particle": "forever_production_monitor:block/production_monitor_online_side"
+  }
+}
