@@ -41,6 +41,7 @@ public final class InterfaceTheme {
             case ClientConfig.InterfaceStyle.REDSTONE -> new Palette(0x74100000, -2063597568, 0xFF270909, 0xF1321010, 0xFF461414, 0xFF1B0707, 0xFF5A1919, 0xFF361010, 0xFF2A0B0B, 0x66FF3434, 0xFF431313, 0xFFFFE7E2, 0xFFC4877E, 0xFFFF3B30, 0xFFFFA126, 0xFF7D2420);
             case ClientConfig.InterfaceStyle.FROST -> new Palette(0x68101B28, -2063597568, 0xFF182C3D, 0xEE274154, 0xFF31566E, 0xFF112331, 0xFF3B6580, 0xFF263F51, 0xFF1D3546, 0x668DEBFF, 0xFF2C4D62, 0xFFF4FDFF, 0xFF9EC3D0, 0xFF7DDBF2, 0xFFD7F7FF, 0xFF56849B);
             case ClientConfig.InterfaceStyle.NATURE -> new Palette(0x7A040804, -2063597568, 0xFF0A120A, 0xF10D160C, 0xFF162316, 0xFF081008, 0xFF1B2E19, 0xFF101B0F, 0xFF0C160C, 0x66527F45, 0xFF172617, 0xFFE3EAD6, 0xFF89957A, 0xFF4E9847, 0xFFD278A4, 0xFF30432D);
+            case ClientConfig.InterfaceStyle.CAT -> new Palette(0x74200D1B, 0x88000000, 0xFF4A2F4A, 0xF248324C, 0xFF684468, 0xFF332236, 0xFF765276, 0xFF4B354F, 0xFF402C45, 0x66FF9BCB, 0xFF5A3D5E, 0xFFFFF4FA, 0xFFC9B4C3, 0xFFFF8FC5, 0xFFFFD39A, 0xFF8E668D);
             case ClientConfig.InterfaceStyle.CUSTOM -> InterfaceTheme.customPalette(n, n2, d);
         };
     }
@@ -174,7 +175,7 @@ public final class InterfaceTheme {
                 guiGraphics.fill(n + 14, n2 + 31, n + n3 - 14, n2 + 32, palette.accentA());
                 break;
             }
-            case CARBON, TERMINAL, DEEP_SPACE, COPPER, AURORA, REDSTONE, FROST, NATURE: {
+            case CARBON, TERMINAL, DEEP_SPACE, COPPER, AURORA, REDSTONE, FROST, NATURE, CAT: {
                 int split = n + n3 / 3;
                 guiGraphics.fill(n, n2, split, n2 + 3, palette.accentA());
                 guiGraphics.fill(split, n2, n + n3, n2 + 3, palette.accentB());
@@ -225,6 +226,14 @@ public final class InterfaceTheme {
                         guiGraphics.fill(blossomX - 4, blossomY - 1, blossomX - 1, blossomY + 2, palette.accentB());
                         guiGraphics.fill(blossomX + 1, blossomY - 1, blossomX + 4, blossomY + 2, palette.accentB());
                         guiGraphics.fill(blossomX, blossomY, blossomX + 1, blossomY + 1, palette.text());
+                    }
+                    case CAT -> {
+                        guiGraphics.fill(n + 3, n2 + 34, n + 5, n2 + n4 - 5, InterfaceTheme.darken(palette.accentA(), 0.72f));
+                        guiGraphics.fill(n + n3 - 5, n2 + 34, n + n3 - 3, n2 + n4 - 5, InterfaceTheme.darken(palette.accentB(), 0.72f));
+                        InterfaceTheme.catEar(guiGraphics, n + 12, n2 + 8, palette.accentA(), true);
+                        InterfaceTheme.catEar(guiGraphics, n + n3 - 13, n2 + 8, palette.accentB(), false);
+                        InterfaceTheme.catPaw(guiGraphics, n + 14, n2 + n4 - 10, GuiMotion.alpha(palette.accentA(), 150));
+                        InterfaceTheme.catPaw(guiGraphics, n + n3 - 17, n2 + n4 - 10, GuiMotion.alpha(palette.accentB(), 145));
                     }
                     default -> {
                     }
@@ -287,6 +296,13 @@ public final class InterfaceTheme {
                 guiGraphics.fill(x + width / 3, y + height - 5, x + width / 3 + 2, y + height - 2, palette.accentB());
                 guiGraphics.fill(x + width * 2 / 3, y + height - 6, x + width * 2 / 3 + 2, y + height - 2, palette.accentA());
             }
+            case CAT -> {
+                guiGraphics.fill(x + 4, y + height - 3, x + width - 4, y + height - 2, GuiMotion.alpha(accent, 105));
+                if (width >= 42) {
+                    InterfaceTheme.catPaw(guiGraphics, x + width - 12, y + height / 2 - 2,
+                            GuiMotion.alpha(active ? palette.accentA() : palette.accentB(), 150));
+                }
+            }
             default -> {
             }
         }
@@ -321,9 +337,28 @@ public final class InterfaceTheme {
                 guiGraphics.fill(x + 2, y + 3, x + 4, y + height - 3, palette.accentA());
                 guiGraphics.fill(x + 4, y + height / 2, x + 8, y + height / 2 + 2, palette.accentB());
             }
+            case CAT -> {
+                InterfaceTheme.catPaw(guiGraphics, x + 7, y + 7, GuiMotion.alpha(palette.accentA(), 105));
+                InterfaceTheme.catPaw(guiGraphics, x + width - 10, y + height - 10, GuiMotion.alpha(palette.accentB(), 95));
+            }
             default -> {
             }
         }
+    }
+
+    private static void catEar(GuiGraphics g, int x, int y, int color, boolean left) {
+        int dir = left ? 1 : -1;
+        g.fill(Math.min(x, x + dir * 6), y + 5, Math.max(x, x + dir * 6) + 1, y + 7, GuiMotion.alpha(color, 92));
+        g.fill(Math.min(x + dir, x + dir * 5), y + 3, Math.max(x + dir, x + dir * 5) + 1, y + 5, GuiMotion.alpha(color, 112));
+        g.fill(Math.min(x + dir * 2, x + dir * 4), y + 1, Math.max(x + dir * 2, x + dir * 4) + 1, y + 3, GuiMotion.alpha(color, 128));
+        g.fill(Math.min(x + dir * 3, x + dir * 4), y, Math.max(x + dir * 3, x + dir * 4) + 1, y + 2, GuiMotion.alpha(0xFFFFEAF5, 86));
+    }
+
+    private static void catPaw(GuiGraphics g, int x, int y, int color) {
+        g.fill(x + 2, y + 3, x + 6, y + 6, color);
+        g.fill(x, y + 1, x + 2, y + 3, color);
+        g.fill(x + 2, y, x + 4, y + 2, color);
+        g.fill(x + 5, y + 1, x + 7, y + 3, color);
     }
 
     private static void corner(GuiGraphics guiGraphics, int n, int n2, int n3) {
