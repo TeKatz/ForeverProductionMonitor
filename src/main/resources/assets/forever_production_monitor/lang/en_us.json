@@ -349,7 +349,7 @@
   ,"screen.forever_production_monitor.crafting.fit": "Fit"
   ,"screen.forever_production_monitor.crafting.select_pattern_tree": "Select a pattern to visualize its crafting tree."
   ,"screen.forever_production_monitor.crafting.tree_unavailable": "Crafting tree unavailable for this pattern."
-  ,"screen.forever_production_monitor.crafting.tree_controls": "Drag to pan · Wheel to scroll · Shift+wheel horizontally"
+  ,"screen.forever_production_monitor.crafting.tree_controls": "Drag to pan · Ctrl+wheel zooms · Wheel scrolls · Shift+wheel horizontal"
   ,"screen.forever_production_monitor.crafting.tree_limited": "Tree view limited for performance."
   ,"screen.forever_production_monitor.crafting.recipe_options": "recipe options"
   ,"screen.forever_production_monitor.crafting.requires": "Pattern prerequisites"
