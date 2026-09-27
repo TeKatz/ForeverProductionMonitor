@@ -1,0 +1,85 @@
+name: Publish 4.2.0
+
+on:
+  push:
+    paths:
+      - ".github/workflows/publish-4.2.0.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download verified main build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-files
+          gh run download 36319823945 \
+            --repo "${{ github.repository }}" \
+            --name "ForeverProductionMonitor-build" \
+            --dir release-files
+
+      - name: Verify release artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "release-files/ForeverProductionMonitor-1.21.1-NeoForge-4.2.0.jar"
+          echo "32faa03293104dfa1cd5802ca69f8f7ec2bf2653bae7a23ff94ef180a8469d55  release-files/ForeverProductionMonitor-1.21.1-NeoForge-4.2.0.jar" | sha256sum --check -
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          cat > /tmp/release-notes.md <<'EOF'
+          Forever Production Monitor 4.2.0 is the first official update after the 4.0.0 public release.
+
+          This release focuses on the mod's visual identity while preserving the monitoring, diagnostics and Network Map functionality from 4.0.0.
+
+          ## Monitor block redesign
+          - Reworked the Production Monitor into a dark industrial design with AE-inspired cyan/blue accents and restrained violet identity details.
+          - Added a directional block model with distinct front, side, back, top and bottom faces.
+          - Added three functional visual states:
+            - **OFFLINE** — no active AE network; displays and animations remain off.
+            - **ONLINE** — connected to an active AE network; displays and subtle animations become active.
+            - **LINKED** — active AE network with a linked Production Tablet; the front display additionally shows a tablet indicator.
+          - Added subtle classic Minecraft texture animations for the active displays, side indicators and top panel.
+          - Existing linked tablets are migrated into the new visual link state during normal validation.
+
+          ## Production Tablet redesign
+          - Replaced the Production Tablet item texture with a new classic 16x16 Minecraft-style design.
+          - The tablet now shares the same industrial dark-gray, cyan/blue and violet visual language as the monitor block.
+          - Tablet linking logic, Curios integration, saved link data and network behavior remain unchanged.
+
+          ## Compatibility
+          - Minecraft 1.21.1
+          - NeoForge 21.1.x
+          - Applied Energistics 2 19.2.x
+          - Curios 9.5.1+
+          - ExtendedAE remains optional.
+
+          ## Development & AI disclosure
+          Forever Production Monitor is designed, directed and tested by Timo. The implementation and asset development are produced extensively with generative AI (ChatGPT/OpenAI) under human direction, selection, review and in-game testing. Full details are documented in the repository README.
+
+          The 4.1.0 monitor redesign and 4.2.0 tablet redesign were tested in-game before this release.
+          EOF
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create v4.2.0 \
+            "release-files/ForeverProductionMonitor-1.21.1-NeoForge-4.2.0.jar" \
+            --repo "${{ github.repository }}" \
+            --target "6f093ff8d24c0b6e45298ab027464e0e06495478" \
+            --title "Forever Production Monitor 4.2.0" \
+            --notes-file /tmp/release-notes.md
