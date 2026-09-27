@@ -51,10 +51,48 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private Component hoveredTab;
     private Component hoveredText;
     private boolean draggingListScrollbar;
+    private PatternView patternView = PatternView.DETAILS;
+    private final List<TreeHit> treeHits = new ArrayList<>();
+    private TreeNode cachedTreeRoot;
+    private CraftingDiagnostics.Snapshot treeSnapshot;
+    private int treePattern = -1;
+    private boolean treeTruncated;
+    private double treePanX;
+    private double treePanY;
+    private boolean treePanInitialized;
+    private boolean draggingTree;
+    private double treeDragX;
+    private double treeDragY;
+
+    private static final int TREE_NODE_WIDTH = 116;
+    private static final int TREE_NODE_HEIGHT = 30;
+    private static final int TREE_GAP_X = 26;
+    private static final int TREE_GAP_Y = 42;
+    private static final int TREE_MAX_NODES = 120;
+    private static final int TREE_MAX_DEPTH = 12;
 
     private enum Section { JOBS, PATTERNS, PROVIDERS }
+    private enum PatternView { DETAILS, TREE }
     private record ProviderHit(int y, int providerIndex) {}
     private record PatternHit(int y, int patternIndex) {}
+    private record TreeHit(int x1, int y1, int x2, int y2, int patternIndex) {}
+
+    private static final class TreeNode {
+        final int patternIndex;
+        final AEKey icon;
+        final String label;
+        final String type;
+        final List<TreeNode> children = new ArrayList<>();
+        int x;
+        int y;
+
+        TreeNode(int patternIndex, AEKey icon, String label, String type) {
+            this.patternIndex = patternIndex;
+            this.icon = icon;
+            this.label = label;
+            this.type = type;
+        }
+    }
 
     public CraftingDiagnosticsScreen(ProductionMonitorScreen parent, ProductionTabletItem.MonitorLink link) {
         super(Component.translatable("screen.forever_production_monitor.crafting.title"));
@@ -108,6 +146,9 @@ public final class CraftingDiagnosticsScreen extends Screen {
         if (!response.dimension().equals(link.dimension()) || !response.pos().equals(link.pos())) return;
         snapshot = response.snapshot();
         graphSnapshot = null;
+        treeSnapshot = null;
+        cachedTreeRoot = null;
+        treePanInitialized = false;
         if (selectedPattern >= snapshot.patterns().size()) selectedPattern = -1;
         if (selectedProvider >= snapshot.providers().size()) selectedProvider = -1;
         if (selectedJob >= snapshot.jobs().size()) selectedJob = -1;
@@ -126,6 +167,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
         for (Renderable widget : renderables) widget.render(g, mouseX, mouseY, partialTick);
         providerHits.clear();
         patternHits.clear();
+        treeHits.clear();
         if (snapshot == null) {
             line(g, tr("loading"), listLeft, contentTop, palette.text(), listRight - listLeft);
             renderTabTooltip(g, mouseX, mouseY);
@@ -208,6 +250,15 @@ public final class CraftingDiagnosticsScreen extends Screen {
         int available = left + widthPanel - 18 - x;
         if (available < 50) return;
         var palette = InterfaceTheme.current();
+        int detailTop = contentTop;
+        if (section == Section.PATTERNS) {
+            drawPatternViewSelector(g, mouseX, mouseY, x, available);
+            detailTop += 24;
+            if (patternView == PatternView.TREE) {
+                drawCraftingTree(g, mouseX, mouseY, x, detailTop, available);
+                return;
+            }
+        }
         List<String> lines = new ArrayList<>();
         Map<Integer, AEKey> icons = new HashMap<>();
         if (section == Section.JOBS) {
@@ -350,14 +401,14 @@ public final class CraftingDiagnosticsScreen extends Screen {
             if (snapshot.limited()) lines.add(tr("partial"));
         } else lines.add(tr("select_pattern"));
 
-        int maxLines = Math.max(1, (contentBottom - contentTop) / 18);
+        int maxLines = Math.max(1, (contentBottom - detailTop) / 18);
         detailScroll = Math.max(0, Math.min(detailScroll, Math.max(0, lines.size() - maxLines)));
-        g.enableScissor(x, contentTop, left + widthPanel - 16, contentBottom);
+        g.enableScissor(x, detailTop, left + widthPanel - 16, contentBottom);
         for (int i = detailScroll; i < lines.size() && i < detailScroll + maxLines; i++) {
             boolean actionable = false;
             for (ProviderHit hit : providerHits) if (hit.y() == i) actionable = true;
             for (PatternHit hit : patternHits) if (hit.y() == i) actionable = true;
-            int rowY = contentTop + (i - detailScroll) * 18;
+            int rowY = detailTop + (i - detailScroll) * 18;
             if (actionable) {
                 g.fill(x, rowY, x + available, rowY + 17,
                         mouseX >= x && mouseX < x + available
@@ -373,7 +424,194 @@ public final class CraftingDiagnosticsScreen extends Screen {
                     mouseX, mouseY, rowY, 18);
         }
         g.disableScissor();
-        drawDetailScrollbar(g, lines.size(), maxLines);
+        drawDetailScrollbar(g, lines.size(), maxLines, detailTop);
+    }
+
+    private void drawPatternViewSelector(GuiGraphics g, int mouseX, int mouseY, int x, int available) {
+        var palette = InterfaceTheme.current();
+        int gap = 4;
+        int fitWidth = 42;
+        int modeWidth = Math.max(72, (available - fitWidth - gap * 2) / 2);
+        drawMiniModeButton(g, x, contentTop, modeWidth, 20, tr("details"),
+                patternView == PatternView.DETAILS, mouseX, mouseY);
+        drawMiniModeButton(g, x + modeWidth + gap, contentTop, modeWidth, 20, tr("crafting_tree"),
+                patternView == PatternView.TREE, mouseX, mouseY);
+        if (patternView == PatternView.TREE) {
+            int fitX = x + modeWidth * 2 + gap * 2;
+            int width = Math.max(24, available - modeWidth * 2 - gap * 2);
+            g.fill(fitX, contentTop, fitX + width, contentTop + 20, palette.border());
+            g.fill(fitX + 1, contentTop + 1, fitX + width - 1, contentTop + 19,
+                    mouseX >= fitX && mouseX < fitX + width && mouseY >= contentTop && mouseY < contentTop + 20
+                            ? palette.tableHeader() : palette.summary());
+            centered(g, tr("fit"), fitX + width / 2, contentTop + 6, palette.text());
+        }
+    }
+
+    private void drawMiniModeButton(GuiGraphics g, int x, int y, int width, int height, String label,
+                                    boolean selected, int mouseX, int mouseY) {
+        var palette = InterfaceTheme.current();
+        boolean hover = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+        g.fill(x, y, x + width, y + height, selected ? palette.accentA() : palette.border());
+        g.fill(x + 1, y + 1, x + width - 1, y + height - 1,
+                selected || hover ? palette.tableHeader() : palette.summary());
+        if (selected) g.fill(x + 2, y + height - 3, x + width - 2, y + height - 1, palette.accentB());
+        centered(g, label, x + width / 2, y + 6, palette.text());
+    }
+
+    private void drawCraftingTree(GuiGraphics g, int mouseX, int mouseY, int x, int treeTop, int available) {
+        var palette = InterfaceTheme.current();
+        if (selectedPattern < 0 || selectedPattern >= snapshot.patterns().size()) {
+            line(g, tr("select_pattern_tree"), x, treeTop + 6, palette.text(), available - 8);
+            return;
+        }
+
+        TreeNode root = craftingTree(selectedPattern);
+        if (root == null) {
+            line(g, tr("tree_unavailable"), x, treeTop + 6, palette.text(), available - 8);
+            return;
+        }
+
+        int viewRight = left + widthPanel - 18;
+        int viewBottom = contentBottom;
+        if (!treePanInitialized) {
+            treePanX = Math.max(8, (available - TREE_NODE_WIDTH) / 2.0 - root.x);
+            treePanY = 8;
+            treePanInitialized = true;
+        }
+
+        g.enableScissor(x, treeTop, viewRight, viewBottom);
+        drawTreeEdges(g, root, x, treeTop, palette.border());
+        drawTreeNodes(g, root, x, treeTop, mouseX, mouseY);
+        g.disableScissor();
+
+        String info = tr("tree_controls");
+        line(g, info, x + 4, viewBottom - 12, palette.muted(), available - 8);
+        if (treeTruncated) {
+            line(g, tr("tree_limited"), x + 4, treeTop + 4, palette.accentB(), available - 8);
+        }
+    }
+
+    private TreeNode craftingTree(int patternIndex) {
+        if (treeSnapshot == snapshot && treePattern == patternIndex && cachedTreeRoot != null) {
+            return cachedTreeRoot;
+        }
+        treeSnapshot = snapshot;
+        treePattern = patternIndex;
+        treeTruncated = false;
+        int[] count = {0};
+        cachedTreeRoot = buildPatternTree(patternIndex, 0, new HashSet<>(), count);
+        int[] leaf = {0};
+        layoutTree(cachedTreeRoot, 0, leaf);
+        treePanInitialized = false;
+        return cachedTreeRoot;
+    }
+
+    private TreeNode buildPatternTree(int patternIndex, int depth, Set<Integer> path, int[] count) {
+        if (patternIndex < 0 || patternIndex >= snapshot.patterns().size()) return null;
+        var pattern = snapshot.patterns().get(patternIndex);
+        TreeNode node = new TreeNode(patternIndex, pattern.outputIcon(),
+                pattern.output() + " × " + pattern.amount(), pattern.type());
+        if (++count[0] >= TREE_MAX_NODES || depth >= TREE_MAX_DEPTH) {
+            treeTruncated = true;
+            return node;
+        }
+        if (!path.add(patternIndex)) {
+            node.children.add(new TreeNode(-1, pattern.outputIcon(), tr("cycle"), "Cycle"));
+            return node;
+        }
+
+        Set<Integer> usedDependencies = new HashSet<>();
+        for (int input = 0; input < pattern.inputs().size() && count[0] < TREE_MAX_NODES; input++) {
+            AEKey inputIcon = input < pattern.inputIcons().size() ? pattern.inputIcons().get(input) : null;
+            List<Integer> matches = new ArrayList<>();
+            if (inputIcon != null) {
+                for (int dep : pattern.dependencies()) {
+                    if (dep < 0 || dep >= snapshot.patterns().size()) continue;
+                    if (inputIcon.equals(snapshot.patterns().get(dep).outputIcon())) matches.add(dep);
+                }
+            }
+            if (matches.size() == 1) {
+                int dep = matches.get(0);
+                usedDependencies.add(dep);
+                TreeNode child = buildPatternTree(dep, depth + 1, new HashSet<>(path), count);
+                if (child != null) node.children.add(child);
+            } else {
+                String label = pattern.inputs().get(input);
+                if (matches.size() > 1) label += " · " + matches.size() + " " + tr("recipe_options");
+                node.children.add(new TreeNode(-1, inputIcon, label,
+                        matches.size() > 1 ? "Alternatives" : "Ingredient"));
+                count[0]++;
+            }
+        }
+
+        for (int dep : pattern.dependencies()) {
+            if (count[0] >= TREE_MAX_NODES) {
+                treeTruncated = true;
+                break;
+            }
+            if (usedDependencies.contains(dep) || dep < 0 || dep >= snapshot.patterns().size()) continue;
+            TreeNode child = buildPatternTree(dep, depth + 1, new HashSet<>(path), count);
+            if (child != null) node.children.add(child);
+        }
+        path.remove(patternIndex);
+        return node;
+    }
+
+    private void layoutTree(TreeNode node, int depth, int[] nextLeaf) {
+        if (node == null) return;
+        node.y = depth * (TREE_NODE_HEIGHT + TREE_GAP_Y);
+        if (node.children.isEmpty()) {
+            node.x = nextLeaf[0] * (TREE_NODE_WIDTH + TREE_GAP_X);
+            nextLeaf[0]++;
+            return;
+        }
+        for (TreeNode child : node.children) layoutTree(child, depth + 1, nextLeaf);
+        int first = node.children.get(0).x;
+        int last = node.children.get(node.children.size() - 1).x;
+        node.x = (first + last) / 2;
+    }
+
+    private void drawTreeEdges(GuiGraphics g, TreeNode node, int viewX, int viewY, int color) {
+        int px = viewX + (int) treePanX + node.x + TREE_NODE_WIDTH / 2;
+        int py = viewY + (int) treePanY + node.y + TREE_NODE_HEIGHT;
+        for (TreeNode child : node.children) {
+            int cx = viewX + (int) treePanX + child.x + TREE_NODE_WIDTH / 2;
+            int cy = viewY + (int) treePanY + child.y;
+            int midY = py + Math.max(6, (cy - py) / 2);
+            g.fill(px, py, px + 1, midY + 1, color);
+            g.fill(Math.min(px, cx), midY, Math.max(px, cx) + 1, midY + 1, color);
+            g.fill(cx, midY, cx + 1, cy + 1, color);
+            drawTreeEdges(g, child, viewX, viewY, color);
+        }
+    }
+
+    private void drawTreeNodes(GuiGraphics g, TreeNode node, int viewX, int viewY, int mouseX, int mouseY) {
+        var palette = InterfaceTheme.current();
+        int sx = viewX + (int) treePanX + node.x;
+        int sy = viewY + (int) treePanY + node.y;
+        boolean hover = mouseX >= sx && mouseX < sx + TREE_NODE_WIDTH
+                && mouseY >= sy && mouseY < sy + TREE_NODE_HEIGHT;
+        int stripe = "Crafting".equalsIgnoreCase(node.type) ? palette.accentA()
+                : "Processing".equalsIgnoreCase(node.type) ? palette.accentB() : palette.muted();
+        g.fill(sx, sy, sx + TREE_NODE_WIDTH, sy + TREE_NODE_HEIGHT, hover ? palette.accentA() : palette.border());
+        g.fill(sx + 1, sy + 1, sx + TREE_NODE_WIDTH - 1, sy + TREE_NODE_HEIGHT - 1,
+                hover ? palette.tableHeader() : palette.summary());
+        g.fill(sx + 1, sy + 1, sx + 4, sy + TREE_NODE_HEIGHT - 1, stripe);
+        if (node.icon != null) drawIcon(g, node.icon, sx + 7, sy + 7, mouseX, mouseY);
+        int textX = sx + (node.icon == null ? 7 : 27);
+        int textWidth = TREE_NODE_WIDTH - (node.icon == null ? 12 : 32);
+        String first = font.plainSubstrByWidth(node.label, Math.max(1, textWidth));
+        g.drawString(font, first, textX, sy + 6, palette.text(), false);
+        String type = node.type == null ? "" : node.type;
+        g.drawString(font, font.plainSubstrByWidth(type, Math.max(1, textWidth)),
+                textX, sy + 17, palette.muted(), false);
+        if (hover) hoveredText = Component.literal(node.label + (type.isEmpty() ? "" : " · " + type));
+        treeHits.add(new TreeHit(sx, sy, sx + TREE_NODE_WIDTH, sy + TREE_NODE_HEIGHT, node.patternIndex));
+        for (TreeNode child : node.children) drawTreeNodes(g, child, viewX, viewY, mouseX, mouseY);
+    }
+
+    private void resetTreePan() {
+        treePanInitialized = false;
     }
 
     private int rowHeight() {
@@ -409,15 +647,15 @@ public final class CraftingDiagnosticsScreen extends Screen {
         g.fill(trackX, thumbY, trackX + 4, thumbY + thumbHeight, palette.accentA());
     }
 
-    private void drawDetailScrollbar(GuiGraphics g, int totalLines, int visibleLines) {
+    private void drawDetailScrollbar(GuiGraphics g, int totalLines, int visibleLines, int detailTop) {
         if (totalLines <= visibleLines) return;
         var palette = InterfaceTheme.current();
         int trackX = left + widthPanel - 20;
-        int trackHeight = contentBottom - contentTop;
+        int trackHeight = contentBottom - detailTop;
         int thumbHeight = Math.max(20, trackHeight * visibleLines / totalLines);
         int maxScroll = Math.max(1, totalLines - visibleLines);
-        int thumbY = contentTop + (trackHeight - thumbHeight) * detailScroll / maxScroll;
-        g.fill(trackX, contentTop, trackX + 4, contentBottom, palette.summary());
+        int thumbY = detailTop + (trackHeight - thumbHeight) * detailScroll / maxScroll;
+        g.fill(trackX, detailTop, trackX + 4, contentBottom, palette.summary());
         g.fill(trackX, thumbY, trackX + 4, thumbY + thumbHeight, palette.accentA());
     }
 
@@ -532,7 +770,48 @@ public final class CraftingDiagnosticsScreen extends Screen {
     @Override
     public boolean mouseClicked(double x, double y, int button) {
         if (super.mouseClicked(x, y, button)) return true;
-        if (button != 0 || snapshot == null || y < contentTop || y >= contentBottom) return false;
+        if (button != 0 || snapshot == null) return false;
+
+        if (section == Section.PATTERNS && x >= detailsLeft
+                && y >= contentTop && y < contentTop + 20) {
+            int available = left + widthPanel - 18 - detailsLeft;
+            int gap = 4;
+            int fitWidth = 42;
+            int modeWidth = Math.max(72, (available - fitWidth - gap * 2) / 2);
+            if (x < detailsLeft + modeWidth) {
+                patternView = PatternView.DETAILS;
+                detailScroll = 0;
+                return true;
+            }
+            if (x < detailsLeft + modeWidth * 2 + gap) {
+                patternView = PatternView.TREE;
+                resetTreePan();
+                return true;
+            }
+            if (patternView == PatternView.TREE) {
+                resetTreePan();
+                return true;
+            }
+        }
+
+        if (section == Section.PATTERNS && patternView == PatternView.TREE
+                && x >= detailsLeft && y >= contentTop + 24 && y < contentBottom) {
+            for (TreeHit hit : treeHits) {
+                if (x >= hit.x1() && x < hit.x2() && y >= hit.y1() && y < hit.y2()
+                        && hit.patternIndex() >= 0 && hit.patternIndex() < snapshot.patterns().size()) {
+                    selectedPattern = hit.patternIndex();
+                    detailScroll = 0;
+                    resetTreePan();
+                    return true;
+                }
+            }
+            draggingTree = true;
+            treeDragX = x;
+            treeDragY = y;
+            return true;
+        }
+
+        if (y < contentTop || y >= contentBottom) return false;
         if (x >= listRight - 10 && x < listRight && visibleIndexes.size() > rows(rowHeight())) {
             draggingListScrollbar = true;
             setListScrollFromMouse(y);
@@ -544,17 +823,27 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 int index = visibleIndexes.get(row);
                 if (section == Section.JOBS) selectedJob = index;
                 else if (section == Section.PROVIDERS) selectedProvider = index;
-                else selectedPattern = index;
+                else {
+                    selectedPattern = index;
+                    treeSnapshot = null;
+                    cachedTreeRoot = null;
+                    resetTreePan();
+                }
                 detailScroll = 0;
                 return true;
             }
         } else if (x >= detailsLeft) {
-            int line = (int) (y - contentTop) / 18 + detailScroll;
+            int activeDetailTop = section == Section.PATTERNS ? contentTop + 24 : contentTop;
+            if (y < activeDetailTop) return false;
+            int line = (int) (y - activeDetailTop) / 18 + detailScroll;
             for (PatternHit hit : patternHits) {
                 if (hit.y() == line && hit.patternIndex() >= 0
                         && hit.patternIndex() < snapshot.patterns().size()) {
                     section = Section.PATTERNS;
                     selectedPattern = hit.patternIndex();
+                    treeSnapshot = null;
+                    cachedTreeRoot = null;
+                    resetTreePan();
                     listScroll = Math.max(0, selectedPattern - rows(rowHeight()) / 2);
                     detailScroll = 0;
                     if (search != null) search.setValue("");
@@ -594,6 +883,13 @@ public final class CraftingDiagnosticsScreen extends Screen {
             setListScrollFromMouse(y);
             return true;
         }
+        if (button == 0 && draggingTree && section == Section.PATTERNS && patternView == PatternView.TREE) {
+            treePanX += x - treeDragX;
+            treePanY += y - treeDragY;
+            treeDragX = x;
+            treeDragY = y;
+            return true;
+        }
         return super.mouseDragged(x, y, button, dragX, dragY);
     }
 
@@ -603,11 +899,21 @@ public final class CraftingDiagnosticsScreen extends Screen {
             draggingListScrollbar = false;
             return true;
         }
+        if (button == 0 && draggingTree) {
+            draggingTree = false;
+            return true;
+        }
         return super.mouseReleased(x, y, button);
     }
 
     @Override
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        if (snapshot != null && section == Section.PATTERNS && patternView == PatternView.TREE
+                && x >= detailsLeft && y >= contentTop + 24 && y < contentBottom) {
+            if (hasShiftDown()) treePanX += scrollY * 28.0;
+            else treePanY += scrollY * 28.0;
+            return true;
+        }
         if (snapshot != null && y >= contentTop && y < contentBottom) {
             if (x < listRight) listScroll = Math.max(0, listScroll - (int) Math.signum(scrollY) * 3);
             else detailScroll = Math.max(0, detailScroll - (int) Math.signum(scrollY) * 3);
@@ -630,6 +936,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 section = target;
                 listScroll = 0;
                 detailScroll = 0;
+                draggingTree = false;
                 if (search != null) search.setValue("");
             }, DEFAULT_NARRATION);
             this.target = target;
