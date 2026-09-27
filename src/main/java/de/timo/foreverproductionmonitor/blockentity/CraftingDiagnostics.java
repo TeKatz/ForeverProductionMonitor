@@ -28,9 +28,9 @@ import net.minecraft.resources.ResourceLocation;
  * server thread. No crafting plans, CPU internals, or external machine state are inferred.
  */
 public final class CraftingDiagnostics {
-    public static final int MAX_PROVIDERS = 256;
-    public static final int MAX_PATTERNS = 256;
-    public static final int MAX_PATTERN_SLOTS = 2048;
+    public static final int MAX_PROVIDERS = 1024;
+    public static final int MAX_PATTERNS = 4096;
+    public static final int MAX_PATTERN_SLOTS = 32768;
     public static final int MAX_CPUS = 64;
 
     private CraftingDiagnostics() {}
