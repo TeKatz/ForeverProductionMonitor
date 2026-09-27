@@ -36,6 +36,7 @@ final class HudThemeRenderer {
             case REDSTONE -> new Colors(0xFF0D0505, 0xFF68282A, 0xFF180B0B, 0xFF281010, 0xFF211010, 0xFF1B0D0D, 0xFFE13A36, 0xFFFF8A45, 0xFFFFEAE2);
             case FROST -> new Colors(0xFF071018, 0xFF4D718A, 0xFF0E1A23, 0xFF162A37, 0xFF12232E, 0xFF0F1D27, 0xFF7DCAEE, 0xFFD2F0FF, 0xFFF4FBFF);
             case NATURE -> new Colors(0xFF040804, 0xFF31502E, 0xFF0A130A, 0xFF102010, 0xFF0D1A0D, 0xFF0A160A, 0xFF4E9847, 0xFFD278A4, 0xFFE3EAD6);
+            case CAT -> new Colors(0xFF180C16, 0xFF765376, 0xFF2B1B2E, 0xFF543755, 0xFF3A273E, 0xFF322137, 0xFFFF8FC5, 0xFFFFD39A, 0xFFFFF4FA);
             case CUSTOM -> customColors();
         };
     }
@@ -100,6 +101,11 @@ final class HudThemeRenderer {
                 int leaf = withAlpha(c.accentA(), 64);
                 g.fill(x + 2, y + 3, x + 3, y + 14, withAlpha(c.accentA(), 42));
                 drawLeaf(g, x + 5, y + 6 + (row & 1) * 4, leaf, (row & 1) == 0);
+            }
+            case CAT -> {
+                int paw = withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 54);
+                drawPaw(g, x + 7, y + 8, paw);
+                if ((row & 1) == 0) drawPaw(g, x + WIDTH - 9, y + 9, withAlpha(c.accentB(), 38));
             }
             case FROST -> {
                 g.fill(x + 2, y + 15, x + 12, y + 16, withAlpha(c.accentB(), 32));
@@ -182,6 +188,7 @@ final class HudThemeRenderer {
                 drawLeaf(g, cx - 2, cy + 2, withAlpha(c.accentA(), a), false);
                 flower(g, cx + 1, cy - 5, withAlpha(c.accentB(), a), withAlpha(c.titleText(), a));
             }
+            case CAT -> drawCatFace(g, cx, cy, c, a);
             case FOREVER -> {
                 g.fill(cx - 5, cy - 2, cx - 1, cy + 3, withAlpha(c.accentA(), a));
                 g.fill(cx + 1, cy - 3, cx + 5, cy + 2, withAlpha(c.accentB(), a));
@@ -349,6 +356,7 @@ final class HudThemeRenderer {
                 }
             }
             case NATURE -> natureFrame(g, x, y, h, c);
+            case CAT -> catFrame(g, x, y, h, c);
             case CUSTOM -> {
                 g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 86));
                 g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 86));
@@ -356,6 +364,40 @@ final class HudThemeRenderer {
                 corner(g, x + WIDTH - 2, y + h - 2, false, false, withAlpha(c.accentB(), 48));
             }
         }
+    }
+
+    private static void catFrame(GuiGraphics g, int x, int y, int h, Colors c) {
+        // Soft split ribbon in pink + cream.
+        g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 110));
+        g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 110));
+
+        // Two little ears make the frame silhouette unique even with animations off.
+        drawEar(g, x + 18, y + 3, true, withAlpha(c.accentA(), 92), withAlpha(c.accentB(), 66));
+        drawEar(g, x + WIDTH - 18, y + 3, false, withAlpha(c.accentB(), 92), withAlpha(c.accentA(), 66));
+
+        // A trail of tiny paws crosses the HUD slowly.
+        float walk = phase(18000L, 0.23f);
+        for (int i = 0; i < 4; ++i) {
+            float p = (walk + i * 0.24f) % 1.0f;
+            int px = x + 22 + Math.round(p * 140.0f);
+            int py = y + h - 8 - (i & 1) * 4;
+            drawPaw(g, px, py, withAlpha((i & 1) == 0 ? c.accentA() : c.accentB(), 34 + i * 5));
+        }
+
+        // A lazy tail swishes along the lower-right edge.
+        drawTail(g, x + WIDTH - 54, y + h - 5, 40, 5, phase(9000L, 0.34f),
+                withAlpha(c.accentA(), motionAlpha(32, 66)));
+
+        // Tiny yarn ball rolls under the title line.
+        float yarn = phase(13000L, 0.28f);
+        float ping = 1.0f - Math.abs(yarn * 2.0f - 1.0f);
+        int bx = x + 58 + Math.round(ping * 55.0f);
+        int by = y + 13 - Math.round(Math.abs((float)Math.sin(yarn * Math.PI * 4.0)) * 2.0f);
+        yarnBall(g, bx, by, c, yarn);
+
+        // One heart appears and gently pulses near the right ear.
+        float pulse = 0.5f + 0.5f * (float)Math.sin(phase(6200L, 0.35f) * Math.PI * 2.0);
+        drawHeart(g, x + WIDTH - 31, y + 8, withAlpha(c.accentA(), Math.round(34 + pulse * 48.0f)));
     }
 
     private static void natureFrame(GuiGraphics g, int x, int y, int h, Colors c) {
@@ -492,6 +534,72 @@ final class HudThemeRenderer {
     private static void snowflake(GuiGraphics g, int x, int y, int color) {
         g.fill(x - 1, y, x + 2, y + 1, color);
         g.fill(x, y - 1, x + 1, y + 2, color);
+    }
+
+    private static void drawPaw(GuiGraphics g, int cx, int cy, int color) {
+        g.fill(cx - 2, cy + 1, cx + 3, cy + 4, color);
+        g.fill(cx - 4, cy - 2, cx - 2, cy, color);
+        g.fill(cx - 1, cy - 4, cx + 1, cy - 2, color);
+        g.fill(cx + 2, cy - 2, cx + 4, cy, color);
+    }
+
+    private static void drawEar(GuiGraphics g, int x, int y, boolean left, int outer, int inner) {
+        int d = left ? 1 : -1;
+        g.fill(Math.min(x, x + d * 7), y + 5, Math.max(x, x + d * 7) + 1, y + 7, outer);
+        g.fill(Math.min(x + d, x + d * 6), y + 3, Math.max(x + d, x + d * 6) + 1, y + 5, outer);
+        g.fill(Math.min(x + d * 2, x + d * 5), y + 1, Math.max(x + d * 2, x + d * 5) + 1, y + 3, outer);
+        g.fill(Math.min(x + d * 3, x + d * 4), y + 1, Math.max(x + d * 3, x + d * 4) + 1, y + 3, inner);
+    }
+
+    private static void drawCatFace(GuiGraphics g, int cx, int cy, Colors c, int alpha) {
+        int fur = withAlpha(c.accentB(), alpha);
+        int pink = withAlpha(c.accentA(), alpha);
+        int detail = withAlpha(c.titleText(), alpha);
+
+        g.fill(cx - 5, cy - 4, cx + 6, cy + 5, fur);
+        g.fill(cx - 5, cy - 7, cx - 1, cy - 4, fur);
+        g.fill(cx + 2, cy - 7, cx + 6, cy - 4, fur);
+        boolean blink = phase(6100L, 0.4f) > 0.91f;
+        if (blink) {
+            g.fill(cx - 3, cy - 1, cx - 1, cy, detail);
+            g.fill(cx + 2, cy - 1, cx + 4, cy, detail);
+        } else {
+            g.fill(cx - 3, cy - 2, cx - 2, cy + 1, detail);
+            g.fill(cx + 3, cy - 2, cx + 4, cy + 1, detail);
+        }
+        g.fill(cx, cy + 1, cx + 2, cy + 3, pink);
+        g.fill(cx - 5, cy + 1, cx - 1, cy + 2, withAlpha(c.titleText(), alpha / 2));
+        g.fill(cx + 3, cy + 1, cx + 7, cy + 2, withAlpha(c.titleText(), alpha / 2));
+    }
+
+    private static void drawTail(GuiGraphics g, int sx, int sy, int length, int amplitude, float turn, int color) {
+        int prevX = sx;
+        int prevY = sy;
+        for (int i = 2; i <= length; i += 3) {
+            int px = sx + i;
+            int py = sy - (int)Math.round(Math.sin((i / (double)length) * Math.PI * 1.35 + turn * Math.PI * 2.0)
+                    * amplitude * (i / (double)length));
+            diagonal(g, prevX, prevY, px, py, color);
+            prevX = px;
+            prevY = py;
+        }
+    }
+
+    private static void yarnBall(GuiGraphics g, int cx, int cy, Colors c, float turn) {
+        int body = withAlpha(c.accentA(), 70);
+        int thread = withAlpha(c.accentB(), 72);
+        g.fill(cx - 4, cy - 3, cx + 5, cy + 4, body);
+        g.fill(cx - 3, cy - 4, cx + 4, cy + 5, body);
+        int o = Math.round((float)Math.sin(turn * Math.PI * 2.0) * 2.0f);
+        diagonal(g, cx - 3, cy - 2 + o, cx + 3, cy + 2 + o, thread);
+        diagonal(g, cx - 3, cy + 2 - o, cx + 3, cy - 2 - o, withAlpha(c.titleText(), 38));
+    }
+
+    private static void drawHeart(GuiGraphics g, int cx, int cy, int color) {
+        g.fill(cx - 2, cy - 1, cx, cy + 1, color);
+        g.fill(cx + 1, cy - 1, cx + 3, cy + 1, color);
+        g.fill(cx - 1, cy, cx + 2, cy + 3, color);
+        g.fill(cx, cy + 3, cx + 1, cy + 4, color);
     }
 
     private static void drawLeaf(GuiGraphics g, int x, int y, int color, boolean right) {
