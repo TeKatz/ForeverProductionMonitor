@@ -329,6 +329,11 @@
   ,"screen.forever_production_monitor.crafting.channel": "Channel-Anforderung erfüllt"
   ,"screen.forever_production_monitor.crafting.booted": "Netzwerk gestartet"
   ,"screen.forever_production_monitor.crafting.priority": "Pattern-Priorität"
+  ,"screen.forever_production_monitor.crafting.provider_status": "Provider-Status"
+  ,"screen.forever_production_monitor.crafting.provider_patterns": "Pattern-Inventar"
+  ,"screen.forever_production_monitor.crafting.crafting_patterns": "Crafting-Patterns"
+  ,"screen.forever_production_monitor.crafting.processing_patterns": "Processing-Patterns"
+  ,"screen.forever_production_monitor.crafting.hosted_patterns": "Enthaltene Patterns"
   ,"screen.forever_production_monitor.crafting.no_location": "Keine physische Node-Position verfügbar."
   ,"screen.forever_production_monitor.crafting.locate": "In Netzwerk-Karte lokalisieren ↗"
   ,"screen.forever_production_monitor.crafting.select_provider": "Provider auswählen."
@@ -350,5 +355,5 @@
   ,"screen.forever_production_monitor.crafting.hint_jobs": "Crafting-Job auswählen, um CPU und Rezept-Kontext zu untersuchen."
   ,"screen.forever_production_monitor.crafting.hint_patterns": "Pattern auswählen, um Inputs, Outputs, Provider und Abhängigkeiten zu untersuchen."
   ,"screen.forever_production_monitor.crafting.hint_dependents": "Pattern auswählen, um Voraussetzungen und Abhängigkeiten zu sehen."
-  ,"screen.forever_production_monitor.crafting.hint_providers": "Provider auswählen und dann „In Netzwerk-Karte lokalisieren“ anklicken."
+  ,"screen.forever_production_monitor.crafting.hint_providers": "Provider auswählen, um Status und enthaltene Patterns zu untersuchen; Lokalisieren öffnet die Netzwerk-Karte."
 }
