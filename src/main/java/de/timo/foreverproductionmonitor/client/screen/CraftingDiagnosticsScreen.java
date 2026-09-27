@@ -43,6 +43,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private List<Integer> visibleIndexes = List.of();
     private final List<ProviderHit> providerHits = new ArrayList<>();
     private final List<PatternHit> patternHits = new ArrayList<>();
+    private final List<CraftHit> craftHits = new ArrayList<>();
     private CraftingDiagnostics.Snapshot graphSnapshot;
     private int graphSource = -1;
     private List<Integer> cachedDependents = List.of();
@@ -50,6 +51,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private AEKey hoveredIcon;
     private Component hoveredTab;
     private Component hoveredText;
+    private Component craftStatus;
     private boolean draggingListScrollbar;
     private PatternView patternView = PatternView.DETAILS;
     private final List<TreeHit> treeHits = new ArrayList<>();
@@ -78,6 +80,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private enum PatternView { DETAILS, TREE }
     private record ProviderHit(int y, int providerIndex) {}
     private record PatternHit(int y, int patternIndex) {}
+    private record CraftHit(int y, AEKey target) {}
     private record TreeHit(int x1, int y1, int x2, int y2, int patternIndex) {}
 
     private static final class TreeNode {
@@ -157,6 +160,31 @@ public final class CraftingDiagnosticsScreen extends Screen {
         if (selectedJob >= snapshot.jobs().size()) selectedJob = -1;
     }
 
+    public void startCraft(AEKey target, long amount) {
+        craftStatus = Component.translatable("screen.forever_production_monitor.crafting.craft_planning", amount);
+        CraftingDiagnosticsNetwork.startCraft(link, target, amount);
+    }
+
+    public void acceptCraftResult(CraftingDiagnosticsNetwork.CraftResult result) {
+        if (!result.dimension().equals(link.dimension()) || !result.pos().equals(link.pos())) return;
+        String key = switch (result.status()) {
+            case STARTED -> "craft_started";
+            case INVALID_AMOUNT -> "craft_invalid_amount";
+            case INVALID_LINK -> "craft_invalid_link";
+            case NETWORK_OFFLINE -> "craft_network_offline";
+            case NOT_CRAFTABLE -> "craft_not_craftable";
+            case MISSING_INGREDIENTS -> "craft_missing";
+            case SUBMIT_FAILED -> "craft_submit_failed";
+            case ERROR -> "craft_error";
+        };
+        craftStatus = result.detail().isEmpty()
+                ? Component.translatable("screen.forever_production_monitor.crafting." + key, result.amount())
+                : Component.translatable("screen.forever_production_monitor.crafting." + key, result.amount(), result.detail());
+        if (result.status() == CraftingDiagnosticsNetwork.CraftStatus.STARTED) {
+            CraftingDiagnosticsNetwork.request(link);
+        }
+    }
+
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         hoveredIcon = null;
@@ -170,6 +198,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
         for (Renderable widget : renderables) widget.render(g, mouseX, mouseY, partialTick);
         providerHits.clear();
         patternHits.clear();
+        craftHits.clear();
         treeHits.clear();
         if (snapshot == null) {
             line(g, tr("loading"), listLeft, contentTop, palette.text(), listRight - listLeft);
@@ -188,8 +217,12 @@ public final class CraftingDiagnosticsScreen extends Screen {
         g.fill(listRight + 3, contentTop - 2, listRight + 4, contentBottom, palette.border());
         drawList(g, mouseX, mouseY);
         drawDetails(g, mouseX, mouseY);
-        line(g, tr("hint_" + section.name().toLowerCase(Locale.ROOT)),
-                listLeft, contentBottom + 10, palette.text(), widthPanel - 36);
+        if (craftStatus != null) {
+            line(g, craftStatus.getString(), listLeft, contentBottom + 10, palette.accentA(), widthPanel - 36);
+        } else {
+            line(g, tr("hint_" + section.name().toLowerCase(Locale.ROOT)),
+                    listLeft, contentBottom + 10, palette.text(), widthPanel - 36);
+        }
         if (hoveredIcon != null) {
             g.renderComponentTooltip(font, AEKeyRendering.getTooltip(hoveredIcon), mouseX, mouseY);
         } else if (hoveredText != null) {
@@ -373,6 +406,10 @@ public final class CraftingDiagnosticsScreen extends Screen {
             var pattern = snapshot.patterns().get(selectedPattern);
             lines.add("[" + pattern.type() + "] " + pattern.output() + " × " + pattern.amount());
             icons.put(0, pattern.outputIcon());
+            if (pattern.outputIcon() != null) {
+                craftHits.add(new CraftHit(lines.size(), pattern.outputIcon()));
+                lines.add("▶ " + tr("craft"));
+            }
             lines.add(tr("inputs") + ":");
             for (int i = 0; i < pattern.inputs().size(); i++) {
                 if (i < pattern.inputIcons().size()) icons.put(lines.size(), pattern.inputIcons().get(i));
@@ -420,6 +457,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
             boolean actionable = false;
             for (ProviderHit hit : providerHits) if (hit.y() == i) actionable = true;
             for (PatternHit hit : patternHits) if (hit.y() == i) actionable = true;
+            for (CraftHit hit : craftHits) if (hit.y() == i) actionable = true;
             int rowY = detailTop + (i - detailScroll) * 18;
             if (actionable) {
                 g.fill(x, rowY, x + available, rowY + 17,
@@ -850,6 +888,22 @@ public final class CraftingDiagnosticsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double x, double y, int button) {
+        if (search != null && search.visible && search.active) {
+            boolean overSearch = search.isMouseOver(x, y);
+            if (overSearch && button == 1) {
+                search.setValue("");
+                search.setFocused(true);
+                listScroll = 0;
+                return true;
+            }
+            if (overSearch && button == 0) {
+                search.setFocused(true);
+                return super.mouseClicked(x, y, button);
+            }
+            if (!overSearch && (button == 0 || button == 1)) {
+                search.setFocused(false);
+            }
+        }
         if (super.mouseClicked(x, y, button)) return true;
         if (button != 0 || snapshot == null) return false;
 
@@ -930,6 +984,12 @@ public final class CraftingDiagnosticsScreen extends Screen {
             int activeDetailTop = section == Section.PATTERNS ? contentTop + 24 : contentTop;
             if (y < activeDetailTop) return false;
             int line = (int) (y - activeDetailTop) / 18 + detailScroll;
+            for (CraftHit hit : craftHits) {
+                if (hit.y() == line && hit.target() != null) {
+                    minecraft.setScreen(new MonitorCraftAmountScreen(this, hit.target()));
+                    return true;
+                }
+            }
             for (PatternHit hit : patternHits) {
                 if (hit.y() == line && hit.patternIndex() >= 0
                         && hit.patternIndex() < snapshot.patterns().size()) {
