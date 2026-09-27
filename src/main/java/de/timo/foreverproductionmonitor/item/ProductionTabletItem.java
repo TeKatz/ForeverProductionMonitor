@@ -123,7 +123,7 @@ extends Item {
         return Optional.of(new MonitorLink(dimension, BlockPos.of((long)tag.getLong("pos"))));
     }
 
-    private static UUID getOrCreateTabletId(ItemStack stack) {
+    public static UUID getOrCreateTabletId(ItemStack stack) {
         CompoundTag compoundTag = ((CustomData)stack.getOrDefault(DataComponents.CUSTOM_DATA, (Object)CustomData.EMPTY)).copyTag();
         if (compoundTag.contains(TABLET_ID_TAG)) {
             try {
