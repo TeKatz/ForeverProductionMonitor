@@ -349,7 +349,7 @@
   ,"screen.forever_production_monitor.crafting.fit": "Fit"
   ,"screen.forever_production_monitor.crafting.select_pattern_tree": "Pattern auswählen, um den Crafting Tree anzuzeigen."
   ,"screen.forever_production_monitor.crafting.tree_unavailable": "Für dieses Pattern ist kein Crafting Tree verfügbar."
-  ,"screen.forever_production_monitor.crafting.tree_controls": "Ziehen zum Verschieben · Mausrad scrollt · Shift+Mausrad horizontal"
+  ,"screen.forever_production_monitor.crafting.tree_controls": "Ziehen zum Verschieben · Strg+Mausrad zoomt · Mausrad scrollt · Shift+Mausrad horizontal"
   ,"screen.forever_production_monitor.crafting.tree_limited": "Tree-Ansicht aus Performancegründen begrenzt."
   ,"screen.forever_production_monitor.crafting.recipe_options": "Rezeptoptionen"
   ,"screen.forever_production_monitor.crafting.requires": "Pattern-Voraussetzungen"
