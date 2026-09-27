@@ -539,7 +539,6 @@ public final class CraftingDiagnosticsScreen extends Screen {
         g.fill(x, y, x + width, y + height, selected ? palette.accentA() : palette.border());
         g.fill(x + 1, y + 1, x + width - 1, y + height - 1,
                 selected || hover ? palette.tableHeader() : palette.summary());
-        if (selected) g.fill(x + 3, y + height - 2, x + width - 3, y + height, palette.accentB());
         centered(g, label, x + width / 2, y + 6, palette.text());
     }
 
@@ -1136,9 +1135,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
             g.fill(x, y, x + getWidth(), y + getHeight(), selected ? palette.accentA() : palette.border());
             g.fill(x + 1, y + 1, x + getWidth() - 1, y + getHeight() - 1,
                     selected ? palette.tableHeader() : palette.summary());
-            if (selected) g.fill(x + 3, y + getHeight() - 2, x + getWidth() - 3,
-                    y + getHeight(), palette.accentB());
-            g.renderItem(icon, x + 4, y + 1);
+            g.renderItem(icon, x + 4, y + 2);
             String label = getMessage().getString();
             int textWidth = Math.max(1, getWidth() - 28);
             g.drawString(font, font.plainSubstrByWidth(label, textWidth), x + 24, y + 6,
