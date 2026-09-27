@@ -42,15 +42,19 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private int left, top, widthPanel, heightPanel, listLeft, listRight, detailsLeft, contentTop, contentBottom;
     private List<Integer> visibleIndexes = List.of();
     private final List<ProviderHit> providerHits = new ArrayList<>();
+    private final List<PatternHit> patternHits = new ArrayList<>();
     private CraftingDiagnostics.Snapshot graphSnapshot;
     private int graphSource = -1;
     private List<Integer> cachedDependents = List.of();
     private boolean cachedCycle;
     private AEKey hoveredIcon;
     private Component hoveredTab;
+    private Component hoveredText;
+    private boolean draggingListScrollbar;
 
     private enum Section { JOBS, PATTERNS, PROVIDERS }
     private record ProviderHit(int y, int providerIndex) {}
+    private record PatternHit(int y, int patternIndex) {}
 
     public CraftingDiagnosticsScreen(ProductionMonitorScreen parent, ProductionTabletItem.MonitorLink link) {
         super(Component.translatable("screen.forever_production_monitor.crafting.title"));
@@ -113,6 +117,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         hoveredIcon = null;
         hoveredTab = null;
+        hoveredText = null;
         var palette = InterfaceTheme.current();
         g.fill(0, 0, width, height, palette.backdrop());
         InterfaceTheme.drawPanel(g, left, top, widthPanel, heightPanel,
@@ -120,6 +125,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
         centered(g, title.getString(), left + widthPanel / 2, top + 13, palette.text());
         for (Renderable widget : renderables) widget.render(g, mouseX, mouseY, partialTick);
         providerHits.clear();
+        patternHits.clear();
         if (snapshot == null) {
             line(g, tr("loading"), listLeft, contentTop, palette.text(), listRight - listLeft);
             renderTabTooltip(g, mouseX, mouseY);
@@ -141,6 +147,8 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 listLeft, contentBottom + 10, palette.text(), widthPanel - 36);
         if (hoveredIcon != null) {
             g.renderComponentTooltip(font, AEKeyRendering.getTooltip(hoveredIcon), mouseX, mouseY);
+        } else if (hoveredText != null) {
+            g.renderTooltip(font, hoveredText, mouseX, mouseY);
         }
         renderTabTooltip(g, mouseX, mouseY);
     }
@@ -148,35 +156,48 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private void drawList(GuiGraphics g, int mouseX, int mouseY) {
         var palette = InterfaceTheme.current();
         visibleIndexes = matchingIndexes();
-        int slots = rows();
+        int rowHeight = rowHeight();
+        int slots = rows(rowHeight);
         listScroll = Math.max(0, Math.min(listScroll, Math.max(0, visibleIndexes.size() - slots)));
+        int scrollbarWidth = visibleIndexes.size() > slots ? 8 : 0;
+        int textMax = Math.max(1, listRight - listLeft - 31 - scrollbarWidth);
         g.enableScissor(listLeft, contentTop, listRight, contentBottom);
         for (int row = 0; row < slots && row + listScroll < visibleIndexes.size(); row++) {
             int index = visibleIndexes.get(row + listScroll);
-            int y = contentTop + row * 18;
+            int y = contentTop + row * rowHeight;
             boolean active = section == Section.PROVIDERS ? index == selectedProvider
                     : section == Section.JOBS ? index == selectedJob : index == selectedPattern;
-            if (active) g.fill(listLeft, y, listRight - 3, y + 17, palette.border());
+            if (active) g.fill(listLeft, y, listRight - 3 - scrollbarWidth, y + rowHeight - 1, palette.border());
             AEKey icon = switch (section) {
                 case JOBS -> snapshot.jobs().get(index).targetIcon();
                 case PROVIDERS -> snapshot.providers().get(index).visualIcon();
                 case PATTERNS -> snapshot.patterns().get(index).outputIcon();
             };
-            drawIcon(g, icon, listLeft + 3, y, mouseX, mouseY);
-            String label = switch (section) {
-                case JOBS -> snapshot.jobs().get(index).cpuName() + " · " + snapshot.jobs().get(index).target();
-                case PROVIDERS -> snapshot.providers().get(index).name()
-                        + (snapshot.providers().get(index).active() ? "" : " · " + tr("inactive"));
-                case PATTERNS -> {
+            int iconY = y + Math.max(0, (rowHeight - 16) / 2);
+            drawIcon(g, icon, listLeft + 3, iconY, mouseX, mouseY);
+
+            if (section == Section.JOBS) {
+                var job = snapshot.jobs().get(index);
+                drawTruncated(g, job.target(), listLeft + 23, y + 4,
+                        active ? palette.accentA() : palette.text(), textMax, mouseX, mouseY, y, rowHeight);
+                drawTruncated(g, job.cpuName(), listLeft + 23, y + 17,
+                        palette.textMuted(), textMax, mouseX, mouseY, y, rowHeight);
+            } else {
+                String label;
+                if (section == Section.PROVIDERS) {
+                    var provider = snapshot.providers().get(index);
+                    label = provider.name() + (provider.active() ? "" : " · " + tr("inactive"));
+                } else {
                     var pattern = snapshot.patterns().get(index);
-                    yield "[" + pattern.type() + "] " + pattern.output()
+                    label = "[" + pattern.type() + "] " + pattern.output()
                             + (pattern.multipleProviders() ? " · ×" + pattern.providers().size() : "");
                 }
-            };
-            line(g, label, listLeft + 23, y + 4, active ? palette.accentA() : palette.text(),
-                    listRight - listLeft - 31);
+                drawTruncated(g, label, listLeft + 23, y + 4,
+                        active ? palette.accentA() : palette.text(), textMax, mouseX, mouseY, y, rowHeight);
+            }
         }
         g.disableScissor();
+        drawListScrollbar(g, slots);
         if (visibleIndexes.isEmpty()) {
             line(g, tr("empty"), listLeft + 4, contentTop + 6, palette.text(), listRight - listLeft - 12);
         }
@@ -192,13 +213,46 @@ public final class CraftingDiagnosticsScreen extends Screen {
         if (section == Section.JOBS) {
             if (selectedJob >= 0 && selectedJob < snapshot.jobs().size()) {
                 var job = snapshot.jobs().get(selectedJob);
+                lines.add(job.target());
+                if (job.targetIcon() != null) icons.put(0, job.targetIcon());
+                lines.add(tr("job_active"));
+                lines.add("");
+                lines.add(tr("cpu") + ":");
                 lines.add(job.cpuName());
-                lines.add(tr("target") + ": " + job.target());
-                if (job.targetIcon() != null) icons.put(lines.size() - 1, job.targetIcon());
                 lines.add(tr("storage") + ": " + job.storage() + " bytes");
                 lines.add(tr("coprocessors") + ": " + job.coProcessors());
+
+                List<Integer> directPatterns = matchingJobPatterns(job);
+                Set<Integer> graphPatterns = collectDependencyGraph(directPatterns);
+                Set<Integer> graphProviders = new HashSet<>();
+                for (int patternIndex : graphPatterns) {
+                    if (patternIndex < 0 || patternIndex >= snapshot.patterns().size()) continue;
+                    graphProviders.addAll(snapshot.patterns().get(patternIndex).providers());
+                }
+
                 lines.add("");
-                lines.addAll(wrap(tr("job_limit"), available));
+                lines.add(tr("recipe_context") + ":");
+                lines.add(tr("direct_recipes") + ": " + directPatterns.size());
+                lines.add(tr("prerequisite_patterns") + ": "
+                        + Math.max(0, graphPatterns.size() - directPatterns.size()));
+                lines.add(tr("related_providers") + ": " + graphProviders.size());
+
+                if (!directPatterns.isEmpty()) {
+                    lines.add("");
+                    lines.add(tr("matching_patterns") + ":");
+                    for (int patternIndex : directPatterns) {
+                        if (patternIndex < 0 || patternIndex >= snapshot.patterns().size()) continue;
+                        var pattern = snapshot.patterns().get(patternIndex);
+                        patternHits.add(new PatternHit(lines.size(), patternIndex));
+                        icons.put(lines.size(), pattern.outputIcon());
+                        lines.add("↗ [" + pattern.type() + "] " + pattern.output());
+                    }
+                } else {
+                    lines.add(tr("no_matching_pattern"));
+                }
+
+                lines.add("");
+                lines.addAll(wrap(tr("job_limit"), available - 8));
             } else lines.add(tr("select_job"));
         } else if (section == Section.PROVIDERS) {
             if (selectedProvider >= 0 && selectedProvider < snapshot.providers().size()) {
@@ -272,6 +326,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
         for (int i = detailScroll; i < lines.size() && i < detailScroll + maxLines; i++) {
             boolean actionable = false;
             for (ProviderHit hit : providerHits) if (hit.y() == i) actionable = true;
+            for (PatternHit hit : patternHits) if (hit.y() == i) actionable = true;
             int rowY = contentTop + (i - detailScroll) * 18;
             if (actionable) {
                 g.fill(x, rowY, x + available, rowY + 17,
@@ -283,10 +338,78 @@ public final class CraftingDiagnosticsScreen extends Screen {
             AEKey icon = icons.get(i);
             if (icon != null) drawIcon(g, icon, x, rowY, mouseX, mouseY);
             int inset = icon == null ? 0 : 20;
-            line(g, lines.get(i), x + inset, rowY + 4,
-                    actionable ? palette.accentA() : palette.text(), available - inset);
+            drawTruncated(g, lines.get(i), x + inset, rowY + 4,
+                    actionable ? palette.accentA() : palette.text(), available - inset - 8,
+                    mouseX, mouseY, rowY, 18);
         }
         g.disableScissor();
+        drawDetailScrollbar(g, lines.size(), maxLines);
+    }
+
+    private int rowHeight() {
+        return section == Section.JOBS ? 30 : 18;
+    }
+
+    private int rows(int rowHeight) {
+        return Math.max(1, (contentBottom - contentTop) / rowHeight);
+    }
+
+    private void drawTruncated(GuiGraphics g, String value, int x, int y, int color, int maxWidth,
+                               int mouseX, int mouseY, int rowY, int rowHeight) {
+        int width = Math.max(1, maxWidth);
+        String rendered = font.plainSubstrByWidth(value, width);
+        if (font.width(value) > width && font.width(rendered + "…") <= width) rendered += "…";
+        g.drawString(font, rendered, x, y, color, false);
+        if (font.width(value) > width && mouseX >= x && mouseX < x + width
+                && mouseY >= rowY && mouseY < rowY + rowHeight) {
+            hoveredText = Component.literal(value);
+        }
+    }
+
+    private void drawListScrollbar(GuiGraphics g, int visibleRows) {
+        if (visibleIndexes.size() <= visibleRows) return;
+        var palette = InterfaceTheme.current();
+        int trackX = listRight - 7;
+        int trackY = contentTop;
+        int trackHeight = contentBottom - contentTop;
+        int thumbHeight = Math.max(20, trackHeight * visibleRows / visibleIndexes.size());
+        int maxScroll = Math.max(1, visibleIndexes.size() - visibleRows);
+        int thumbY = trackY + (trackHeight - thumbHeight) * listScroll / maxScroll;
+        g.fill(trackX, trackY, trackX + 4, trackY + trackHeight, palette.summary());
+        g.fill(trackX, thumbY, trackX + 4, thumbY + thumbHeight, palette.accentA());
+    }
+
+    private void drawDetailScrollbar(GuiGraphics g, int totalLines, int visibleLines) {
+        if (totalLines <= visibleLines) return;
+        var palette = InterfaceTheme.current();
+        int trackX = left + widthPanel - 20;
+        int trackHeight = contentBottom - contentTop;
+        int thumbHeight = Math.max(20, trackHeight * visibleLines / totalLines);
+        int maxScroll = Math.max(1, totalLines - visibleLines);
+        int thumbY = contentTop + (trackHeight - thumbHeight) * detailScroll / maxScroll;
+        g.fill(trackX, contentTop, trackX + 4, contentBottom, palette.summary());
+        g.fill(trackX, thumbY, trackX + 4, thumbY + thumbHeight, palette.accentA());
+    }
+
+    private List<Integer> matchingJobPatterns(CraftingDiagnostics.Job job) {
+        if (job.targetIcon() == null) return List.of();
+        List<Integer> matches = new ArrayList<>();
+        for (int i = 0; i < snapshot.patterns().size(); i++) {
+            AEKey output = snapshot.patterns().get(i).outputIcon();
+            if (job.targetIcon().equals(output)) matches.add(i);
+        }
+        return matches;
+    }
+
+    private Set<Integer> collectDependencyGraph(List<Integer> roots) {
+        Set<Integer> found = new HashSet<>();
+        ArrayDeque<Integer> queue = new ArrayDeque<>(roots);
+        while (!queue.isEmpty()) {
+            int current = queue.removeFirst();
+            if (current < 0 || current >= snapshot.patterns().size() || !found.add(current)) continue;
+            queue.addAll(snapshot.patterns().get(current).dependencies());
+        }
+        return found;
     }
 
     private List<Integer> matchingIndexes() {
@@ -342,7 +465,6 @@ public final class CraftingDiagnosticsScreen extends Screen {
         return false;
     }
 
-    private int rows() { return Math.max(1, (contentBottom - contentTop) / 18); }
     private String yes(boolean value) { return tr(value ? "yes" : "no"); }
     private String tr(String name) {
         return Component.translatable("screen.forever_production_monitor.crafting." + name).getString();
@@ -381,8 +503,13 @@ public final class CraftingDiagnosticsScreen extends Screen {
     public boolean mouseClicked(double x, double y, int button) {
         if (super.mouseClicked(x, y, button)) return true;
         if (button != 0 || snapshot == null || y < contentTop || y >= contentBottom) return false;
+        if (x >= listRight - 10 && x < listRight && visibleIndexes.size() > rows(rowHeight())) {
+            draggingListScrollbar = true;
+            setListScrollFromMouse(y);
+            return true;
+        }
         if (x >= listLeft && x < listRight) {
-            int row = (int) (y - contentTop) / 18 + listScroll;
+            int row = (int) (y - contentTop) / rowHeight() + listScroll;
             if (row >= 0 && row < visibleIndexes.size()) {
                 int index = visibleIndexes.get(row);
                 if (section == Section.JOBS) selectedJob = index;
@@ -393,6 +520,17 @@ public final class CraftingDiagnosticsScreen extends Screen {
             }
         } else if (x >= detailsLeft) {
             int line = (int) (y - contentTop) / 18 + detailScroll;
+            for (PatternHit hit : patternHits) {
+                if (hit.y() == line && hit.patternIndex() >= 0
+                        && hit.patternIndex() < snapshot.patterns().size()) {
+                    section = Section.PATTERNS;
+                    selectedPattern = hit.patternIndex();
+                    listScroll = Math.max(0, selectedPattern - rows(rowHeight()) / 2);
+                    detailScroll = 0;
+                    if (search != null) search.setValue("");
+                    return true;
+                }
+            }
             for (ProviderHit hit : providerHits) {
                 if (hit.y() != line || hit.providerIndex() < 0
                         || hit.providerIndex() >= snapshot.providers().size()) continue;
@@ -404,6 +542,38 @@ public final class CraftingDiagnosticsScreen extends Screen {
             }
         }
         return false;
+    }
+
+    private void setListScrollFromMouse(double mouseY) {
+        int visibleRows = rows(rowHeight());
+        int maxScroll = Math.max(0, visibleIndexes.size() - visibleRows);
+        if (maxScroll == 0) {
+            listScroll = 0;
+            return;
+        }
+        int trackHeight = contentBottom - contentTop;
+        int thumbHeight = Math.max(20, trackHeight * visibleRows / Math.max(1, visibleIndexes.size()));
+        double usable = Math.max(1, trackHeight - thumbHeight);
+        double fraction = (mouseY - contentTop - thumbHeight / 2.0) / usable;
+        listScroll = (int) Math.round(Math.max(0.0, Math.min(1.0, fraction)) * maxScroll);
+    }
+
+    @Override
+    public boolean mouseDragged(double x, double y, int button, double dragX, double dragY) {
+        if (button == 0 && draggingListScrollbar) {
+            setListScrollFromMouse(y);
+            return true;
+        }
+        return super.mouseDragged(x, y, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double x, double y, int button) {
+        if (button == 0 && draggingListScrollbar) {
+            draggingListScrollbar = false;
+            return true;
+        }
+        return super.mouseReleased(x, y, button);
     }
 
     @Override
