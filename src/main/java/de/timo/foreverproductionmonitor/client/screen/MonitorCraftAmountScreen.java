@@ -66,7 +66,7 @@ public final class MonitorCraftAmountScreen extends Screen {
     }
 
     private void clearAmount() {
-        amount.setValue("0");
+        amount.setValue("");
         amount.setFocused(true);
     }
 
@@ -94,9 +94,31 @@ public final class MonitorCraftAmountScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // Modal sub-screen: the diagnostics screen is rendered manually below.
+        // Do not invoke Screen's vanilla background path because it applies the world/menu blur.
+    }
+
+    @Override
+    protected void renderBlurredBackground(float partialTick) {
+        // Intentionally disabled for this modal.
+    }
+
+    @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        parent.render(g, -1, -1, partialTick);
         var palette = InterfaceTheme.current();
+
+        // Keep the diagnostics screen visible as context, but force every parent element
+        // (including item renders with their own positive z offsets) behind the modal.
+        g.pose().pushPose();
+        g.pose().translate(0.0F, 0.0F, -400.0F);
+        parent.render(g, -1, -1, partialTick);
+        g.pose().popPose();
+
+        // Dim without blurring.
+        g.fill(0, 0, width, height, palette.backdrop());
+
+        // The themed panel can be translucent, so give the modal an opaque base first.
         int opaquePanel = 0xFF000000 | (palette.panel() & 0x00FFFFFF);
         g.fill(left - 2, top - 2, left + panelWidth + 2, top + panelHeight + 2, opaquePanel);
         InterfaceTheme.drawPanel(g, left, top, panelWidth, panelHeight,
