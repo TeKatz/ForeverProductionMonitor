@@ -329,6 +329,11 @@
   ,"screen.forever_production_monitor.crafting.channel": "Channel requirement met"
   ,"screen.forever_production_monitor.crafting.booted": "Network booted"
   ,"screen.forever_production_monitor.crafting.priority": "Pattern priority"
+  ,"screen.forever_production_monitor.crafting.provider_status": "Provider status"
+  ,"screen.forever_production_monitor.crafting.provider_patterns": "Pattern inventory"
+  ,"screen.forever_production_monitor.crafting.crafting_patterns": "Crafting patterns"
+  ,"screen.forever_production_monitor.crafting.processing_patterns": "Processing patterns"
+  ,"screen.forever_production_monitor.crafting.hosted_patterns": "Hosted patterns"
   ,"screen.forever_production_monitor.crafting.no_location": "No physical node position available."
   ,"screen.forever_production_monitor.crafting.locate": "Locate in Network Map ↗"
   ,"screen.forever_production_monitor.crafting.select_provider": "Select a provider."
@@ -350,5 +355,5 @@
   ,"screen.forever_production_monitor.crafting.hint_jobs": "Select a crafting job to inspect its CPU and recipe context."
   ,"screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern to inspect inputs, outputs, providers and dependencies."
   ,"screen.forever_production_monitor.crafting.hint_dependents": "Select a pattern to inspect prerequisites and reverse dependencies."
-  ,"screen.forever_production_monitor.crafting.hint_providers": "Select a provider, then click Locate in Network Map."
+  ,"screen.forever_production_monitor.crafting.hint_providers": "Select a provider to inspect status and hosted patterns; use Locate for the Network Map."
 }
