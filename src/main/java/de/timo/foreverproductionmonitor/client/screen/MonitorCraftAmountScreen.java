@@ -30,13 +30,17 @@ public final class MonitorCraftAmountScreen extends Screen {
         left = (width - panelWidth) / 2;
         top = (height - panelHeight) / 2;
 
-        amount = new EditBox(font, left + 24, top + 72, panelWidth - 48, 22,
+        int clearWidth = 58;
+        amount = new EditBox(font, left + 24, top + 72, panelWidth - 52 - clearWidth, 22,
                 Component.translatable("screen.forever_production_monitor.crafting.amount"));
         amount.setMaxLength(10);
         amount.setFilter(value -> value.isEmpty() || value.chars().allMatch(Character::isDigit));
         amount.setValue("1");
         amount.setFocused(true);
         addRenderableWidget(amount);
+        addRenderableWidget(ForeverButton.create(Component.literal("Clear"),
+                button -> clearAmount(), ForeverButton.Style.SECONDARY,
+                left + panelWidth - 24 - clearWidth, top + 72, clearWidth, 22));
 
         int presetY = top + 101;
         long[] presets = {1L, 10L, 32L, 64L, 128L, 1_000L, 10_000L};
@@ -59,6 +63,11 @@ public final class MonitorCraftAmountScreen extends Screen {
                 Component.translatable("gui.cancel"),
                 button -> minecraft.setScreen(parent), ForeverButton.Style.SECONDARY,
                 left + 28 + buttonWidth, buttonY, buttonWidth, 22));
+    }
+
+    private void clearAmount() {
+        amount.setValue("0");
+        amount.setFocused(true);
     }
 
     private void addAmount(long delta) {
@@ -88,7 +97,8 @@ public final class MonitorCraftAmountScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         parent.render(g, -1, -1, partialTick);
         var palette = InterfaceTheme.current();
-        g.fill(0, 0, width, height, palette.backdrop());
+        int opaquePanel = 0xFF000000 | (palette.panel() & 0x00FFFFFF);
+        g.fill(left - 2, top - 2, left + panelWidth + 2, top + panelHeight + 2, opaquePanel);
         InterfaceTheme.drawPanel(g, left, top, panelWidth, panelHeight,
                 (ClientConfig.InterfaceStyle) ClientConfig.VALUES.interfaceStyle.get(), palette);
         g.drawCenteredString(font, title, left + panelWidth / 2, top + 16, palette.text());
