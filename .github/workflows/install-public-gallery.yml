@@ -1,0 +1,35 @@
+name: Install public 4.2 gallery
+
+on:
+  push:
+    paths:
+      - ".github/workflows/install-public-gallery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gallery assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/images
+          unzip -o .github/gallery-public-4.2.zip -d docs/images
+          rm -f docs/images/feature-gallery.webp
+          rm -f .github/gallery-public-4.2.zip
+          rm -f .github/workflows/install-public-gallery.yml
+
+      - name: Commit installed assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: install refreshed 4.2 public gallery"
+          git push
