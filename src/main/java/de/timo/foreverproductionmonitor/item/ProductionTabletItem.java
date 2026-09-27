@@ -28,13 +28,17 @@ import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity
 import de.timo.foreverproductionmonitor.client.ClientTabletHooks;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -49,6 +53,7 @@ import net.minecraft.world.level.Level;
 public final class ProductionTabletItem
 extends Item {
     private static final String LINK_TAG = "ForeverProductionMonitorLink";
+    private static final String TABLET_ID_TAG = "ForeverProductionMonitorTabletId";
 
     public ProductionTabletItem(Item.Properties properties) {
         super(properties);
@@ -56,9 +61,16 @@ extends Item {
 
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
-        if (level.getBlockEntity(context.getClickedPos()) instanceof ProductionMonitorBlockEntity) {
-            if (!level.isClientSide) {
-                ProductionTabletItem.bind(context.getItemInHand(), new MonitorLink(level.dimension().location(), context.getClickedPos()));
+        if (level.getBlockEntity(context.getClickedPos()) instanceof ProductionMonitorBlockEntity productionMonitorBlockEntity) {
+            if (!level.isClientSide && level instanceof ServerLevel) {
+                ServerLevel serverLevel = (ServerLevel)level;
+                ItemStack itemStack = context.getItemInHand();
+                MonitorLink monitorLink = new MonitorLink(level.dimension().location(), context.getClickedPos());
+                Optional<MonitorLink> optional = ProductionTabletItem.getLink(itemStack);
+                UUID uUID = ProductionTabletItem.getOrCreateTabletId(itemStack);
+                optional.ifPresent(oldLink -> ProductionTabletItem.unlinkPreviousMonitor(serverLevel, oldLink, monitorLink, uUID));
+                ProductionTabletItem.bind(itemStack, monitorLink);
+                productionMonitorBlockEntity.linkTablet(uUID);
                 context.getPlayer().displayClientMessage((Component)Component.translatable((String)"message.forever_production_monitor.linked", (Object[])new Object[]{context.getClickedPos().toShortString()}), true);
             }
             return InteractionResult.sidedSuccess((boolean)level.isClientSide);
@@ -109,6 +121,36 @@ extends Item {
             return Optional.empty();
         }
         return Optional.of(new MonitorLink(dimension, BlockPos.of((long)tag.getLong("pos"))));
+    }
+
+    public static UUID getOrCreateTabletId(ItemStack stack) {
+        CompoundTag compoundTag = ((CustomData)stack.getOrDefault(DataComponents.CUSTOM_DATA, (Object)CustomData.EMPTY)).copyTag();
+        if (compoundTag.contains(TABLET_ID_TAG)) {
+            try {
+                return UUID.fromString(compoundTag.getString(TABLET_ID_TAG));
+            }
+            catch (IllegalArgumentException ignored) {
+                // Replace malformed custom data with a fresh stable tablet identity.
+            }
+        }
+        UUID uUID = UUID.randomUUID();
+        CustomData.update((DataComponentType)DataComponents.CUSTOM_DATA, (ItemStack)stack, root -> root.putString(TABLET_ID_TAG, uUID.toString()));
+        return uUID;
+    }
+
+    private static void unlinkPreviousMonitor(ServerLevel currentLevel, MonitorLink oldLink, MonitorLink newLink, UUID tabletId) {
+        if (oldLink.equals(newLink)) {
+            return;
+        }
+        ResourceKey<Level> resourceKey = ResourceKey.create(Registries.DIMENSION, oldLink.dimension());
+        ServerLevel serverLevel = currentLevel.getServer().getLevel(resourceKey);
+        if (serverLevel == null) {
+            return;
+        }
+        serverLevel.getChunkAt(oldLink.pos());
+        if (serverLevel.getBlockEntity(oldLink.pos()) instanceof ProductionMonitorBlockEntity productionMonitorBlockEntity) {
+            productionMonitorBlockEntity.unlinkTablet(tabletId);
+        }
     }
 
     public record MonitorLink(ResourceLocation dimension, BlockPos pos) {

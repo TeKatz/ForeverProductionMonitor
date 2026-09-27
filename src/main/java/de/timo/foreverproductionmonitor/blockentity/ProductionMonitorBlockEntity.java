@@ -55,6 +55,7 @@ import appeng.blockentity.qnb.QuantumBridgeBlockEntity;
 import appeng.core.definitions.AEBlocks;
 import appeng.parts.storagebus.StorageBusPart;
 import de.timo.foreverproductionmonitor.ModContent;
+import de.timo.foreverproductionmonitor.block.ProductionMonitorBlock;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -70,6 +71,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -112,6 +114,7 @@ extends AENetworkedBlockEntity {
     private long deviceSnapshotTick = -1L;
     private DeviceSnapshot deviceSnapshot = DeviceSnapshot.EMPTY;
     private final List<DashboardPin> dashboardPins = new ArrayList<DashboardPin>();
+    private final Set<UUID> linkedTablets = new HashSet<>();
 
     public ProductionMonitorBlockEntity(BlockPos blockPos, BlockState blockState) {
         super((BlockEntityType)ModContent.PRODUCTION_MONITOR_BLOCK_ENTITY.get(), blockPos, blockState);
@@ -138,6 +141,7 @@ extends AENetworkedBlockEntity {
 
     public static void serverTick(Level level, BlockPos blockPos, BlockState blockState, ProductionMonitorBlockEntity productionMonitorBlockEntity) {
         boolean bl;
+        productionMonitorBlockEntity.syncVisualState();
         long l = level.getGameTime();
         int n = productionMonitorBlockEntity.effectiveSampleInterval(l);
         boolean bl2 = bl = productionMonitorBlockEntity.lastSampleTick < 0L && l % (long)n == (long)Math.floorMod(blockPos.asLong(), n);
@@ -436,10 +440,25 @@ extends AENetworkedBlockEntity {
             listTag.add(compoundTag2);
         }
         compoundTag.put("DashboardPins", (Tag)listTag);
+
+        CompoundTag linkedTabletsTag = new CompoundTag();
+        for (UUID tabletId : this.linkedTablets) {
+            linkedTabletsTag.putBoolean(tabletId.toString(), true);
+        }
+        compoundTag.put("LinkedTablets", linkedTabletsTag);
     }
 
     public void loadTag(CompoundTag compoundTag, HolderLookup.Provider provider) {
         this.dashboardPins.clear();
+        this.linkedTablets.clear();
+        CompoundTag linkedTabletsTag = compoundTag.getCompound("LinkedTablets");
+        for (String key : linkedTabletsTag.getAllKeys()) {
+            try {
+                this.linkedTablets.add(UUID.fromString(key));
+            } catch (IllegalArgumentException ignored) {
+                // Ignore malformed legacy/custom data instead of breaking monitor loading.
+            }
+        }
         ListTag listTag = compoundTag.getList("DashboardPins", 10);
         for (int i = 0; i < listTag.size() && this.dashboardPins.size() < 24; ++i) {
             CompoundTag compoundTag2 = listTag.getCompound(i);
@@ -466,6 +485,52 @@ extends AENetworkedBlockEntity {
 
     public boolean isMonitorOnline() {
         return this.getMainNode().isOnline();
+    }
+
+    public void linkTablet(UUID tabletId) {
+        if (tabletId != null && this.linkedTablets.add(tabletId)) {
+            this.setChanged();
+            this.syncVisualState();
+        }
+    }
+
+    public void unlinkTablet(UUID tabletId) {
+        if (tabletId != null && this.linkedTablets.remove(tabletId)) {
+            this.setChanged();
+            this.syncVisualState();
+        }
+    }
+
+    public boolean hasLinkedTablet() {
+        return !this.linkedTablets.isEmpty();
+    }
+
+    private void syncVisualState() {
+        Level level = this.getLevel();
+        if (level == null || level.isClientSide) {
+            return;
+        }
+
+        BlockState state = this.getBlockState();
+        if (!state.hasProperty(ProductionMonitorBlock.VISUAL_STATE)) {
+            return;
+        }
+
+        ProductionMonitorBlock.VisualState visualState;
+        if (!this.isMonitorOnline()) {
+            visualState = ProductionMonitorBlock.VisualState.OFFLINE;
+        } else if (this.hasLinkedTablet()) {
+            visualState = ProductionMonitorBlock.VisualState.LINKED;
+        } else {
+            visualState = ProductionMonitorBlock.VisualState.ONLINE;
+        }
+
+        if (state.getValue(ProductionMonitorBlock.VISUAL_STATE) != visualState) {
+            level.setBlock(
+                    this.getBlockPos(),
+                    state.setValue(ProductionMonitorBlock.VISUAL_STATE, visualState),
+                    Block.UPDATE_CLIENTS);
+        }
     }
 
     public boolean isWarmingUp() {
