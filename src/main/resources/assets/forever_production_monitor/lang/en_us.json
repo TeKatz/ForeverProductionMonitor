@@ -318,7 +318,7 @@
   ,"screen.forever_production_monitor.crafting.job_limit": "AE2 does not expose pending job steps or the provider handling a job through its public API."
   ,"screen.forever_production_monitor.crafting.select_job": "Select a running CPU."
   ,"screen.forever_production_monitor.crafting.power": "Powered"
-  ,"screen.forever_production_monitor.crafting.channel": "Channel present"
+  ,"screen.forever_production_monitor.crafting.channel": "Channel requirement met"
   ,"screen.forever_production_monitor.crafting.booted": "Network booted"
   ,"screen.forever_production_monitor.crafting.priority": "Pattern priority"
   ,"screen.forever_production_monitor.crafting.no_location": "No physical node position available."

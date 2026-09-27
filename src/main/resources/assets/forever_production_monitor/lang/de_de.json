@@ -318,7 +318,7 @@
   ,"screen.forever_production_monitor.crafting.job_limit": "AE2 stellt offene Jobschritte und die Provider-Zuordnung eines Jobs nicht über die öffentliche API bereit."
   ,"screen.forever_production_monitor.crafting.select_job": "Laufende CPU auswählen."
   ,"screen.forever_production_monitor.crafting.power": "Stromversorgung"
-  ,"screen.forever_production_monitor.crafting.channel": "Channel vorhanden"
+  ,"screen.forever_production_monitor.crafting.channel": "Channel-Anforderung erfüllt"
   ,"screen.forever_production_monitor.crafting.booted": "Netzwerk gestartet"
   ,"screen.forever_production_monitor.crafting.priority": "Pattern-Priorität"
   ,"screen.forever_production_monitor.crafting.no_location": "Keine physische Node-Position verfügbar."

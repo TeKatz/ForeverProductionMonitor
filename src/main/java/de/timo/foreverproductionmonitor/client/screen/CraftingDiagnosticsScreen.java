@@ -34,6 +34,10 @@ public final class CraftingDiagnosticsScreen extends Screen {
     private int left, top, widthPanel, heightPanel, listLeft, listRight, detailsLeft, contentTop, contentBottom;
     private List<Integer> visibleIndexes = List.of();
     private final List<ProviderHit> providerHits = new ArrayList<>();
+    private CraftingDiagnostics.Snapshot graphSnapshot;
+    private int graphSource = -1;
+    private List<Integer> cachedDependents = List.of();
+    private boolean cachedCycle;
 
     private enum Section { JOBS, PATTERNS, DEPENDENTS, PROVIDERS }
     private record ProviderHit(int y, int providerIndex) {}
@@ -96,6 +100,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
     public void accept(CraftingDiagnosticsNetwork.Response response) {
         if (!response.dimension().equals(link.dimension()) || !response.pos().equals(link.pos())) return;
         snapshot = response.snapshot();
+        graphSnapshot = null;
         if (selectedPattern >= snapshot.patterns().size()) selectedPattern = -1;
         if (selectedProvider >= snapshot.providers().size()) selectedProvider = -1;
         if (selectedJob >= snapshot.jobs().size()) selectedJob = -1;
@@ -213,6 +218,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
             if (pattern.copies() > 1) lines.add(tr("identical_copies") + ": " + pattern.copies());
             if (pattern.outputVariants()) lines.add(tr("output_variants"));
             if (section == Section.DEPENDENTS) {
+                updateGraph(selectedPattern);
                 lines.add("");
                 lines.add(tr("requires") + ":");
                 for (int dep : pattern.dependencies()) {
@@ -220,10 +226,10 @@ public final class CraftingDiagnosticsScreen extends Screen {
                         lines.add("→ " + snapshot.patterns().get(dep).output());
                 }
                 lines.add(tr("reverse_dependencies") + ":");
-                for (int dependent : dependents(selectedPattern)) {
+                for (int dependent : cachedDependents) {
                     lines.add("← " + snapshot.patterns().get(dependent).output());
                 }
-                if (reachesItself(selectedPattern)) lines.add(tr("cycle"));
+                if (cachedCycle) lines.add(tr("cycle"));
             }
             if (snapshot.limited()) lines.add(tr("partial"));
         } else lines.add(tr("select_pattern"));
@@ -253,6 +259,14 @@ public final class CraftingDiagnosticsScreen extends Screen {
             if (text.toLowerCase(Locale.ROOT).contains(query)) indexes.add(i);
         }
         return indexes;
+    }
+
+    private void updateGraph(int source) {
+        if (graphSnapshot == snapshot && graphSource == source) return;
+        graphSnapshot = snapshot;
+        graphSource = source;
+        cachedDependents = dependents(source);
+        cachedCycle = reachesItself(source);
     }
 
     private List<Integer> dependents(int source) {
