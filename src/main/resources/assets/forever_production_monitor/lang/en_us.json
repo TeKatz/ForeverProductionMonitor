@@ -330,6 +330,7 @@
   ,"screen.forever_production_monitor.crafting.provider_trace": "Pattern providers"
   ,"screen.forever_production_monitor.crafting.multiple_providers": "Identical pattern on multiple providers (informational)."
   ,"screen.forever_production_monitor.crafting.output_variants": "Same output with different inputs (informational)."
+  ,"screen.forever_production_monitor.crafting.dependencies": "Dependencies"
   ,"screen.forever_production_monitor.crafting.requires": "Pattern prerequisites"
   ,"screen.forever_production_monitor.crafting.cycle": "Cycle detected in the visible pattern graph."
   ,"screen.forever_production_monitor.crafting.partial": "Results may be incomplete due to the scan limit."
@@ -339,7 +340,7 @@
   ,"screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse dependencies"
   ,"screen.forever_production_monitor.crafting.identical_copies": "Identical pattern copies (informational)"
   ,"screen.forever_production_monitor.crafting.hint_jobs": "Select a CPU for technical details."
-  ,"screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern; click a provider on the right to locate it on the map."
+  ,"screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern to inspect inputs, outputs, providers and dependencies."
   ,"screen.forever_production_monitor.crafting.hint_dependents": "Select a pattern to inspect prerequisites and reverse dependencies."
   ,"screen.forever_production_monitor.crafting.hint_providers": "Select a provider, then click Locate in Network Map."
 }
