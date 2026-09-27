@@ -153,6 +153,7 @@
   ,"screen.forever_production_monitor.theme.redstone": "Redstone"
   ,"screen.forever_production_monitor.theme.frost": "Frost"
   ,"screen.forever_production_monitor.theme.nature": "Nature"
+  ,"screen.forever_production_monitor.theme.cat": "Cats"
   ,"screen.forever_production_monitor.theme.custom": "Custom"
   ,"screen.forever_production_monitor.theme.hue": "Custom accent: %s°"
   ,"screen.forever_production_monitor.theme.match_hud": "Match compact HUD: %s"
