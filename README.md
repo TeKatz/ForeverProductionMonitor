@@ -1,8 +1,8 @@
 # Forever Production Monitor
 
-**A production, storage and network diagnostics companion for Applied Energistics 2 on Minecraft 1.21.1 / NeoForge.**
+**An AE2 production, storage and network diagnostics companion for Minecraft 1.21.1 / NeoForge.**
 
-Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface.
+Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface. Version 4.2.0 gives the Production Monitor and Tablet a matching industrial look.
 
 > Forever Production Monitor is an unofficial third-party addon for Applied Energistics 2. It is not affiliated with or endorsed by the Applied Energistics 2 development team.
 
@@ -30,6 +30,7 @@ Release changes are documented in [CHANGELOG.md](CHANGELOG.md). For safety and r
 - **Heatmap, search and filters** for exploring large networks.
 - **Camera bookmarks and remembered views** for frequently inspected areas.
 - **Multiple interface themes and animations** with configurable visual options.
+- **Industrial monitor and tablet design** with three functional monitor states: OFFLINE, ONLINE and LINKED.
 
 ## 3D Network Map
 
@@ -54,7 +55,7 @@ Version 4.0.0 includes a dedicated performance pass for large maps: filtered nod
 | Java | **21** |
 | ExtendedAE | Optional; enables Wireless Connector path navigation |
 
-Curios is currently declared as a required dependency by the 4.0.0 mod metadata.
+Curios is declared as a required dependency by the mod metadata.
 
 Forever Production Monitor is currently developed and tested for **NeoForge 1.21.1 only**. Fabric, Forge and other Minecraft versions are not supported by the current release.
 
@@ -78,11 +79,61 @@ If a device reports **Missing Channel**, use the locator from the diagnostics vi
 
 ## Screenshots
 
-![Forever Production Monitor feature gallery](docs/images/feature-gallery.webp)
+### Production Tablet
 
-*Real in-game captures from the development and test worlds. From top to bottom: the interactive 3D Network Map, multidimensional network navigation, Network Events with an alternate theme, Storage Capacity diagnostics, Missing Channel diagnostics, and live item/fluid production monitoring.*
+![Production Tablet front artwork](docs/images/production-tablet.webp)
 
-The screenshots above are ungenerated gameplay captures. They were selected from the same development and test sessions used to validate the mod; the gallery only combines and scales those captures for presentation.
+The redesigned Production Tablet in 4.2.0 matches the monitor block's dark industrial frame and cyan, blue and violet accents. This front artwork is a presentation image; the in-game item uses a 16×16 texture.
+
+### Dashboard
+
+![Dashboard with pinned resources and alarms](docs/images/dashboard.webp)
+
+Pin important resources and check stored amounts, 1-minute averages and alarms at a glance.
+
+### Production
+
+![Live production statistics](docs/images/production.webp)
+
+Follow production and consumption for items, fluids and energy, including live rates and stored totals.
+
+### Storage Capacity
+
+![AE2 storage capacity diagnostics](docs/images/storage-capacity.webp)
+
+Inspect storage bytes, type slots, storage sources and NBT-item diagnostics.
+
+### Channel Devices
+
+![AE2 channel device diagnostics](docs/images/channel-devices.webp)
+
+Review devices, channel usage, power and network status.
+
+### Settings and Mini HUD
+
+![Settings screen with Mini HUD preview](docs/images/settings-mini-hud.webp)
+
+Configure the interface and Mini HUD with a live preview in the settings screen.
+
+### Network Map: device detail
+
+![3D Network Map with a selected ME Controller](docs/images/network-map-detail.webp)
+
+Select a device to inspect its position, network state, channels and idle power.
+
+### Network Map: overview
+
+![3D Network Map overview](docs/images/network-map-overview.webp)
+
+Explore a large AE2 network using the interactive 3D view, search, filters, camera presets and dimension selection.
+
+The interface screenshots are in-game captures from the development and test worlds.
+
+## What's new in 4.2.0
+
+- Redesigned the Production Monitor block and Production Tablet with a matching industrial style.
+- Added functional monitor visuals: **OFFLINE** has dark, static displays; **ONLINE** lights and animates them when the AE2 network is active; **LINKED** also shows a tablet indicator when a tablet is connected.
+- Added subtle animation to the active monitor's displays and accent lights.
 
 ## Development and AI disclosure
 
