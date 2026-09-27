@@ -1,12 +1,15 @@
 package de.timo.foreverproductionmonitor.network;
 
+import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.stacks.AEKey;
+import appeng.me.helpers.PlayerSource;
 import de.timo.foreverproductionmonitor.blockentity.CraftingDiagnostics;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.client.ClientCraftingDiagnosticsState;
 import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,10 +27,17 @@ public final class CraftingDiagnosticsNetwork {
     static void register(PayloadRegistrar registrar) {
         registrar.playToServer(Request.TYPE, Request.CODEC, CraftingDiagnosticsNetwork::handleRequest);
         registrar.playToClient(Response.TYPE, Response.CODEC, CraftingDiagnosticsNetwork::handleResponse);
+        registrar.playToServer(CraftRequest.TYPE, CraftRequest.CODEC, CraftingDiagnosticsNetwork::handleCraftRequest);
+        registrar.playToClient(CraftResult.TYPE, CraftResult.CODEC, CraftingDiagnosticsNetwork::handleCraftResult);
     }
 
     public static void request(ProductionTabletItem.MonitorLink link) {
         PacketDistributor.sendToServer(new Request(link.dimension(), link.pos()));
+    }
+
+    public static void startCraft(ProductionTabletItem.MonitorLink link, AEKey target, long amount) {
+        if (target == null || amount <= 0) return;
+        PacketDistributor.sendToServer(new CraftRequest(link.dimension(), link.pos(), target, amount));
     }
 
     private static void handleRequest(Request request, IPayloadContext context) {
@@ -44,6 +54,94 @@ public final class CraftingDiagnosticsNetwork {
 
     private static void handleResponse(Response response, IPayloadContext context) {
         ClientCraftingDiagnosticsState.accept(response);
+    }
+
+    private static void handleCraftRequest(CraftRequest request, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player)) return;
+            if (request.amount() <= 0 || request.amount() > 1_000_000_000L) {
+                sendCraftResult(player, request, CraftStatus.INVALID_AMOUNT, "");
+                return;
+            }
+
+            ProductionMonitorBlockEntity monitor =
+                    MonitorNetwork.linkedMonitor(player, request.dimension(), request.pos());
+            if (monitor == null) {
+                sendCraftResult(player, request, CraftStatus.INVALID_LINK, "");
+                return;
+            }
+            if (!monitor.isMonitorOnline() || monitor.getMainNode().getGrid() == null) {
+                sendCraftResult(player, request, CraftStatus.NETWORK_OFFLINE, "");
+                return;
+            }
+
+            var grid = monitor.getMainNode().getGrid();
+            var crafting = grid.getCraftingService();
+            if (!crafting.isCraftable(request.target())) {
+                sendCraftResult(player, request, CraftStatus.NOT_CRAFTABLE, "");
+                return;
+            }
+
+            var source = new PlayerSource(player, monitor);
+            final var future = crafting.beginCraftingCalculation(
+                    player.level(),
+                    () -> source,
+                    request.target(),
+                    request.amount(),
+                    CalculationStrategy.REPORT_MISSING_ITEMS);
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    var plan = future.get();
+                    player.server.execute(() -> {
+                        try {
+                            ProductionMonitorBlockEntity current =
+                                    MonitorNetwork.linkedMonitor(player, request.dimension(), request.pos());
+                            if (current == null) {
+                                sendCraftResult(player, request, CraftStatus.INVALID_LINK, "");
+                                return;
+                            }
+                            if (!current.isMonitorOnline() || current.getMainNode().getGrid() == null) {
+                                sendCraftResult(player, request, CraftStatus.NETWORK_OFFLINE, "");
+                                return;
+                            }
+                            if (plan.simulation()) {
+                                sendCraftResult(player, request, CraftStatus.MISSING_INGREDIENTS, "");
+                                return;
+                            }
+
+                            var currentSource = new PlayerSource(player, current);
+                            var submit = current.getMainNode().getGrid().getCraftingService()
+                                    .submitJob(plan, null, null, true, currentSource);
+                            if (submit.successful()) {
+                                sendCraftResult(player, request, CraftStatus.STARTED, "");
+                            } else {
+                                String detail = submit.errorCode() == null ? "" : submit.errorCode().name();
+                                sendCraftResult(player, request, CraftStatus.SUBMIT_FAILED, detail);
+                            }
+                        } catch (Throwable error) {
+                            sendCraftResult(player, request, CraftStatus.ERROR,
+                                    error.getClass().getSimpleName());
+                        }
+                    });
+                } catch (Throwable error) {
+                    player.server.execute(() -> sendCraftResult(player, request, CraftStatus.ERROR,
+                            error.getClass().getSimpleName()));
+                }
+            });
+        });
+    }
+
+    private static void sendCraftResult(ServerPlayer player, CraftRequest request,
+                                        CraftStatus status, String detail) {
+        if (!player.isRemoved()) {
+            PacketDistributor.sendToPlayer(player, new CraftResult(
+                    request.dimension(), request.pos(), request.target(), request.amount(), status, detail));
+        }
+    }
+
+    private static void handleCraftResult(CraftResult response, IPayloadContext context) {
+        ClientCraftingDiagnosticsState.acceptCraftResult(response);
     }
 
     private static void writeText(RegistryFriendlyByteBuf buf, String value) {
@@ -98,6 +196,58 @@ public final class CraftingDiagnosticsNetwork {
                     ResourceLocation.STREAM_CODEC.encode(buf, value.dimension());
                     buf.writeBlockPos(value.pos());
                 }, buf -> new Request(ResourceLocation.STREAM_CODEC.decode(buf), buf.readBlockPos()));
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    public record CraftRequest(ResourceLocation dimension, BlockPos pos,
+                               AEKey target, long amount) implements CustomPacketPayload {
+        public static final Type<CraftRequest> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath("forever_production_monitor", "request_crafting_start"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, CraftRequest> CODEC =
+                StreamCodec.of((buf, value) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, value.dimension());
+                    buf.writeBlockPos(value.pos());
+                    AEKey.STREAM_CODEC.encode(buf, value.target());
+                    buf.writeVarLong(value.amount());
+                }, buf -> new CraftRequest(
+                        ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos(),
+                        AEKey.STREAM_CODEC.decode(buf),
+                        buf.readVarLong()));
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    public enum CraftStatus {
+        STARTED,
+        INVALID_AMOUNT,
+        INVALID_LINK,
+        NETWORK_OFFLINE,
+        NOT_CRAFTABLE,
+        MISSING_INGREDIENTS,
+        SUBMIT_FAILED,
+        ERROR
+    }
+
+    public record CraftResult(ResourceLocation dimension, BlockPos pos, AEKey target,
+                              long amount, CraftStatus status, String detail)
+            implements CustomPacketPayload {
+        public static final Type<CraftResult> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath("forever_production_monitor", "crafting_start_result"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, CraftResult> CODEC =
+                StreamCodec.of((buf, value) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, value.dimension());
+                    buf.writeBlockPos(value.pos());
+                    AEKey.STREAM_CODEC.encode(buf, value.target());
+                    buf.writeVarLong(value.amount());
+                    buf.writeEnum(value.status());
+                    writeText(buf, value.detail());
+                }, buf -> new CraftResult(
+                        ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos(),
+                        AEKey.STREAM_CODEC.decode(buf),
+                        buf.readVarLong(),
+                        buf.readEnum(CraftStatus.class),
+                        buf.readUtf(120)));
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
