@@ -607,9 +607,26 @@ public final class MonitorNetwork {
         for (int i = 0; i < serverPlayer.getInventory().getContainerSize(); ++i) {
             ItemStack itemStack = serverPlayer.getInventory().getItem(i);
             if (!ProductionTabletItem.getLink(itemStack).filter(monitorLink -> monitorLink.dimension().equals((Object)resourceLocation) && monitorLink.pos().equals((Object)blockPos)).isPresent()) continue;
+            MonitorNetwork.registerVisualTabletLink(serverPlayer, resourceLocation, blockPos, itemStack);
             return true;
         }
-        return TabletCurios.findEquippedLink((LivingEntity)serverPlayer).filter(monitorLink -> monitorLink.dimension().equals((Object)resourceLocation) && monitorLink.pos().equals((Object)blockPos)).isPresent();
+        Optional<ItemStack> optional = TabletCurios.findEquippedTablet((LivingEntity)serverPlayer);
+        if (optional.isPresent() && ProductionTabletItem.getLink(optional.get()).filter(monitorLink -> monitorLink.dimension().equals((Object)resourceLocation) && monitorLink.pos().equals((Object)blockPos)).isPresent()) {
+            MonitorNetwork.registerVisualTabletLink(serverPlayer, resourceLocation, blockPos, optional.get());
+            return true;
+        }
+        return false;
+    }
+
+    private static void registerVisualTabletLink(ServerPlayer serverPlayer, ResourceLocation resourceLocation, BlockPos blockPos, ItemStack itemStack) {
+        ServerLevel serverLevel = serverPlayer.server.getLevel(ResourceKey.create((ResourceKey)Registries.DIMENSION, (ResourceLocation)resourceLocation));
+        if (serverLevel == null || !serverLevel.hasChunkAt(blockPos)) {
+            return;
+        }
+        BlockEntity blockEntity = serverLevel.getBlockEntity(blockPos);
+        if (blockEntity instanceof ProductionMonitorBlockEntity productionMonitorBlockEntity) {
+            productionMonitorBlockEntity.linkTablet(ProductionTabletItem.getOrCreateTabletId(itemStack));
+        }
     }
 
     private static void sendOffline(ServerPlayer serverPlayer, RequestSnapshot requestSnapshot, Status status) {
