@@ -73,8 +73,8 @@ public final class CraftingDiagnosticsScreen extends Screen {
         contentBottom = top + heightPanel - 38;
         int inner = Math.max(1, widthPanel - 36);
         int gap = 4;
-        int tabWidth = Math.max(1, (inner - 3 * gap) / 4);
-        Section[] sections = Section.values();
+        Section[] sections = { Section.JOBS, Section.PATTERNS, Section.PROVIDERS };
+        int tabWidth = Math.max(1, (inner - (sections.length - 1) * gap) / sections.length);
         for (int i = 0; i < sections.length; i++) {
             Section target = sections[i];
             int x = listLeft + i * (tabWidth + gap);
