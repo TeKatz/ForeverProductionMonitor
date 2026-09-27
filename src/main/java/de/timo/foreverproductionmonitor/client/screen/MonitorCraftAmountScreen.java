@@ -39,16 +39,15 @@ public final class MonitorCraftAmountScreen extends Screen {
         addRenderableWidget(amount);
 
         int presetY = top + 101;
-        int presetWidth = (panelWidth - 54) / 3;
-        addRenderableWidget(ForeverButton.create(Component.literal("1"),
-                button -> amount.setValue("1"), ForeverButton.Style.SECONDARY,
-                left + 24, presetY, presetWidth, 20));
-        addRenderableWidget(ForeverButton.create(Component.literal("64"),
-                button -> amount.setValue("64"), ForeverButton.Style.SECONDARY,
-                left + 27 + presetWidth, presetY, presetWidth, 20));
-        addRenderableWidget(ForeverButton.create(Component.literal("1000"),
-                button -> amount.setValue("1000"), ForeverButton.Style.SECONDARY,
-                left + 30 + presetWidth * 2, presetY, presetWidth, 20));
+        long[] presets = {1L, 10L, 32L, 64L, 128L, 1_000L, 10_000L};
+        int presetGap = 3;
+        int presetWidth = Math.max(1, (panelWidth - 48 - presetGap * (presets.length - 1)) / presets.length);
+        for (int i = 0; i < presets.length; i++) {
+            long delta = presets[i];
+            addRenderableWidget(ForeverButton.create(Component.literal("+" + delta),
+                    button -> addAmount(delta), ForeverButton.Style.SECONDARY,
+                    left + 24 + i * (presetWidth + presetGap), presetY, presetWidth, 20));
+        }
 
         int buttonY = top + 132;
         int buttonWidth = (panelWidth - 52) / 2;
@@ -60,6 +59,17 @@ public final class MonitorCraftAmountScreen extends Screen {
                 Component.translatable("gui.cancel"),
                 button -> minecraft.setScreen(parent), ForeverButton.Style.SECONDARY,
                 left + 28 + buttonWidth, buttonY, buttonWidth, 22));
+    }
+
+    private void addAmount(long delta) {
+        long current;
+        try {
+            current = amount.getValue().isEmpty() ? 0L : Long.parseLong(amount.getValue());
+        } catch (NumberFormatException ignored) {
+            current = 0L;
+        }
+        amount.setValue(Long.toString(Math.min(1_000_000_000L, Math.max(0L, current) + delta)));
+        amount.setFocused(true);
     }
 
     private void startCraft() {
@@ -76,6 +86,7 @@ public final class MonitorCraftAmountScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        parent.render(g, -1, -1, partialTick);
         var palette = InterfaceTheme.current();
         g.fill(0, 0, width, height, palette.backdrop());
         InterfaceTheme.drawPanel(g, left, top, panelWidth, panelHeight,
