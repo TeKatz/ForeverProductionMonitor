@@ -181,7 +181,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 drawTruncated(g, job.target(), listLeft + 23, y + 4,
                         active ? palette.accentA() : palette.text(), textMax, mouseX, mouseY, y, rowHeight);
                 drawTruncated(g, job.cpuName(), listLeft + 23, y + 17,
-                        palette.textMuted(), textMax, mouseX, mouseY, y, rowHeight);
+                        palette.muted(), textMax, mouseX, mouseY, y, rowHeight);
             } else {
                 String label;
                 if (section == Section.PROVIDERS) {
