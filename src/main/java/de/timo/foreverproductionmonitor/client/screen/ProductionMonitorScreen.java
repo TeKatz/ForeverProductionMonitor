@@ -1280,21 +1280,30 @@ extends Screen {
         if (this.contentTransitionRunning()) {
             return super.mouseClicked(d, d2, n);
         }
-        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownClick(d, d2, n)) {
-            return true;
-        }
-        // The map search box is an overlay inside the 3D viewport in 3.3.0.
-        // Give the widget first refusal so camera dragging/zoom never steals search input.
-        if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isMouseOver(d, d2)) {
-            if (n == 1) {
+        if (this.search != null && this.search.visible && this.search.active) {
+            boolean overSearch = this.search.isMouseOver(d, d2);
+            if (overSearch && n == 1) {
                 this.search.setValue("");
                 this.searchDelay = 0;
                 this.search.setFocused(true);
                 this.requestedPage = 0;
-                this.networkMapView.setSearch("");
+                if (this.viewMode == ViewMode.MAP && this.networkMapView != null) {
+                    this.networkMapView.setSearch("");
+                } else {
+                    this.requestNow();
+                }
                 return true;
             }
-            return super.mouseClicked(d, d2, n);
+            if (overSearch && n == 0) {
+                this.search.setFocused(true);
+                return super.mouseClicked(d, d2, n);
+            }
+            if (!overSearch && (n == 0 || n == 1)) {
+                this.search.setFocused(false);
+            }
+        }
+        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownClick(d, d2, n)) {
+            return true;
         }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseClicked(d, d2, n)) {
             return true;
@@ -1347,14 +1356,6 @@ extends Screen {
                     return true;
                 }
             }
-        }
-        if (n == 1 && this.search != null && this.search.isMouseOver(d, d2)) {
-            this.search.setValue("");
-            this.searchDelay = 0;
-            this.search.setFocused(true);
-            this.requestedPage = 0;
-            this.requestNow();
-            return true;
         }
         return super.mouseClicked(d, d2, n);
     }
