@@ -71,6 +71,7 @@ extends Screen {
     private ForeverButton nbtItemsButton;
     private ForeverButton devicesTab;
     private ForeverButton mapTab;
+    private ForeverButton craftingTab;
     private GearButton settingsButton;
     private MonitorNetwork.MonitorSnapshot snapshot;
     private MonitorNetwork.StatisticsSnapshot statisticsSnapshot;
@@ -139,12 +140,13 @@ extends Screen {
         int n = this.contentLeft;
         int n2 = Math.max(5, this.contentRight - this.contentLeft);
         int n3 = 4;
-        int n4 = Math.max(1, (n2 - n3 * 4) / 5);
+        int n4 = Math.max(1, (n2 - n3 * 5) / 6);
         this.dashboardTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18));
         this.productionTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18));
         this.storageTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18));
         this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
         this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
+        this.craftingTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create(Component.translatable("screen.forever_production_monitor.tab.crafting"), button -> this.minecraft.setScreen(new CraftingDiagnosticsScreen(this, this.link)), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 5, this.top + 37, n4, 18));
         this.settingsButton = (GearButton)this.addRenderableWidget(new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
         int n5 = Math.max(60, Math.min(260, n2));
         this.search = new EditBox(this.font, this.left + 18, this.top + 62, n5, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.search"));
@@ -296,6 +298,7 @@ extends Screen {
         this.storageTab.setStyle(this.viewMode == ViewMode.STORAGE || this.viewMode == ViewMode.COMPONENTS ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.devicesTab.setStyle(this.viewMode == ViewMode.DEVICES ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.mapTab.setStyle(this.viewMode == ViewMode.MAP ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
+        this.craftingTab.setStyle(ForeverButton.Style.THEMED);
         this.sortButton.setStyle(ForeverButton.Style.THEMED_ACTIVE);
         this.filterButton.setStyle(ForeverButton.Style.THEMED);
         this.previousButton.setStyle(ForeverButton.Style.THEMED);
@@ -440,6 +443,12 @@ extends Screen {
 
     private void followNetworkPath(ResourceLocation dimension, BlockPos pos) {
         this.switchMapDimension(dimension, pos == null ? null : pos.immutable(), true);
+    }
+
+    public void locateCraftingProvider(ResourceLocation dimension, BlockPos pos) {
+        this.minecraft.setScreen(this);
+        this.switchView(ViewMode.MAP);
+        this.switchMapDimension(dimension, pos.immutable(), true);
     }
 
     private void prepareMapForCurrentDimension() {

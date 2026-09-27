@@ -1099,7 +1099,7 @@ extends AENetworkedBlockEntity {
         return null;
     }
 
-    private static DeviceLocation locationOf(IGridNode iGridNode, Object object) {
+    static DeviceLocation locationOf(IGridNode iGridNode, Object object) {
         Object object2 = ProductionMonitorBlockEntity.invokeNoArg(iGridNode, "getInWorldNode");
         BlockPos blockPos = ProductionMonitorBlockEntity.findBlockPos(object2, 0);
         if (blockPos == null) {

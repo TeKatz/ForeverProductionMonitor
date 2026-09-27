@@ -89,6 +89,7 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(UpdateDashboardPin.TYPE, UpdateDashboardPin.STREAM_CODEC, MonitorNetwork::handleDashboardUpdate);
         payloadRegistrar.playToServer(RequestNetworkMap.TYPE, RequestNetworkMap.STREAM_CODEC, MonitorNetwork::handleNetworkMapRequest);
         payloadRegistrar.playToClient(NetworkMapPayload.TYPE, NetworkMapPayload.STREAM_CODEC, MonitorNetwork::handleNetworkMapSnapshot);
+        CraftingDiagnosticsNetwork.register(payloadRegistrar);
     }
 
     public static void request(ProductionTabletItem.MonitorLink monitorLink, String string, SortMode sortMode, int n, int n2, int n3) {
@@ -125,7 +126,7 @@ public final class MonitorNetwork {
         PacketDistributor.sendToServer((CustomPacketPayload)new UpdateDashboardPin(monitorLink.dimension(), monitorLink.pos(), dashboardAction, entryKind, aEKey, alarmMode, l, n, l2), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
-    private static ProductionMonitorBlockEntity linkedMonitor(ServerPlayer serverPlayer, ResourceLocation resourceLocation, BlockPos blockPos) {
+    static ProductionMonitorBlockEntity linkedMonitor(ServerPlayer serverPlayer, ResourceLocation resourceLocation, BlockPos blockPos) {
         ProductionMonitorBlockEntity productionMonitorBlockEntity;
         if (!MonitorNetwork.hasMatchingTablet(serverPlayer, resourceLocation, blockPos)) {
             return null;
@@ -1418,4 +1419,3 @@ public final class MonitorNetwork {
         }
     }
 }
-
