@@ -408,6 +408,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
             icons.put(0, pattern.outputIcon());
             if (pattern.outputIcon() != null) {
                 craftHits.add(new CraftHit(lines.size(), pattern.outputIcon()));
+                icons.put(lines.size(), pattern.outputIcon());
                 lines.add("▶ " + tr("craft"));
             }
             lines.add(tr("inputs") + ":");
@@ -455,18 +456,33 @@ public final class CraftingDiagnosticsScreen extends Screen {
         g.enableScissor(x, detailTop, left + widthPanel - 16, contentBottom);
         for (int i = detailScroll; i < lines.size() && i < detailScroll + maxLines; i++) {
             boolean actionable = false;
+            boolean craftAction = false;
             for (ProviderHit hit : providerHits) if (hit.y() == i) actionable = true;
             for (PatternHit hit : patternHits) if (hit.y() == i) actionable = true;
-            for (CraftHit hit : craftHits) if (hit.y() == i) actionable = true;
+            for (CraftHit hit : craftHits) {
+                if (hit.y() == i) {
+                    actionable = true;
+                    craftAction = true;
+                }
+            }
             int rowY = detailTop + (i - detailScroll) * 18;
+            boolean hovered = mouseX >= x && mouseX < x + available
+                    && mouseY >= rowY && mouseY < rowY + 17;
+            AEKey icon = icons.get(i);
+            if (craftAction) {
+                g.fill(x, rowY, x + available, rowY + 17, palette.accentA());
+                g.fill(x + 2, rowY + 2, x + available - 2, rowY + 15,
+                        hovered ? palette.tableHeader() : palette.summary());
+                g.fill(x + 2, rowY + 15, x + available - 2, rowY + 17, palette.accentB());
+                if (icon != null) drawIcon(g, icon, x + 4, rowY, mouseX, mouseY);
+                centered(g, lines.get(i), x + available / 2, rowY + 4, palette.text());
+                continue;
+            }
             if (actionable) {
                 g.fill(x, rowY, x + available, rowY + 17,
-                        mouseX >= x && mouseX < x + available
-                                && mouseY >= rowY && mouseY < rowY + 17
-                                ? palette.tableHeader() : palette.summary());
+                        hovered ? palette.tableHeader() : palette.summary());
                 g.renderOutline(x, rowY, available, 17, palette.border());
             }
-            AEKey icon = icons.get(i);
             if (icon != null) drawIcon(g, icon, x, rowY, mouseX, mouseY);
             int inset = icon == null ? 0 : 20;
             drawTruncated(g, lines.get(i), x + inset, rowY + 4,
@@ -523,7 +539,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
         g.fill(x, y, x + width, y + height, selected ? palette.accentA() : palette.border());
         g.fill(x + 1, y + 1, x + width - 1, y + height - 1,
                 selected || hover ? palette.tableHeader() : palette.summary());
-        if (selected) g.fill(x + 2, y + height - 3, x + width - 2, y + height - 1, palette.accentB());
+        if (selected) g.fill(x + 3, y + height - 2, x + width - 3, y + height, palette.accentB());
         centered(g, label, x + width / 2, y + 6, palette.text());
     }
 
@@ -1120,9 +1136,9 @@ public final class CraftingDiagnosticsScreen extends Screen {
             g.fill(x, y, x + getWidth(), y + getHeight(), selected ? palette.accentA() : palette.border());
             g.fill(x + 1, y + 1, x + getWidth() - 1, y + getHeight() - 1,
                     selected ? palette.tableHeader() : palette.summary());
-            if (selected) g.fill(x + 2, y + getHeight() - 3, x + getWidth() - 2,
-                    y + getHeight() - 1, palette.accentB());
-            g.renderItem(icon, x + 4, y + 2);
+            if (selected) g.fill(x + 3, y + getHeight() - 2, x + getWidth() - 3,
+                    y + getHeight(), palette.accentB());
+            g.renderItem(icon, x + 4, y + 1);
             String label = getMessage().getString();
             int textWidth = Math.max(1, getWidth() - 28);
             g.drawString(font, font.plainSubstrByWidth(label, textWidth), x + 24, y + 6,
