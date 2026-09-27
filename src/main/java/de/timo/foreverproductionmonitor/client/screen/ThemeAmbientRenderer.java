@@ -231,21 +231,11 @@ final class ThemeAmbientRenderer {
                 }
             }
             case CAT -> {
-                int cy = y + height / 2;
-                float walk = phase(7600L, 0.28f);
-                int drift = GuiMotion.ambientMotionEnabled()
-                        ? Math.round((float)Math.sin(walk * Math.PI * 2.0) * 2.0f)
-                        : 0;
-                catPaw(graphics, x + 7 + drift, cy - 2, alpha(a, 82), 1);
-                if (width > 54) {
-                    catPaw(graphics, x + width - 15 - drift, cy - 2, alpha(b, 74), 1);
-                }
-                int whiskerAlpha = Math.round(36 + hoverProgress * 70.0f);
-                graphics.fill(x + width - 11, cy - 3, x + width - 4, cy - 2, alpha(palette.accentB(), whiskerAlpha));
-                graphics.fill(x + width - 12, cy + 2, x + width - 4, cy + 3, alpha(palette.accentA(), whiskerAlpha));
-                if (active || hoverProgress > 0.45f) {
-                    catHeart(graphics, x + width / 2, y + 4,
-                            alpha(palette.accentA(), Math.round(54 + hoverProgress * 70.0f)));
+                // Motion stays on the button edge, where it cannot cover its label.
+                if (hoverProgress > 0.01f && width > 22) {
+                    int travel = Math.round((width - 12) * hoverProgress);
+                    graphics.fill(x + 4, bottom, x + 4 + travel, bottom + 1,
+                            alpha(palette.accentB(), 165));
                 }
             }
             case CUSTOM -> {
@@ -381,17 +371,7 @@ final class ThemeAmbientRenderer {
                 leaf(graphics, x + width / 2, bottom - 4, alpha(palette.accentA(), 45), true);
             }
             case CAT -> {
-                int step = Math.max(28, width / 5);
-                for (int i = 0; i < 4; ++i) {
-                    int px = x + 10 + i * step;
-                    if (px > right - 12) break;
-                    int py = y + 6 + (i & 1) * Math.max(5, height / 3);
-                    catPaw(graphics, px, py, alpha(i % 2 == 0 ? palette.accentA() : palette.accentB(), 34), 1);
-                }
-                if (width > 90 && height > 30) {
-                    float tail = phase(9000L, 0.22f);
-                    catTail(graphics, right - 18, bottom - 5, 12, 4, tail, alpha(palette.accentA(), 54));
-                }
+                graphics.fill(x + 2, y + 2, x + 3, bottom - 2, alpha(palette.accentA(), 64));
             }
             case CUSTOM -> {
                 graphics.fill(x + 2, y + 2, x + width / 2, y + 3, a);
@@ -1089,83 +1069,7 @@ final class ThemeAmbientRenderer {
     }
 
     private static void catPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int width = r - l;
-        int height = b - t;
-
-        // A soft trail of paws walks through the background. The low alpha keeps
-        // rows and labels readable while still making the theme unmistakably feline.
-        float walk = phase(26000L, 0.18f);
-        for (int i = 0; i < 8; ++i) {
-            float progress = (walk + i * 0.135f) % 1.0f;
-            int px = l + 10 + Math.round(progress * Math.max(1, width - 24));
-            double arc = Math.sin(progress * Math.PI);
-            int py = b - 18 - (int)Math.round(arc * Math.min(52.0, height * 0.42))
-                    + (int)Math.round(Math.sin((progress + i * 0.17f) * Math.PI * 4.0) * 3.0);
-            int color = (i & 1) == 0 ? p.accentA() : p.accentB();
-            catPaw(g, px, py, alpha(color, 22 + (i % 3) * 7), 1);
-        }
-
-        // A yarn ball rolls and gently bounces along the bottom edge. Its thread
-        // follows behind it and sways independently.
-        float yarnCycle = phase(18000L, 0.32f);
-        float pingPong = 1.0f - Math.abs(yarnCycle * 2.0f - 1.0f);
-        int yarnX = l + 24 + Math.round(pingPong * Math.max(1, width - 58));
-        int yarnBase = b - 15;
-        int yarnY = yarnBase - Math.round(Math.abs((float)Math.sin(yarnCycle * Math.PI * 4.0)) * 5.0f);
-        int threadStart = Math.max(l + 8, yarnX - 34);
-        int prevX = threadStart;
-        int prevY = yarnBase + 2;
-        for (int step = 1; step <= 6; ++step) {
-            int nx = threadStart + (yarnX - threadStart) * step / 6;
-            int ny = yarnBase + 2 + (int)Math.round(Math.sin(step * 0.85 + yarnCycle * Math.PI * 2.0) * 3.0);
-            diagonal(g, prevX, prevY, nx, ny, alpha(p.accentB(), 38));
-            prevX = nx;
-            prevY = ny;
-        }
-        yarnBall(g, yarnX, yarnY, 7, p, yarnCycle);
-
-        // A peeking cat occasionally blinks from the lower-left edge.
-        if (width > 150 && height > 78) {
-            float blinkPhase = phase(6200L, 0.41f);
-            boolean blink = blinkPhase > 0.91f && blinkPhase < 0.965f;
-            int faceX = l + Math.min(54, Math.max(34, width / 7));
-            int faceY = b - 8;
-            float bob = GuiMotion.ambientMotionEnabled()
-                    ? (float)Math.sin(phase(12500L, 0.20f) * Math.PI * 2.0) * 1.5f
-                    : 0.0f;
-            g.pose().pushPose();
-            g.pose().translate(0.0f, bob, 0.0f);
-            catFace(g, faceX, faceY, p, blink, 64);
-            g.pose().popPose();
-        }
-
-        // On larger panels a curled-up sleeping cat breathes slowly in the far
-        // corner while its tail makes a lazy sweep.
-        if (width > 260 && height > 130) {
-            float breathPhase = phase(8400L, 0.26f);
-            float breath = 0.5f + 0.5f * (float)Math.sin(breathPhase * Math.PI * 2.0);
-            int sleepX = r - 58;
-            int sleepY = b - 19;
-            sleepingCat(g, sleepX, sleepY, p, breath);
-            catTail(g, sleepX + 15, sleepY + 5, 24, 7, phase(11200L, 0.34f),
-                    alpha(p.accentA(), motionAlpha(34, 68)));
-
-            // Dream hearts drift upward and fade instead of using generic particles.
-            for (int i = 0; i < 3; ++i) {
-                float dream = (phase(15000L + i * 900L, 0.2f + i * 0.18f) + i * 0.27f) % 1.0f;
-                int hx = sleepX + 18 + i * 7 + (int)Math.round(Math.sin(dream * Math.PI * 2.0) * 3.0);
-                int hy = sleepY - 8 - Math.round(dream * 24.0f);
-                catHeart(g, hx, hy, alpha(i == 1 ? p.accentB() : p.accentA(),
-                        Math.max(12, Math.round((1.0f - dream) * 62.0f))));
-            }
-        }
-
-        // Gentle whisker strokes on both sides frame the panel without becoming a grid.
-        int whiskerY = t + Math.max(22, height / 3);
-        diagonal(g, l + 6, whiskerY, l + 28, whiskerY - 4, alpha(p.accentA(), 25));
-        diagonal(g, l + 6, whiskerY + 5, l + 30, whiskerY + 7, alpha(p.accentB(), 20));
-        diagonal(g, r - 6, whiskerY, r - 28, whiskerY - 4, alpha(p.accentB(), 25));
-        diagonal(g, r - 6, whiskerY + 5, r - 30, whiskerY + 7, alpha(p.accentA(), 20));
+        CatThemeRenderer.drawBody(g, l, t, r, b, p);
     }
 
     private static void customPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
