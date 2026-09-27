@@ -259,6 +259,9 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 var provider = snapshot.providers().get(selectedProvider);
                 lines.add(provider.name());
                 if (provider.visualIcon() != null) icons.put(0, provider.visualIcon());
+
+                lines.add("");
+                lines.add(tr("provider_status") + ":");
                 lines.add(tr("power") + ": " + yes(provider.powered()));
                 lines.add(tr("channel") + ": " + yes(provider.channel()));
                 lines.add(tr("booted") + ": " + yes(provider.booted()));
@@ -266,15 +269,42 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 lines.add(tr("priority") + ": " + provider.priority());
                 lines.add(provider.dimension() == null ? tr("no_location")
                         : provider.dimension() + " · " + provider.pos().toShortString());
-                if (provider.dimension() != null) {
-                    int count = 0;
-                    for (var pattern : snapshot.patterns()) {
-                        if (pattern.providers().contains(selectedProvider)) count++;
-                    }
-                    lines.add(tr("patterns") + ": " + count);
-                    lines.add(tr("locate"));
-                    providerHits.add(new ProviderHit(8, selectedProvider));
+
+                List<Integer> hostedPatterns = new ArrayList<>();
+                int craftingPatterns = 0;
+                int processingPatterns = 0;
+                for (int i = 0; i < snapshot.patterns().size(); i++) {
+                    var pattern = snapshot.patterns().get(i);
+                    if (!pattern.providers().contains(selectedProvider)) continue;
+                    hostedPatterns.add(i);
+                    if ("Crafting".equalsIgnoreCase(pattern.type())) craftingPatterns++;
+                    else if ("Processing".equalsIgnoreCase(pattern.type())) processingPatterns++;
                 }
+
+                lines.add("");
+                lines.add(tr("provider_patterns") + ":");
+                lines.add(tr("pattern_count") + ": " + hostedPatterns.size());
+                lines.add(tr("crafting_patterns") + ": " + craftingPatterns);
+                lines.add(tr("processing_patterns") + ": " + processingPatterns);
+
+                if (!hostedPatterns.isEmpty()) {
+                    lines.add("");
+                    lines.add(tr("hosted_patterns") + ":");
+                    for (int patternIndex : hostedPatterns) {
+                        var pattern = snapshot.patterns().get(patternIndex);
+                        patternHits.add(new PatternHit(lines.size(), patternIndex));
+                        icons.put(lines.size(), pattern.outputIcon());
+                        lines.add("↗ [" + pattern.type() + "] " + pattern.output());
+                    }
+                }
+
+                if (provider.dimension() != null && provider.pos() != null) {
+                    lines.add("");
+                    int locateLine = lines.size();
+                    lines.add(tr("locate"));
+                    providerHits.add(new ProviderHit(locateLine, selectedProvider));
+                }
+                if (snapshot.limited()) lines.add(tr("partial"));
             } else lines.add(tr("select_provider"));
         } else if (selectedPattern >= 0 && selectedPattern < snapshot.patterns().size()) {
             var pattern = snapshot.patterns().get(selectedPattern);
