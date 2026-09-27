@@ -14,4 +14,12 @@ public final class ClientCraftingDiagnosticsState {
             }
         });
     }
+
+    public static void acceptCraftResult(CraftingDiagnosticsNetwork.CraftResult response) {
+        Minecraft.getInstance().execute(() -> {
+            if (Minecraft.getInstance().screen instanceof CraftingDiagnosticsScreen screen) {
+                screen.acceptCraftResult(response);
+            }
+        });
+    }
 }
