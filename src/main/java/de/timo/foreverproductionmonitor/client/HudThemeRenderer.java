@@ -710,40 +710,62 @@ final class HudThemeRenderer {
     }
 
     private static void drawCatFace(GuiGraphics g, int cx, int cy, Colors c, int alpha) {
-        int outline = withAlpha(0xFF19353B, alpha);
-        int face = withAlpha(c.titleText(), alpha);
+        int outline = withAlpha(0xFF173238, alpha);
+        int fur = withAlpha(c.titleText(), alpha);
         int coral = withAlpha(c.accentA(), alpha);
-        int apricot = withAlpha(c.accentB(), Math.max(40, alpha - 20));
-        int eye = withAlpha(0xFF16282C, alpha);
+        int apricot = withAlpha(c.accentB(), Math.max(40, alpha - 16));
+        int eye = withAlpha(0xFF102329, alpha);
 
         float cycle = phase(7600L, 0.24f);
         boolean blink = cycle > 0.91f && cycle < 0.955f;
-        int earWiggle = motionEnabled() && cycle > 0.62f && cycle < 0.69f ? 1 : 0;
+        boolean twitch = motionEnabled() && cycle > 0.62f && cycle < 0.69f;
 
-        // Dark petrol silhouette.
-        g.fill(cx - 6, cy - 4, cx + 7, cy + 6, outline);
-        g.fill(cx - 6, cy - 8 + earWiggle, cx - 1, cy - 4, outline);
-        g.fill(cx + 2, cy - 8, cx + 7, cy - 4, outline);
+        // Pointed feline ears. The previous rectangular ears plus the coloured
+        // face patch read like a cow at HUD scale, so the silhouette now does
+        // most of the work before any facial detail is added.
+        int leftTipY = cy - 9 + (twitch ? 1 : 0);
+        g.fill(cx - 6, leftTipY, cx - 4, cy - 7 + (twitch ? 1 : 0), outline);
+        g.fill(cx - 7, cy - 7 + (twitch ? 1 : 0), cx - 3, cy - 4, outline);
+        g.fill(cx + 4, cy - 9, cx + 6, cy - 7, outline);
+        g.fill(cx + 3, cy - 7, cx + 7, cy - 4, outline);
 
-        // Cream face and warm ear interiors.
-        g.fill(cx - 4, cy - 3, cx + 5, cy + 5, face);
-        g.fill(cx - 4, cy - 6 + earWiggle, cx - 2, cy - 4, coral);
-        g.fill(cx + 3, cy - 6, cx + 5, cy - 4, coral);
-        g.fill(cx + 2, cy - 2, cx + 5, cy + 1, apricot);
+        // Cat head: slightly wider at the cheeks, narrower at the forehead.
+        g.fill(cx - 6, cy - 5, cx + 7, cy + 5, outline);
+        g.fill(cx - 5, cy - 4, cx + 6, cy + 4, fur);
+        g.fill(cx - 4, cy + 3, cx + 5, cy + 6, fur);
 
+        // Small triangular ear interiors, no large facial patch.
+        g.fill(cx - 5, cy - 7 + (twitch ? 1 : 0), cx - 4, cy - 5, coral);
+        g.fill(cx + 4, cy - 7, cx + 5, cy - 5, coral);
+
+        // A subtle warm forehead tuft ties the icon to the current cat palette
+        // without turning into a cow-like spot.
+        g.fill(cx, cy - 4, cx + 2, cy - 2, apricot);
+
+        // Feline eyes are narrow/slanted rather than square.
         if (blink) {
-            g.fill(cx - 3, cy, cx - 1, cy + 1, eye);
-            g.fill(cx + 2, cy, cx + 4, cy + 1, eye);
+            g.fill(cx - 4, cy - 1, cx - 1, cy, eye);
+            g.fill(cx + 2, cy - 1, cx + 5, cy, eye);
         } else {
-            g.fill(cx - 3, cy - 1, cx - 2, cy + 1, eye);
-            g.fill(cx + 3, cy - 1, cx + 4, cy + 1, eye);
+            g.fill(cx - 4, cy - 2, cx - 1, cy, eye);
+            g.fill(cx + 2, cy - 2, cx + 5, cy, eye);
+            g.fill(cx - 3, cy - 2, cx - 2, cy - 1, withAlpha(c.accentB(), alpha));
+            g.fill(cx + 3, cy - 2, cx + 4, cy - 1, withAlpha(c.accentB(), alpha));
         }
 
-        // Coral nose, tiny mouth and restrained whiskers.
-        g.fill(cx, cy + 1, cx + 2, cy + 3, coral);
-        g.fill(cx, cy + 3, cx + 1, cy + 4, eye);
-        g.fill(cx - 5, cy + 2, cx - 2, cy + 3, withAlpha(c.titleText(), alpha / 2));
-        g.fill(cx + 4, cy + 2, cx + 7, cy + 3, withAlpha(c.titleText(), alpha / 2));
+        // Small cat muzzle, nose and mouth.
+        g.fill(cx - 2, cy + 1, cx + 4, cy + 4, withAlpha(c.titleText(), Math.max(40, alpha - 8)));
+        g.fill(cx, cy + 1, cx + 2, cy + 2, coral);
+        g.fill(cx, cy + 2, cx + 1, cy + 4, eye);
+        g.fill(cx - 1, cy + 4, cx, cy + 5, eye);
+        g.fill(cx + 1, cy + 4, cx + 2, cy + 5, eye);
+
+        // Long whiskers are the clearest cat cue at this tiny pixel size.
+        int whisker = withAlpha(c.titleText(), alpha / 2);
+        diagonal(g, cx - 3, cy + 1, cx - 9, cy, whisker);
+        diagonal(g, cx - 3, cy + 3, cx - 9, cy + 4, whisker);
+        diagonal(g, cx + 4, cy + 1, cx + 10, cy, whisker);
+        diagonal(g, cx + 4, cy + 3, cx + 10, cy + 4, whisker);
     }
 
     private static void drawTail(GuiGraphics g, int sx, int sy, int length, int amplitude, float turn, int color) {
