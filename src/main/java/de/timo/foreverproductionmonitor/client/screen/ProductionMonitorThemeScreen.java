@@ -83,7 +83,7 @@ extends Screen {
             this.addRenderableWidget(ForeverButton.create(ProductionMonitorThemeScreen.categoryName(category), button -> {
                 this.category = category;
                 this.rebuildWidgets();
-            }, category == this.category ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED, tabX, this.top + 40, tabWidth, 22));
+            }, category == this.category ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED, tabX, this.top + 40, tabWidth, 22).setRole(ForeverButton.Role.TAB));
         }
         switch (this.category) {
             case GENERAL: {
