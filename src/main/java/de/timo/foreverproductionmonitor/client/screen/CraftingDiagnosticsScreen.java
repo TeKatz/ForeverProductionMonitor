@@ -1135,9 +1135,15 @@ public final class CraftingDiagnosticsScreen extends Screen {
             boolean selected = section == target;
             int x = getX();
             int y = getY();
-            g.fill(x, y, x + getWidth(), y + getHeight(), selected ? palette.accentA() : palette.border());
-            g.fill(x + 1, y + 1, x + getWidth() - 1, y + getHeight() - 1,
-                    selected ? palette.tableHeader() : palette.summary());
+            if ((ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get()
+                    == ClientConfig.InterfaceStyle.CUSTOM) {
+                CustomThemeRenderer.drawTab(g, x, y, getWidth(), getHeight(),
+                        this.active, selected, isHoveredOrFocused() ? 1.0f : 0.0f, palette);
+            } else {
+                g.fill(x, y, x + getWidth(), y + getHeight(), selected ? palette.accentA() : palette.border());
+                g.fill(x + 1, y + 1, x + getWidth() - 1, y + getHeight() - 1,
+                        selected ? palette.tableHeader() : palette.summary());
+            }
             g.renderItem(icon, x + 4, y + 2);
             String label = getMessage().getString();
             int textWidth = Math.max(1, getWidth() - 28);
