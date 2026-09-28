@@ -129,15 +129,27 @@ extends Screen {
                 () -> (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get(),
                 ProductionMonitorThemeScreen::themeName);
         this.addWidget(this.themeDropdown);
+
         boolean customActive = ClientConfig.VALUES.interfaceStyle.get() == ClientConfig.InterfaceStyle.CUSTOM;
-        int itemCount = customActive ? 4 : 1;
+        int itemCount = customActive ? 2 : 1;
         int startY = this.contentTop + 28;
-        int columns = this.gridColumns(3, itemCount, startY);
-        this.addRenderableWidget(new SettingSlider(this.gridX(0, columns), this.gridY(0, columns, startY), this.gridWidth(0, columns), "settings.interface.opacity", 0.55, 1.0, (Double)ClientConfig.VALUES.interfaceOpacity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceOpacity).set(arg_0), true));
+        int columns = this.gridColumns(2, itemCount, startY);
+        this.addRenderableWidget(new SettingSlider(
+                this.gridX(0, columns), this.gridY(0, columns, startY), this.gridWidth(0, columns),
+                "settings.interface.opacity", 0.55, 1.0,
+                (Double)ClientConfig.VALUES.interfaceOpacity.get(),
+                arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceOpacity).set(arg_0), true));
+
         if (customActive) {
-            this.addRenderableWidget(new SettingSlider(this.gridX(1, columns), this.gridY(1, columns, startY), this.gridWidth(1, columns), "settings.custom.primary", 0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomHue.get()).intValue(), d -> ClientConfig.VALUES.interfaceCustomHue.set(((int)Math.round(d))), false));
-            this.addRenderableWidget(new SettingSlider(this.gridX(2, columns), this.gridY(2, columns, startY), this.gridWidth(2, columns), "settings.custom.secondary", 0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get()).intValue(), d -> ClientConfig.VALUES.interfaceCustomSecondaryHue.set(((int)Math.round(d))), false));
-            this.addRenderableWidget(new SettingSlider(this.gridX(3, columns), this.gridY(3, columns, startY), this.gridWidth(3, columns), "settings.custom.brightness", 0.2, 0.9, (Double)ClientConfig.VALUES.interfaceCustomBrightness.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBrightness).set(arg_0), true));
+            this.addRenderableWidget(ForeverButton.create(
+                    ProductionMonitorThemeScreen.translated("settings.custom.open_designer"),
+                    button -> {
+                        if (this.minecraft != null) {
+                            this.minecraft.setScreen(new CustomThemeScreen(this));
+                        }
+                    },
+                    ForeverButton.Style.THEMED_ACTIVE,
+                    this.gridX(1, columns), this.gridY(1, columns, startY), this.gridWidth(1, columns), 20));
         }
         this.previewTop = this.gridY(itemCount - 1, columns, startY) + 28;
     }
@@ -255,13 +267,28 @@ extends Screen {
     }
 
     private void buildAnimations(int n, int n2) {
-        int columns = this.gridColumns(3, 6, this.contentTop);
-        this.addToggle(this.gridX(0, columns), this.gridY(0, columns), this.gridWidth(0, columns), ProductionMonitorThemeScreen.booleanLabel("settings.gui_animations", (Boolean)ClientConfig.VALUES.guiAnimations.get()), () -> ClientConfig.VALUES.guiAnimations.set(!ClientConfig.VALUES.guiAnimations.get()));
-        this.addToggle(this.gridX(1, columns), this.gridY(1, columns), this.gridWidth(1, columns), ProductionMonitorThemeScreen.booleanLabel("settings.animations.update_pulse", (Boolean)ClientConfig.VALUES.updatePulseEnabled.get()), () -> ClientConfig.VALUES.updatePulseEnabled.set(!ClientConfig.VALUES.updatePulseEnabled.get()));
-        this.addRenderableWidget(new SettingSlider(this.gridX(2, columns), this.gridY(2, columns), this.gridWidth(2, columns), "settings.animations.pulse_intensity", 0.0, 1.0, (Double)ClientConfig.VALUES.updatePulseIntensity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.updatePulseIntensity).set(arg_0), true));
-        this.addRenderableWidget(new SettingSlider(this.gridX(3, columns), this.gridY(3, columns), this.gridWidth(3, columns), "settings.animations.pulse_duration", 0.6, 4.0, (Double)ClientConfig.VALUES.updatePulseDuration.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.updatePulseDuration).set(arg_0), true));
-        this.addToggle(this.gridX(4, columns), this.gridY(4, columns), this.gridWidth(4, columns), ProductionMonitorThemeScreen.booleanLabel("settings.animations.ambient_motion", (Boolean)ClientConfig.VALUES.ambientMotionEnabled.get()), () -> ClientConfig.VALUES.ambientMotionEnabled.set(!ClientConfig.VALUES.ambientMotionEnabled.get()));
-        this.addRenderableWidget(new SettingSlider(this.gridX(5, columns), this.gridY(5, columns), this.gridWidth(5, columns), "settings.animations.ambient_intensity", 0.0, 1.0, (Double)ClientConfig.VALUES.ambientMotionIntensity.get(), arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.ambientMotionIntensity).set(arg_0), true));
+        int columns = this.gridColumns(3, 7, this.contentTop);
+        this.addToggle(this.gridX(0, columns), this.gridY(0, columns), this.gridWidth(0, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.gui_animations", (Boolean)ClientConfig.VALUES.guiAnimations.get()),
+                () -> ClientConfig.VALUES.guiAnimations.set(!ClientConfig.VALUES.guiAnimations.get()));
+        this.addToggle(this.gridX(1, columns), this.gridY(1, columns), this.gridWidth(1, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.animations.update_pulse", (Boolean)ClientConfig.VALUES.updatePulseEnabled.get()),
+                () -> ClientConfig.VALUES.updatePulseEnabled.set(!ClientConfig.VALUES.updatePulseEnabled.get()));
+        this.addRenderableWidget(new SettingSlider(this.gridX(2, columns), this.gridY(2, columns), this.gridWidth(2, columns),
+                "settings.animations.pulse_intensity", 0.0, 1.0, (Double)ClientConfig.VALUES.updatePulseIntensity.get(),
+                arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.updatePulseIntensity).set(arg_0), true));
+        this.addRenderableWidget(new SettingSlider(this.gridX(3, columns), this.gridY(3, columns), this.gridWidth(3, columns),
+                "settings.animations.pulse_duration", 0.6, 4.0, (Double)ClientConfig.VALUES.updatePulseDuration.get(),
+                arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.updatePulseDuration).set(arg_0), true));
+        this.addToggle(this.gridX(4, columns), this.gridY(4, columns), this.gridWidth(4, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.animations.ambient_motion", (Boolean)ClientConfig.VALUES.ambientMotionEnabled.get()),
+                () -> ClientConfig.VALUES.ambientMotionEnabled.set(!ClientConfig.VALUES.ambientMotionEnabled.get()));
+        this.addRenderableWidget(new SettingSlider(this.gridX(5, columns), this.gridY(5, columns), this.gridWidth(5, columns),
+                "settings.animations.ambient_intensity", 0.0, 1.0, (Double)ClientConfig.VALUES.ambientMotionIntensity.get(),
+                arg_0 -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.ambientMotionIntensity).set(arg_0), true));
+        this.addToggle(this.gridX(6, columns), this.gridY(6, columns), this.gridWidth(6, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.animations.interactions", (Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()),
+                () -> ClientConfig.VALUES.themeInteractionsEnabled.set(!ClientConfig.VALUES.themeInteractionsEnabled.get()));
     }
 
     private void addToggle(int n, int n2, int n3, Component component, Runnable runnable) {
@@ -392,6 +419,13 @@ extends Screen {
                 ClientConfig.VALUES.interfaceCustomHue.set(((Integer)ClientConfig.VALUES.interfaceCustomHue.getDefault()));
                 ClientConfig.VALUES.interfaceCustomSecondaryHue.set(((Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.getDefault()));
                 ClientConfig.VALUES.interfaceCustomBrightness.set(((Double)ClientConfig.VALUES.interfaceCustomBrightness.getDefault()));
+                ClientConfig.VALUES.interfaceCustomPrimarySaturation.set(((Double)ClientConfig.VALUES.interfaceCustomPrimarySaturation.getDefault()));
+                ClientConfig.VALUES.interfaceCustomSecondarySaturation.set(((Double)ClientConfig.VALUES.interfaceCustomSecondarySaturation.getDefault()));
+                ClientConfig.VALUES.interfaceCustomSurfaceSaturation.set(((Double)ClientConfig.VALUES.interfaceCustomSurfaceSaturation.getDefault()));
+                ClientConfig.VALUES.interfaceCustomContrast.set(((Double)ClientConfig.VALUES.interfaceCustomContrast.getDefault()));
+                ClientConfig.VALUES.interfaceCustomHeaderStrength.set(((Double)ClientConfig.VALUES.interfaceCustomHeaderStrength.getDefault()));
+                ClientConfig.VALUES.interfaceCustomBorderStrength.set(((Double)ClientConfig.VALUES.interfaceCustomBorderStrength.getDefault()));
+                ClientConfig.VALUES.interfaceCustomAccentBrightness.set(((Double)ClientConfig.VALUES.interfaceCustomAccentBrightness.getDefault()));
                 ClientConfig.VALUES.interfaceOpacity.set(((Double)ClientConfig.VALUES.interfaceOpacity.getDefault()));
                 break;
             }
@@ -439,6 +473,7 @@ extends Screen {
                 ClientConfig.VALUES.updatePulseDuration.set(((Double)ClientConfig.VALUES.updatePulseDuration.getDefault()));
                 ClientConfig.VALUES.ambientMotionEnabled.set(((Boolean)ClientConfig.VALUES.ambientMotionEnabled.getDefault()));
                 ClientConfig.VALUES.ambientMotionIntensity.set(((Double)ClientConfig.VALUES.ambientMotionIntensity.getDefault()));
+                ClientConfig.VALUES.themeInteractionsEnabled.set(((Boolean)ClientConfig.VALUES.themeInteractionsEnabled.getDefault()));
             }
         }
         ForeverProductionMonitorClient.refreshHudNow();
@@ -484,6 +519,13 @@ extends Screen {
         ClientConfig.VALUES.interfaceCustomHue.save();
         ClientConfig.VALUES.interfaceCustomSecondaryHue.save();
         ClientConfig.VALUES.interfaceCustomBrightness.save();
+        ClientConfig.VALUES.interfaceCustomPrimarySaturation.save();
+        ClientConfig.VALUES.interfaceCustomSecondarySaturation.save();
+        ClientConfig.VALUES.interfaceCustomSurfaceSaturation.save();
+        ClientConfig.VALUES.interfaceCustomContrast.save();
+        ClientConfig.VALUES.interfaceCustomHeaderStrength.save();
+        ClientConfig.VALUES.interfaceCustomBorderStrength.save();
+        ClientConfig.VALUES.interfaceCustomAccentBrightness.save();
         ClientConfig.VALUES.interfaceOpacity.save();
         ClientConfig.VALUES.guiAnimations.save();
         ClientConfig.VALUES.updatePulseEnabled.save();
@@ -491,6 +533,7 @@ extends Screen {
         ClientConfig.VALUES.updatePulseDuration.save();
         ClientConfig.VALUES.ambientMotionEnabled.save();
         ClientConfig.VALUES.ambientMotionIntensity.save();
+        ClientConfig.VALUES.themeInteractionsEnabled.save();
         ClientConfig.VALUES.matchHudTheme.save();
         ClientConfig.VALUES.defaultTab.save();
         ClientConfig.VALUES.rememberLastTab.save();
@@ -578,6 +621,10 @@ extends Screen {
 
     private void selectInterfaceStyle(ClientConfig.InterfaceStyle interfaceStyle) {
         ClientConfig.VALUES.interfaceStyle.set(interfaceStyle);
+        if (interfaceStyle == ClientConfig.InterfaceStyle.CUSTOM && this.minecraft != null) {
+            this.minecraft.setScreen(new CustomThemeScreen(this));
+            return;
+        }
         this.rebuildWidgets();
     }
 
