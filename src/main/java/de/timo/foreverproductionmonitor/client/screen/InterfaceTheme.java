@@ -14,7 +14,28 @@ public final class InterfaceTheme {
     }
 
     public static Palette current() {
-        return InterfaceTheme.palette((ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get()), (Integer)ClientConfig.VALUES.interfaceCustomHue.get(), (Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get(), (Double)ClientConfig.VALUES.interfaceCustomBrightness.get()).withOpacity((Double)ClientConfig.VALUES.interfaceOpacity.get());
+        ClientConfig.InterfaceStyle style =
+                (ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get());
+        Palette palette;
+        if (style == ClientConfig.InterfaceStyle.CUSTOM) {
+            palette = InterfaceTheme.customPalette(
+                    (Integer)ClientConfig.VALUES.interfaceCustomHue.get(),
+                    (Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomBrightness.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomPrimarySaturation.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomSecondarySaturation.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomSurfaceSaturation.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomContrast.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomHeaderStrength.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomBorderStrength.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomAccentBrightness.get());
+        } else {
+            palette = InterfaceTheme.palette(style,
+                    (Integer)ClientConfig.VALUES.interfaceCustomHue.get(),
+                    (Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get(),
+                    (Double)ClientConfig.VALUES.interfaceCustomBrightness.get());
+        }
+        return palette.withOpacity((Double)ClientConfig.VALUES.interfaceOpacity.get());
     }
 
     public static Palette palette(ClientConfig.InterfaceStyle interfaceStyle, int n) {
@@ -46,16 +67,80 @@ public final class InterfaceTheme {
         };
     }
 
-    private static Palette customPalette(int n, int n2, double d) {
-        float f = (float)Math.floorMod(n, 360) / 360.0f;
-        float f2 = (float)Math.floorMod(n2, 360) / 360.0f;
-        float f3 = (float)Math.max(0.2, Math.min(0.9, d));
-        int n3 = 0xFF000000 | InterfaceTheme.hsv(f, 0.62f, Math.min(1.0f, f3 + 0.4f));
-        int n4 = 0xFF000000 | InterfaceTheme.hsv(f2, 0.52f, Math.min(1.0f, f3 + 0.48f));
-        int n5 = 0xFF000000 | InterfaceTheme.hsv(f, 0.37f, 0.46f);
-        int n6 = 0xFF000000 | InterfaceTheme.hsv(f, 0.25f, f3 * 0.43f);
-        int n7 = 0xFF000000 | InterfaceTheme.hsv(f, 0.15f, f3 * 0.29f);
-        return new Palette(1510344715, -2063597568, -16250354, -233301214, n6, -15855337, InterfaceTheme.darken(n6, 0.82f), n7, InterfaceTheme.darken(n7, 0.82f), 0x66000000 | n3 & 0xFFFFFF, InterfaceTheme.darken(n6, 0.78f), -855819, -6711904, n3, n4, n5);
+    private static Palette customPalette(int primaryHue, int secondaryHue, double brightness) {
+        return InterfaceTheme.customPalette(primaryHue, secondaryHue, brightness,
+                0.62, 0.52, 0.25, 1.0, 1.0, 1.0, 1.0);
+    }
+
+    private static Palette customPalette(int primaryHue, int secondaryHue, double brightness,
+                                         double primarySaturation, double secondarySaturation,
+                                         double surfaceSaturation, double contrast,
+                                         double headerStrength, double borderStrength,
+                                         double accentBrightness) {
+        float primary = (float)Math.floorMod(primaryHue, 360) / 360.0f;
+        float secondary = (float)Math.floorMod(secondaryHue, 360) / 360.0f;
+        float base = (float)Math.max(0.2, Math.min(0.9, brightness));
+        float primarySat = (float)Math.max(0.0, Math.min(1.0, primarySaturation));
+        float secondarySat = (float)Math.max(0.0, Math.min(1.0, secondarySaturation));
+        float surfaceSat = (float)Math.max(0.0, Math.min(0.75, surfaceSaturation));
+        float contrastValue = (float)Math.max(0.65, Math.min(1.45, contrast));
+        float headerValue = (float)Math.max(0.65, Math.min(1.45, headerStrength));
+        float borderValue = (float)Math.max(0.5, Math.min(1.5, borderStrength));
+        float accentValue = (float)Math.max(0.65, Math.min(1.25, accentBrightness));
+
+        float panelV = InterfaceTheme.clamp01(base * 0.43f);
+        float darkFactor = 1.0f / contrastValue;
+        float brightFactor = contrastValue;
+        int panel = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat,
+                InterfaceTheme.clamp01(panelV));
+        int outer = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.88f,
+                InterfaceTheme.clamp01(panelV * 0.72f * darkFactor));
+        int header = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.92f,
+                InterfaceTheme.clamp01(panelV * 1.34f * headerValue * brightFactor));
+        int tableOuter = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.82f,
+                InterfaceTheme.clamp01(panelV * 0.64f * darkFactor));
+        int tableHeader = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat,
+                InterfaceTheme.clamp01(panelV * 1.13f * headerValue * brightFactor));
+        int rowEven = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.74f,
+                InterfaceTheme.clamp01(panelV * 0.84f));
+        int rowOdd = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.68f,
+                InterfaceTheme.clamp01(panelV * 0.70f * darkFactor));
+        int summary = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.88f,
+                InterfaceTheme.clamp01(panelV * 0.98f));
+        int border = 0xFF000000 | InterfaceTheme.hsv(primary, Math.min(1.0f, surfaceSat + 0.12f),
+                InterfaceTheme.clamp01(base * 0.78f * borderValue * brightFactor));
+
+        float primaryAccentV = InterfaceTheme.clamp01((base + 0.40f) * accentValue);
+        float secondaryAccentV = InterfaceTheme.clamp01((base + 0.48f) * accentValue);
+        int accentA = 0xFF000000 | InterfaceTheme.hsv(primary, primarySat, primaryAccentV);
+        int accentB = 0xFF000000 | InterfaceTheme.hsv(secondary, secondarySat, secondaryAccentV);
+        int text = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.10f,
+                InterfaceTheme.clamp01(0.90f + 0.06f * brightFactor));
+        int muted = 0xFF000000 | InterfaceTheme.hsv(primary, surfaceSat * 0.34f,
+                InterfaceTheme.clamp01(0.50f + base * 0.22f));
+        int hover = 0x66000000 | accentA & 0xFFFFFF;
+
+        return new Palette(
+                0x5A06080B,
+                0x85000000,
+                outer,
+                0xF1000000 | panel & 0xFFFFFF,
+                header,
+                tableOuter,
+                tableHeader,
+                rowEven,
+                rowOdd,
+                hover,
+                summary,
+                text,
+                muted,
+                accentA,
+                accentB,
+                border);
+    }
+
+    private static float clamp01(float value) {
+        return Math.max(0.0f, Math.min(1.0f, value));
     }
 
     public static void drawPanel(GuiGraphics guiGraphics, int n, int n2, int n3, int n4, ClientConfig.InterfaceStyle interfaceStyle, Palette palette) {
