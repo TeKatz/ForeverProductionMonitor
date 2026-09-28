@@ -29,11 +29,11 @@ All notable public release changes for Forever Production Monitor are documented
 
 ### Compatibility and validation
 - Minecraft 1.21.1
-- NeoForge 21.1.249+
-- Applied Energistics 2 19.2.17 up to, but not including, 20.0.0
+- NeoForge 21.1.249+; **5.0.0 stable tested successfully with NeoForge 21.1.252**
+- Applied Energistics 2 19.2.17 up to, but not including, 20.0.0; **5.0.0 stable tested successfully with AE2 19.2.18**
 - Curios 9.5.1+
 - ExtendedAE remains optional.
-- 5.0.0 was manually tested in-game before release.
+- 5.0.0 was manually tested in-game before release and subsequently re-tested successfully with AE2 19.2.18 and NeoForge 21.1.252 on Minecraft 1.21.1.
 
 ## 4.0.0
 
