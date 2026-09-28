@@ -22,7 +22,7 @@ final class HudThemeRenderer {
             case STANDARD -> new Colors(0xFF080A0D, 0xFF4F5968, 0xFF14181F, 0xFF202833, 0xFF191F28, 0xFF161B22, 0xFF6E7C90, 0xFF9AA8BA, 0xFFF0F2F5);
             case FOREVER -> new Colors(0xFF07060B, 0xFF684B86, 0xFF121019, 0xFF21182D, 0xFF1A1422, 0xFF16111D, 0xFFE29AE8, 0xFF8E5AC7, 0xFFF4EDF7);
             case AE2 -> new Colors(0xFF08090B, 0xFF727782, 0xFF16181D, 0xFF25282E, 0xFF1B1E24, 0xFF181A20, 0xFFC9CCD3, 0xFF8D929C, 0xFFF2F3F5);
-            case ORITECH -> new Colors(0xFF090806, 0xFF796E5B, 0xFF191713, 0xFF29241C, 0xFF211E18, 0xFF1C1915, 0xFFE1A54A, 0xFFA56E35, 0xFFF0E7D4);
+            case ORITECH -> new Colors(0xFF0D1113, 0xFF4B5B60, 0xFF161B1E, 0xFF252D31, 0xFF171E21, 0xFF13191C, 0xFFFF7A2D, 0xFF45DCE6, 0xFFF2F4F5);
             case MEKANISM -> new Colors(0xFF061012, 0xFF316D77, 0xFF0E1C20, 0xFF153038, 0xFF12262C, 0xFF0F2126, 0xFF5AD1D8, 0xFF6EDB9D, 0xFFE8FFFF);
             case QUANTUM -> new Colors(0xFF060409, 0xFF5B4165, 0xFF15121A, 0xFF241D2C, 0xFF1D1724, 0xFF18131E, 0xFF8C43D6, 0xFFD39DFF, 0xFFF1ECF6);
             case HOLOGRAPHIC -> new Colors(0xFF031014, 0xFF196573, 0xFF071A20, 0xFF0A2931, 0xFF09232A, 0xFF071E24, 0xFF35E5FF, 0xFF8AF6FF, 0xFFE9FEFF);
@@ -86,8 +86,10 @@ final class HudThemeRenderer {
                 g.fill(x + 3, y + 13, x + 12, y + 14, trace);
             }
             case ORITECH -> {
-                g.fill(x + 2, y + 3, x + 4, y + 14, withAlpha(c.accentA(), 74));
-                rivet(g, x + WIDTH - 6, y + 7, withAlpha(c.accentB(), 88));
+                g.fill(x + 2, y + 3, x + 4, y + 14, withAlpha(c.accentA(), 78));
+                g.fill(x + WIDTH - 12, y + 4, x + WIDTH - 4, y + 13, withAlpha(0xFF10171A, 110));
+                g.fill(x + WIDTH - 10, y + 6, x + WIDTH - 6, y + 11,
+                        withAlpha(c.accentB(), 66));
             }
             case MEKANISM -> {
                 g.fill(x + 2, y + 4, x + 4, y + 13, withAlpha(c.accentA(), 58));
@@ -136,7 +138,12 @@ final class HudThemeRenderer {
                 g.fill(cx - 1, cy - 4, cx + 5, cy - 2, trace);
                 g.fill(cx + 3, cy - 2, cx + 5, cy + 4, trace);
             }
-            case ORITECH -> gear(g, cx, cy, 4, withAlpha(c.accentA(), a), withAlpha(c.accentB(), a));
+            case ORITECH -> {
+                g.fill(cx - 5, cy - 5, cx + 6, cy + 6, withAlpha(0xFF11181B, a));
+                g.fill(cx - 5, cy - 5, cx - 3, cy + 6, withAlpha(c.accentA(), a));
+                g.fill(cx - 2, cy - 3, cx + 4, cy + 4, withAlpha(c.border(), a));
+                g.fill(cx, cy - 1, cx + 3, cy + 2, withAlpha(c.accentB(), a));
+            }
             case MEKANISM -> {
                 g.fill(cx - 4, cy - 1, cx + 5, cy + 2, withAlpha(c.border(), a));
                 g.fill(cx - 1, cy - 4, cx + 2, cy + 5, withAlpha(c.accentA(), a));
@@ -237,10 +244,27 @@ final class HudThemeRenderer {
                 controllerTrace(g, x + WIDTH - 18, y + h - 5, -48, -10, traceB, true);
             }
             case ORITECH -> {
-                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.accentA(), 76));
-                rivet(g, x + 4, y + 4, withAlpha(c.accentB(), 94));
-                rivet(g, x + WIDTH - 6, y + h - 6, withAlpha(c.accentA(), 94));
-                gear(g, x + WIDTH - 12, y + 9, 4, withAlpha(c.border(), 88), withAlpha(c.accentB(), 92));
+                // Compact Oritech machine frame: orange structure, cyan powered glass,
+                // and one small travelling gantry carriage instead of repeated dashes.
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.border(), 88));
+                g.fill(x + 2, y + 2, x + 4, y + h - 3, withAlpha(c.accentA(), 82));
+                g.fill(x + 4, y + 3, x + WIDTH - 17, y + 4, withAlpha(c.border(), 54));
+
+                int moduleX = x + WIDTH - 15;
+                g.fill(moduleX, y + 4, x + WIDTH - 4, y + 15, withAlpha(0xFF10171A, 120));
+                g.fill(moduleX + 3, y + 7, x + WIDTH - 7, y + 12,
+                        withAlpha(c.accentB(), motionAlpha(48, 82)));
+
+                float travel = phase(12000L, 0.28f);
+                float pingPong = 0.5f - 0.5f * (float)Math.cos(travel * Math.PI * 2.0);
+                int carriageX = x + 18 + Math.round(pingPong * 82.0f);
+                g.fill(carriageX - 4, y + 4, carriageX + 5, y + 10, withAlpha(0xFF11181B, 112));
+                g.fill(carriageX - 2, y + 6, carriageX + 3, y + 9,
+                        withAlpha(c.accentB(), motionAlpha(46, 78)));
+                g.fill(carriageX, y + 9, carriageX + 1, y + 15, withAlpha(c.border(), 58));
+
+                rivet(g, x + 7, y + h - 7, withAlpha(c.border(), 68));
+                rivet(g, x + WIDTH - 8, y + h - 7, withAlpha(c.border(), 68));
             }
             case MEKANISM -> {
                 g.fill(x + 2, y + 3, x + 4, y + h - 3, withAlpha(c.accentA(), 64));
