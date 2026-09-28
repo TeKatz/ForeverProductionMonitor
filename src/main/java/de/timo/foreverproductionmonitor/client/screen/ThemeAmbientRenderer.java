@@ -520,8 +520,8 @@ final class ThemeAmbientRenderer {
         int railLeft = l + Math.max(18, width / 10);
         int railRight = r - Math.max(24, width / 7);
 
-        // Clean modular frame: Oritech's orange machine structure, graphite casing,
-        // and cyan powered-glass accents instead of repeated industrial dash patterns.
+        // One coherent machine frame. Every animated module is physically attached
+        // to this structure so moving parts never appear to float independently.
         g.fill(railLeft, railTop, railRight, railTop + 3, alpha(p.border(), 78));
         g.fill(railLeft, railTop - 3, railRight, railTop - 1, alpha(p.accentA(), 66));
         g.fill(railLeft, railTop - 2, railLeft + 3, b - 14, alpha(p.accentA(), 58));
@@ -534,63 +534,113 @@ final class ThemeAmbientRenderer {
         rivet(g, railLeft + 4, b - 20, alpha(p.border(), 66));
         rivet(g, railRight - 7, b - 20, alpha(p.border(), 66));
 
-        // Gantry carriage moves smoothly along the upper rail.
-        float gantry = phase(18000L, 0.24f);
-        float travel = 0.5f - 0.5f * (float)Math.cos(gantry * Math.PI * 2.0);
-        int carriageX = railLeft + 18 + Math.round(travel * Math.max(1, railRight - railLeft - 48));
+        // The entire machine runs from one master cycle:
+        // move to station -> lower head -> process -> raise -> return.
+        // This replaces the previous independent timers that could contradict each other.
+        float cycle = phase(16000L, 0.58f);
+
+        float carriageProgress;
+        if (cycle < 0.22f) {
+            carriageProgress = smoothstep(cycle / 0.22f);
+        } else if (cycle < 0.78f) {
+            carriageProgress = 1.0f;
+        } else {
+            carriageProgress = 1.0f - smoothstep((cycle - 0.78f) / 0.22f);
+        }
+
+        float pressProgress;
+        if (cycle < 0.30f || cycle >= 0.78f) {
+            pressProgress = 0.0f;
+        } else if (cycle < 0.42f) {
+            pressProgress = smoothstep((cycle - 0.30f) / 0.12f);
+        } else if (cycle < 0.68f) {
+            pressProgress = 1.0f;
+        } else {
+            pressProgress = 1.0f - smoothstep((cycle - 0.68f) / 0.10f);
+        }
+
+        int homeX = railLeft + 28;
+        int workX = railRight - 42;
+        int carriageX = homeX + Math.round((workX - homeX) * carriageProgress);
         int carriageY = railTop + 7;
+
+        // A fixed work bed makes the processing station part of the machine instead
+        // of a platform that floats around with the moving carriage.
+        int workBedY = Math.min(b - 42, railTop + Math.min(88, Math.max(58, height / 6)));
+        g.fill(workX - 20, workBedY, workX + 21, workBedY + 4, alpha(p.border(), 76));
+        g.fill(workX - 15, workBedY - 3, workX + 16, workBedY, alpha(p.accentA(), 48));
+        g.fill(workX + 20, workBedY + 1, railRight, workBedY + 3, alpha(p.border(), 58));
+        g.fill(workX + 16, workBedY + 4, workX + 19, b - 14, alpha(p.border(), 38));
+
+        // Gantry carriage stays seated on the upper rail.
         g.fill(carriageX - 9, carriageY - 5, carriageX + 10, carriageY + 8, alpha(0xFF151C20, 118));
         g.fill(carriageX - 7, carriageY - 3, carriageX + 8, carriageY + 5, alpha(p.border(), 78));
         g.fill(carriageX - 4, carriageY - 1, carriageX + 5, carriageY + 3,
                 alpha(p.accentB(), motionAlpha(62, 105)));
-        g.fill(carriageX - 2, carriageY + 7, carriageX + 3, carriageY + 20, alpha(p.border(), 70));
 
-        // Processing head cycles vertically over a small work platform.
-        float pressPhase = phase(9200L, 0.34f);
-        float press = 0.5f - 0.5f * (float)Math.cos(pressPhase * Math.PI * 2.0);
-        int headY = carriageY + 17 + Math.round(press * Math.min(28, Math.max(8, height / 7)));
+        // The telescoping shaft now extends all the way to the moving head.
+        int headRetractedY = carriageY + 18;
+        int headExtendedY = Math.max(headRetractedY, workBedY - 10);
+        int headY = headRetractedY + Math.round((headExtendedY - headRetractedY) * pressProgress);
+        g.fill(carriageX - 2, carriageY + 7, carriageX + 3, headY + 1, alpha(p.border(), 70));
         g.fill(carriageX - 7, headY, carriageX + 8, headY + 7, alpha(0xFF10171A, 132));
-        g.fill(carriageX - 4, headY + 2, carriageX + 5, headY + 5,
-                alpha(p.accentA(), 82));
+        g.fill(carriageX - 4, headY + 2, carriageX + 5, headY + 5, alpha(p.accentA(), 82));
         g.fill(carriageX - 2, headY + 6, carriageX + 3, headY + 10,
                 alpha(p.accentB(), motionAlpha(52, 94)));
 
-        int platformY = Math.min(b - 22, carriageY + Math.max(44, height / 2));
-        g.fill(carriageX - 18, platformY, carriageX + 19, platformY + 4, alpha(p.border(), 72));
-        g.fill(carriageX - 13, platformY - 3, carriageX + 14, platformY, alpha(p.accentA(), 44));
-
-        // Right-side Oritech energy/laser module. The beam fires only during a
-        // short portion of the cycle so the panel reads as a machine, not a light show.
+        // Right-side emitter is mounted to the main frame rather than floating.
         if (width > 190 && height > 92) {
             int emitterX = r - Math.max(34, width / 9);
-            int emitterY = t + height * 2 / 3;
+            int emitterY = workBedY - 9;
+
+            g.fill(railRight, railTop, emitterX + 2, railTop + 2, alpha(p.border(), 46));
+            g.fill(emitterX - 2, railTop + 1, emitterX + 2, emitterY - 10, alpha(p.border(), 52));
             g.fill(emitterX - 9, emitterY - 10, emitterX + 10, emitterY + 11, alpha(0xFF121A1E, 126));
             g.fill(emitterX - 6, emitterY - 7, emitterX + 7, emitterY + 8, alpha(p.border(), 82));
             g.fill(emitterX - 3, emitterY - 4, emitterX + 4, emitterY + 5,
                     alpha(p.accentB(), motionAlpha(58, 112)));
 
-            float laserCycle = phase(12800L, 0.12f);
-            float beam = laserCycle > 0.57f && laserCycle < 0.78f
-                    ? (float)Math.sin((laserCycle - 0.57f) / 0.21f * Math.PI)
-                    : 0.0f;
-            if (beam > 0.01f) {
-                int beamLength = Math.max(18, Math.min(width / 5, emitterX - carriageX - 24));
-                g.fill(emitterX - beamLength, emitterY, emitterX - 8, emitterY + 2,
-                        alpha(p.accentB(), Math.round(28 + beam * 76.0f)));
-                g.fill(emitterX - beamLength + 4, emitterY - 1, emitterX - 8, emitterY,
-                        alpha(p.text(), Math.round(8 + beam * 28.0f)));
+            // A permanent dark conduit makes the connection readable even when idle.
+            int receiverX = workX + 20;
+            int beamEndX = emitterX - 8;
+            int conduitY = emitterY;
+            if (beamEndX > receiverX + 2) {
+                g.fill(receiverX, conduitY - 1, beamEndX, conduitY + 3, alpha(p.border(), 30));
+                g.fill(receiverX, conduitY, beamEndX, conduitY + 2, alpha(p.accentB(), 18));
+
+                // Beam timing is locked to the processing step. It grows from the
+                // emitter to the receiver, holds while the head is down, then retracts.
+                // No independent fade timer remains.
+                float beamProgress = signalWindow(cycle, 0.36f, 0.44f, 0.64f, 0.72f);
+                if (beamProgress > 0.01f) {
+                    int fullLength = beamEndX - receiverX;
+                    int activeLength = Math.max(1, Math.round(fullLength * beamProgress));
+                    int beamStartX = beamEndX - activeLength;
+                    g.fill(beamStartX, conduitY, beamEndX, conduitY + 2,
+                            alpha(p.accentB(), motionAlpha(72, 118)));
+                    if (activeLength > 8) {
+                        g.fill(beamStartX + 3, conduitY - 1, beamEndX, conduitY,
+                                alpha(p.text(), motionAlpha(16, 34)));
+                    }
+                }
             }
+
+            // Receiver block sits directly on the fixed processing bed.
+            g.fill(workX + 16, emitterY - 5, workX + 23, emitterY + 6, alpha(0xFF111A1D, 116));
+            g.fill(workX + 18, emitterY - 2, workX + 21, emitterY + 3,
+                    alpha(p.accentB(), motionAlpha(48, 86)));
         }
 
-        // A compact power column adds a second cyan identity cue without filling
-        // the whole background with lines.
-        int powerX = l + 13;
+        // Power column is attached directly to the left frame instead of living
+        // separately at the edge of the panel.
+        int powerX = railLeft - 9;
         int powerTop = t + height / 2;
         int powerBottom = b - 20;
         if (powerBottom - powerTop > 18) {
             g.fill(powerX - 4, powerTop, powerX + 5, powerBottom, alpha(0xFF10171A, 100));
             g.fill(powerX - 2, powerTop + 2, powerX + 3, powerBottom - 2, alpha(p.border(), 62));
-            float charge = 0.28f + 0.58f * (0.5f + 0.5f * (float)Math.sin(phase(15000L, 0.26f) * Math.PI * 2.0));
+            g.fill(powerX + 5, powerTop + 3, railLeft + 1, powerTop + 5, alpha(p.border(), 48));
+            float charge = 0.28f + 0.58f * (0.5f + 0.5f * (float)Math.sin(cycle * Math.PI * 2.0));
             tankFill(g, powerX - 1, powerTop + 3, powerX + 2, powerBottom - 3,
                     charge, alpha(p.accentB(), motionAlpha(40, 78)));
         }
