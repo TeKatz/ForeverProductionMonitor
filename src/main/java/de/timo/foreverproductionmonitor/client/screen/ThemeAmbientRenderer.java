@@ -110,18 +110,13 @@ final class ThemeAmbientRenderer {
             }
             case AE2 -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(AE2_CONTROLLER_FRAME_LIGHT, 34));
-                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(AE2_CONTROLLER_FRAME_MID, 32));
-                for (int i = 0; i < 3; ++i) {
-                    int sx = x + 8 + i * 9;
-                    graphics.fill(sx, cy - 4, sx + 7, cy + 4, alpha(AE2_CONTROLLER_INSET, 104));
-                    graphics.fill(sx + 2, cy - 2, sx + 5, cy + 2,
-                            ae2ControllerColor(i * 0.12f, active ? 88 : 56));
-                }
-                if (width > 54) {
-                    controllerTrace(graphics, x + 36, cy, width - 47, 0,
-                            ae2ControllerColor(0.28f, active ? 72 : 40), false);
-                }
+                // One compact ME Controller cell is enough for tabs/buttons.
+                graphics.fill(x + 3, y + 4, x + 4, y + height - 4, alpha(AE2_CONTROLLER_FRAME_LIGHT, 28));
+                int cellX = x + width - 15;
+                graphics.fill(cellX, cy - 5, cellX + 10, cy + 5, alpha(AE2_CONTROLLER_FRAME_MID, 78));
+                graphics.fill(cellX + 2, cy - 3, cellX + 8, cy + 3, alpha(AE2_CONTROLLER_INSET, 104));
+                graphics.fill(cellX + 3, cy - 2, cellX + 7, cy + 2,
+                        ae2ControllerColor(0.12f, active ? 82 : 50));
             }
             case ORITECH -> {
                 // Compact machine module: solid orange rail + cyan status glass.
@@ -154,16 +149,14 @@ final class ThemeAmbientRenderer {
             }
             case QUANTUM -> {
                 int cy = y + height / 2;
-                int moduleLeft = x + width - 34;
+                // Single compute cell instead of a row of repeated modules.
+                int moduleX = x + width - 16;
                 float pulse = 0.5f + 0.5f * (float)Math.sin(phase(8200L, 0.28f) * Math.PI * 2.0);
-                for (int i = 0; i < 3; ++i) {
-                    int mx = moduleLeft + i * 10;
-                    graphics.fill(mx, cy - 5, mx + 9, cy + 5, alpha(QUANTUM_CASING, 160));
-                    graphics.fill(mx + 2, cy - 3, mx + 7, cy + 3,
-                            alpha(i == 1 ? QUANTUM_PURPLE_BRIGHT : QUANTUM_PURPLE,
-                                    i == 1 ? Math.round(52 + pulse * 52.0f) : 34));
-                }
-                graphics.fill(moduleLeft + 2, cy + 6, moduleLeft + 29, cy + 7, alpha(0xFFD2A62B, 44));
+                graphics.fill(moduleX, cy - 5, moduleX + 11, cy + 5, alpha(QUANTUM_CASING, 150));
+                graphics.fill(moduleX + 2, cy - 3, moduleX + 9, cy + 3, alpha(QUANTUM_PURPLE, 70));
+                graphics.fill(moduleX + 4, cy - 1, moduleX + 7, cy + 2,
+                        alpha(QUANTUM_PURPLE_BRIGHT, Math.round(46 + pulse * 48.0f)));
+                graphics.fill(moduleX + 2, cy + 5, moduleX + 9, cy + 6, alpha(0xFFD2A62B, 34));
             }
             case HOLOGRAPHIC -> {
                 corner(graphics, x + 2, y + 2, 5, subtle, true, true);
