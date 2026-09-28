@@ -471,4 +471,13 @@
   ,"screen.forever_production_monitor.settings.hud.stored_sort": "Speicher-Sortierung: %s"
   ,"settings.forever_production_monitor.hud.stored_sort.highest": "Höchste zuerst"
   ,"settings.forever_production_monitor.hud.stored_sort.lowest": "Niedrigste zuerst"
+  ,"screen.forever_production_monitor.settings.hud.section.general": "Allgemein"
+  ,"screen.forever_production_monitor.settings.hud.section.content": "Inhalt"
+  ,"screen.forever_production_monitor.settings.hud.section.layout": "Layout"
+  ,"screen.forever_production_monitor.settings.hud.section.appearance": "Aussehen"
+  ,"screen.forever_production_monitor.settings.hud.preview_zoom": "Vorschau-Zoom: %s"
+  ,"screen.forever_production_monitor.settings.hud.preview_zoom.fit": "Einpassen"
+  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one": "1x"
+  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one_half": "1,5x"
+  ,"screen.forever_production_monitor.settings.hud.preview_zoom.two": "2x"
 }
