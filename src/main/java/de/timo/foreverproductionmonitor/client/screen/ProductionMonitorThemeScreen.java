@@ -304,7 +304,7 @@ extends Screen {
     }
 
     public void render(GuiGraphics guiGraphics, int n, int n2, float f) {
-        CatThemeRenderer.beginFrame(n, n2);
+        ThemeInteractionState.beginFrame(n, n2);
         ClientConfig.InterfaceStyle interfaceStyle = (ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get());
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
@@ -446,7 +446,7 @@ extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (CatThemeRenderer.mouseClicked(mouseX, mouseY, button)) {
+        if (ThemeInteractionState.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
