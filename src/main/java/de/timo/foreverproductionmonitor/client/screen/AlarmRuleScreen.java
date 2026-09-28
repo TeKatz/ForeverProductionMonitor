@@ -128,6 +128,7 @@ extends Screen {
     }
 
     public void render(GuiGraphics guiGraphics, int n, int n2, float f) {
+        CatThemeRenderer.beginFrame(n, n2);
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         InterfaceTheme.drawPanel(guiGraphics, this.left, this.top, this.panelWidth, this.panelHeight, (ClientConfig.InterfaceStyle)((Object)ClientConfig.VALUES.interfaceStyle.get()), palette);
@@ -157,6 +158,14 @@ extends Screen {
         if (this.mode == ProductionMonitorBlockEntity.AlarmMode.STALLED) {
             guiGraphics.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.alarm_editor.stalled_hint"), this.left + this.panelWidth / 2, this.top + 158, palette.accentA());
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (CatThemeRenderer.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     public void onClose() {
