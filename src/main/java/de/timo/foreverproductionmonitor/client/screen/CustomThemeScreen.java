@@ -31,6 +31,7 @@ public final class CustomThemeScreen extends Screen {
     private int maxControlScroll;
     private int controlsViewportTop;
     private int controlsViewportBottom;
+    private boolean draggingControlScrollbar;
     private int left;
     private int top;
     private int panelWidth;
@@ -456,7 +457,49 @@ public final class CustomThemeScreen extends Screen {
                 return true;
             }
         }
+        if (button == 0 && this.maxControlScroll > 0) {
+            int trackX = this.controlsLeft + this.controlsWidth + 3;
+            if (mouseX >= trackX - 2 && mouseX < trackX + 5
+                    && mouseY >= this.controlsViewportTop && mouseY < this.controlsViewportBottom) {
+                this.draggingControlScrollbar = true;
+                setControlScrollFromMouse(mouseY);
+                return true;
+            }
+        }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (this.draggingControlScrollbar && button == 0) {
+            setControlScrollFromMouse(mouseY);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (this.draggingControlScrollbar && button == 0) {
+            this.draggingControlScrollbar = false;
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private void setControlScrollFromMouse(double mouseY) {
+        int trackTop = this.controlsViewportTop;
+        int trackHeight = Math.max(12, this.controlsViewportBottom - this.controlsViewportTop);
+        int viewport = Math.max(1, this.controlsViewportBottom - this.controlsViewportTop);
+        int content = viewport + this.maxControlScroll;
+        int thumbHeight = Math.max(18, trackHeight * viewport / Math.max(viewport, content));
+        int travel = Math.max(1, trackHeight - thumbHeight);
+        double normalized = (mouseY - trackTop - thumbHeight / 2.0) / travel;
+        int next = (int)Math.round(Math.max(0.0, Math.min(1.0, normalized)) * this.maxControlScroll);
+        if (next != this.controlScroll) {
+            this.controlScroll = next;
+            this.rebuildWidgets();
+        }
     }
 
     @Override
