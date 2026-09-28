@@ -25,7 +25,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class CustomThemeScreen extends Screen {
     private final Screen parent;
     private final List<EnumDropdown<?>> dropdowns = new ArrayList<>();
-    private final List<Renderable> controlWidgets = new ArrayList<>();
+    private final List<AbstractWidget> controlWidgets = new ArrayList<>();
     private Category category = Category.COLORS;
     private int controlScroll;
     private int maxControlScroll;
@@ -68,7 +68,7 @@ public final class CustomThemeScreen extends Screen {
         this.controlsLeft = innerLeft;
         this.previewLeft = this.controlsLeft + this.controlsWidth + 12;
         this.previewWidth = Math.max(120, innerRight - this.previewLeft);
-        this.controlsViewportTop = this.contentTop + 30;
+        this.controlsViewportTop = this.contentTop + 40;
         this.controlsViewportBottom = this.contentBottom;
         this.maxControlScroll = Math.max(0, controlContentHeight() - Math.max(1, this.controlsViewportBottom - this.controlsViewportTop));
         this.controlScroll = Math.max(0, Math.min(this.controlScroll, this.maxControlScroll));
@@ -318,7 +318,7 @@ public final class CustomThemeScreen extends Screen {
                 this.left + this.panelWidth / 2, this.top + 13, palette.text());
 
         graphics.drawString(this.font, categoryName(this.category),
-                this.controlsLeft, this.contentTop + 23, palette.text(), false);
+                this.controlsLeft, this.contentTop + 24, palette.text(), false);
         graphics.drawString(this.font,
                 Component.translatable("screen.forever_production_monitor.custom_theme.preview"),
                 this.previewLeft, this.contentTop, palette.text(), false);
@@ -329,10 +329,13 @@ public final class CustomThemeScreen extends Screen {
 
         drawPreview(graphics, palette);
 
+        updateControlVisibility();
         graphics.enableScissor(this.controlsLeft, this.controlsViewportTop,
                 this.controlsLeft + this.controlsWidth, this.controlsViewportBottom);
-        for (Renderable renderable : this.controlWidgets) {
-            renderable.render(graphics, mouseX, mouseY, partialTick);
+        for (AbstractWidget widget : this.controlWidgets) {
+            if (widget.visible) {
+                widget.render(graphics, mouseX, mouseY, partialTick);
+            }
         }
         graphics.disableScissor();
 
@@ -349,13 +352,42 @@ public final class CustomThemeScreen extends Screen {
             graphics.fill(trackX, thumbY, trackX + 3, thumbY + thumbHeight, opaque(palette.accentB()));
         }
 
-        // Dropdown lists are rendered last and fully opaque so controls underneath never bleed through.
+        // Dropdown overlays get an explicit high Z layer. This avoids same-depth GUI text
+        // from sliders being composited over an opened list by Minecraft's GUI batching.
+        graphics.pose().pushPose();
+        graphics.pose().translate(0.0f, 0.0f, 400.0f);
         graphics.enableScissor(this.controlsLeft, this.controlsViewportTop,
                 this.controlsLeft + this.controlsWidth, this.controlsViewportBottom);
         for (EnumDropdown<?> dropdown : this.dropdowns) {
             dropdown.renderOverlay(graphics, mouseX, mouseY);
         }
         graphics.disableScissor();
+        graphics.pose().popPose();
+    }
+
+    private void updateControlVisibility() {
+        EnumDropdown<?> openDropdown = null;
+        for (EnumDropdown<?> dropdown : this.dropdowns) {
+            if (dropdown.isOpen()) {
+                openDropdown = dropdown;
+                break;
+            }
+        }
+
+        for (AbstractWidget widget : this.controlWidgets) {
+            boolean inViewport = widget.getY() + widget.getHeight() > this.controlsViewportTop
+                    && widget.getY() < this.controlsViewportBottom;
+            boolean covered = false;
+            if (openDropdown != null && widget != openDropdown) {
+                int overlayTop = openDropdown.getY() + openDropdown.getHeight() + 1;
+                int overlayBottom = openDropdown.overlayBottom();
+                covered = widget.getX() < openDropdown.getX() + openDropdown.getWidth()
+                        && widget.getX() + widget.getWidth() > openDropdown.getX()
+                        && widget.getY() < overlayBottom
+                        && widget.getY() + widget.getHeight() > overlayTop;
+            }
+            widget.visible = inViewport && !covered;
+        }
     }
 
     private void drawPreview(GuiGraphics graphics, InterfaceTheme.Palette palette) {
@@ -753,6 +785,10 @@ public final class CustomThemeScreen extends Screen {
 
         boolean isOpen() {
             return this.open;
+        }
+
+        int overlayBottom() {
+            return this.getY() + this.getHeight() + 1 + this.values.length * ROW_HEIGHT + 2;
         }
 
         @Override
