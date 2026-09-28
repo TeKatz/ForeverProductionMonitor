@@ -705,7 +705,7 @@ extends Screen {
     }
 
     public void render(GuiGraphics guiGraphics, int n, int n2, float f) {
-        CatThemeRenderer.beginFrame(n, n2);
+        ThemeInteractionState.beginFrame(n, n2);
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
@@ -1272,7 +1272,7 @@ extends Screen {
     }
 
     public boolean mouseClicked(double d, double d2, int n) {
-        if (CatThemeRenderer.mouseClicked(d, d2, n)) {
+        if (ThemeInteractionState.mouseClicked(d, d2, n)) {
             return true;
         }
         Object object;
