@@ -176,9 +176,8 @@ final class ThemeAmbientRenderer {
             }
             case CARBON -> {
                 graphics.fill(x + 3, y + 2, x + width - 3, y + 3, alpha(palette.border(), 70));
-                for (int px = x + 5; px < x + width - 4; px += 12) {
-                    graphics.fill(px, bottom - 1, Math.min(px + 5, x + width - 4), bottom, subtle);
-                }
+                rivet(graphics, x + 5, bottom - 1, subtle);
+                rivet(graphics, x + width - 7, bottom - 1, subtle);
             }
             case TERMINAL -> {
                 graphics.fill(x + 3, y + 3, x + 4, y + height - 3, subtle);
@@ -322,9 +321,8 @@ final class ThemeAmbientRenderer {
             }
             case MINIMAL -> graphics.fill(x + width / 4, y + 2, x + width * 3 / 4, y + 3, a);
             case CARBON -> {
-                for (int px = x + 4; px < right - 4; px += 14) {
-                    graphics.fill(px, y + 2, Math.min(px + 6, right - 4), y + 3, alpha(palette.border(), 42));
-                }
+                rivet(graphics, x + 5, y + 4, a);
+                rivet(graphics, right - 7, y + 4, b);
             }
             case TERMINAL -> {
                 for (int py = y + 4; py < bottom - 3; py += 8) {
@@ -718,30 +716,7 @@ final class ThemeAmbientRenderer {
     }
 
     private static void carbonPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int width = r - l;
-        int height = b - t;
-        int rowStep = Math.max(18, height / 8);
-        int columnStep = Math.max(28, width / 9);
-
-        // Material weave only.
-        for (int row = 0; row < 8; ++row) {
-            int y = t + 7 + row * rowStep;
-            if (y >= b - 5) break;
-            int offset = (row & 1) == 0 ? 0 : columnStep / 2;
-            for (int x = l + 5 + offset; x < r - 8; x += columnStep) {
-                g.fill(x, y, Math.min(x + 11, r - 5), y + 1, alpha(p.border(), 24));
-                if (y + 5 < b - 3) {
-                    g.fill(x + 5, y + 5, Math.min(x + 16, r - 4), y + 6, alpha(p.outer(), 18));
-                }
-            }
-        }
-
-        // Slow reflective sheen behaves like light on a material surface.
-        int sheen = l - 36 + (int)((width + 72) * phase(22000L, 0.28f));
-        diagonal(g, sheen, t + 5, sheen + Math.min(62, height), Math.min(b - 5, t + 67), alpha(p.accentA(), motionAlpha(5, 20)));
-        diagonal(g, sheen + 5, t + 5, sheen + 5 + Math.min(62, height), Math.min(b - 5, t + 67), alpha(p.text(), motionAlpha(3, 10)));
-        rivet(g, l + 6, t + 6, alpha(p.accentA(), 50));
-        rivet(g, r - 8, b - 8, alpha(p.accentB(), 42));
+        CarbonIndustrialRenderer.draw(g, l, t, r, b, p);
     }
 
     private static void terminalPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {

@@ -180,11 +180,6 @@ public final class InterfaceTheme {
                 guiGraphics.fill(n, n2, split, n2 + 3, palette.accentA());
                 guiGraphics.fill(split, n2, n + n3, n2 + 3, palette.accentB());
                 switch (interfaceStyle) {
-                    case CARBON -> {
-                        for (int x = n + 5; x < n + n3 - 8; x += 22) {
-                            guiGraphics.fill(x, n2 + n4 - 4, x + 13, n2 + n4 - 2, palette.border());
-                        }
-                    }
                     case TERMINAL -> {
                         for (int y = n2 + 36; y < n2 + n4 - 4; y += 9) {
                             guiGraphics.fill(n + 3, y, n + 5, y + 4, palette.accentA());
@@ -252,9 +247,8 @@ public final class InterfaceTheme {
         ThemeAmbientRenderer.drawButton(guiGraphics, x, y, width, height, style, palette, active, hoverProgress);
         switch (style) {
             case CARBON -> {
-                for (int stripeX = x + 3; stripeX < x + width - 3; stripeX += 8) {
-                    guiGraphics.fill(stripeX, y + height - 2, Math.min(stripeX + 4, x + width - 2), y + height - 1, palette.border());
-                }
+                InterfaceTheme.rivet(guiGraphics, x + 4, y + height - 3, palette.border());
+                InterfaceTheme.rivet(guiGraphics, x + width - 5, y + height - 3, palette.border());
             }
             case TERMINAL -> {
                 guiGraphics.fill(x + 3, y + 3, x + 4, y + height - 3, accent);
