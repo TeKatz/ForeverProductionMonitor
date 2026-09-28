@@ -1,6 +1,7 @@
 package de.timo.foreverproductionmonitor.client.screen;
 
 import com.mojang.math.Axis;
+import de.timo.foreverproductionmonitor.client.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 
 /** Two hand-drawn cats and frame-only motion for the Cats interface theme. */
