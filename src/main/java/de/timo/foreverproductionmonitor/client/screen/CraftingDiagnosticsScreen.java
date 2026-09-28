@@ -187,6 +187,7 @@ public final class CraftingDiagnosticsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        CatThemeRenderer.beginFrame(mouseX, mouseY);
         hoveredIcon = null;
         hoveredTab = null;
         hoveredText = null;
@@ -902,6 +903,9 @@ public final class CraftingDiagnosticsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double x, double y, int button) {
+        if (CatThemeRenderer.mouseClicked(x, y, button)) {
+            return true;
+        }
         if (search != null && search.visible && search.active) {
             boolean overSearch = search.isMouseOver(x, y);
             if (overSearch && button == 1) {
