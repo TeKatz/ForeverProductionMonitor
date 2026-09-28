@@ -104,7 +104,15 @@ public final class ForeverProductionMonitorClient {
         }
         if (hudRequestTicks-- <= 0) {
             n = ((ClientConfig.RefreshInterval)((Object)ClientConfig.VALUES.refreshInterval.get())).ticks();
-            MonitorNetwork.requestHud((MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.get()), n, (Integer)ClientConfig.VALUES.hudEntryCount.get());
+            MonitorNetwork.requestHud(
+                    (MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.get()),
+                    n,
+                    (Integer)ClientConfig.VALUES.hudEntryCount.get(),
+                    (Boolean)ClientConfig.VALUES.hudIncludeItems.get(),
+                    (Boolean)ClientConfig.VALUES.hudIncludeFluids.get(),
+                    (Boolean)ClientConfig.VALUES.hudIncludeEnergy.get(),
+                    (Boolean)ClientConfig.VALUES.hudIncludeInfinite.get(),
+                    ClientConfig.VALUES.hudStoredSort.get() == ClientConfig.HudStoredSort.LOWEST);
             hudRequestTicks = n;
         }
     }
