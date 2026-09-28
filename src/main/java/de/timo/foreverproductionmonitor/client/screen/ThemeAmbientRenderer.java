@@ -1241,23 +1241,9 @@ final class ThemeAmbientRenderer {
     }
 
     private static void customPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
-        int width = r - l;
-        int height = b - t;
-
-        // Neutral geometry so custom colors remain the visual focus.
-        for (int i = 1; i < 5; ++i) {
-            int x = l + width * i / 5;
-            g.fill(x, t + 5, x + 1, b - 5, alpha(i % 2 == 0 ? p.accentA() : p.accentB(), 12));
-        }
-        for (int i = 1; i < 4; ++i) {
-            int y = t + height * i / 4;
-            g.fill(l + 5, y, r - 5, y + 1, alpha(i % 2 == 0 ? p.accentB() : p.accentA(), 10));
-        }
-        corner(g, l + 7, t + 7, 9, alpha(p.accentA(), 42), true, true);
-        corner(g, r - 8, b - 8, 9, alpha(p.accentB(), 42), false, false);
-        g.fill(l + width / 2, t + height / 2 - 3, l + width / 2 + 1, t + height / 2 + 4, alpha(p.text(), 22));
-        g.fill(l + width / 2 - 3, t + height / 2, l + width / 2 + 4, t + height / 2 + 1, alpha(p.text(), 22));
+        CustomThemeRenderer.drawAmbient(g, l, t, r, b, p);
     }
+
 
     private static int ae2ControllerColor(float offset, int requestedAlpha) {
         float hue = phase(18000L, 0.075f) + offset;
