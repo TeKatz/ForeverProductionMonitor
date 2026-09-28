@@ -57,6 +57,7 @@ extends Screen {
     private final List<AbstractWidget> hudControlWidgets = new ArrayList<>();
     private HudSettingsSection hudSettingsSection = HudSettingsSection.GENERAL;
     private HudPreviewZoom hudPreviewZoom = HudPreviewZoom.FIT;
+    private static final int HUD_PANEL_INSET = 5;
     private int hudSettingsLeft;
     private int hudSettingsTop;
     private int hudSettingsWidth;
@@ -204,13 +205,15 @@ extends Screen {
         this.hudPreviewBottom = this.contentBottom;
 
         int tabGap = 3;
+        int tabLeft = this.hudSettingsLeft + HUD_PANEL_INSET;
+        int tabUsableWidth = Math.max(1, this.hudSettingsWidth - HUD_PANEL_INSET * 2);
         HudSettingsSection[] sections = HudSettingsSection.values();
-        int tabWidth = Math.max(1, (this.hudSettingsWidth - tabGap * (sections.length - 1)) / sections.length);
+        int tabWidth = Math.max(1, (tabUsableWidth - tabGap * (sections.length - 1)) / sections.length);
         for (int i = 0; i < sections.length; ++i) {
             HudSettingsSection section = sections[i];
-            int x = this.hudSettingsLeft + i * (tabWidth + tabGap);
+            int x = tabLeft + i * (tabWidth + tabGap);
             int width = i == sections.length - 1
-                    ? Math.max(1, this.hudSettingsLeft + this.hudSettingsWidth - x)
+                    ? Math.max(1, tabLeft + tabUsableWidth - x)
                     : tabWidth;
             this.addRenderableWidget(ForeverButton.create(
                     ProductionMonitorThemeScreen.hudSectionLabel(section),
@@ -222,10 +225,10 @@ extends Screen {
                     section == this.hudSettingsSection
                             ? ForeverButton.Style.THEMED_ACTIVE
                             : ForeverButton.Style.THEMED,
-                    x, this.contentTop, width, 20).setRole(ForeverButton.Role.TAB));
+                    x, this.contentTop + HUD_PANEL_INSET, width, 20).setRole(ForeverButton.Role.TAB));
         }
 
-        this.hudSettingsTop = this.contentTop + 28;
+        this.hudSettingsTop = this.contentTop + HUD_PANEL_INSET + 28;
         this.hudSettingsBottom = this.contentBottom;
         int itemCount = switch (this.hudSettingsSection) {
             case GENERAL -> 4;
@@ -240,7 +243,8 @@ extends Screen {
         this.hudSettingsMaxScroll = Math.max(0, contentHeight - viewportHeight);
         this.hudSettingsScroll = Math.max(0, Math.min(this.hudSettingsScroll, this.hudSettingsMaxScroll));
         this.hudSettingsUsableWidth = Math.max(1,
-                this.hudSettingsWidth - (this.hudSettingsMaxScroll > 0 ? 8 : 0));
+                this.hudSettingsWidth - HUD_PANEL_INSET * 2
+                        - (this.hudSettingsMaxScroll > 0 ? 8 : 0));
 
         switch (this.hudSettingsSection) {
             case GENERAL -> this.buildHudGeneral(matched);
@@ -409,7 +413,8 @@ extends Screen {
         int gap = 4;
         int columnWidth = Math.max(1,
                 (this.hudSettingsUsableWidth - gap * (this.hudSettingsColumns - 1)) / this.hudSettingsColumns);
-        return this.hudSettingsLeft + index % this.hudSettingsColumns * (columnWidth + gap);
+        return this.hudSettingsLeft + HUD_PANEL_INSET
+                + index % this.hudSettingsColumns * (columnWidth + gap);
     }
 
     private int hudControlY(int index) {
@@ -422,7 +427,8 @@ extends Screen {
         int columnWidth = Math.max(1,
                 (this.hudSettingsUsableWidth - gap * (this.hudSettingsColumns - 1)) / this.hudSettingsColumns);
         return index % this.hudSettingsColumns == this.hudSettingsColumns - 1
-                ? Math.max(1, this.hudSettingsLeft + this.hudSettingsUsableWidth - this.hudControlX(index))
+                ? Math.max(1, this.hudSettingsLeft + HUD_PANEL_INSET
+                        + this.hudSettingsUsableWidth - this.hudControlX(index))
                 : columnWidth;
     }
 
@@ -579,8 +585,8 @@ extends Screen {
 
     private void renderHudControls(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick,
                                    InterfaceTheme.Palette palette) {
-        guiGraphics.enableScissor(this.hudSettingsLeft, this.hudSettingsTop,
-                this.hudSettingsLeft + this.hudSettingsWidth, this.hudSettingsBottom);
+        guiGraphics.enableScissor(this.hudSettingsLeft + HUD_PANEL_INSET, this.hudSettingsTop,
+                this.hudSettingsLeft + this.hudSettingsWidth - HUD_PANEL_INSET, this.hudSettingsBottom);
         for (AbstractWidget widget : this.hudControlWidgets) {
             widget.visible = widget.getY() + widget.getHeight() > this.hudSettingsTop
                     && widget.getY() < this.hudSettingsBottom;
@@ -600,7 +606,7 @@ extends Screen {
         guiGraphics.disableScissor();
 
         if (this.hudSettingsMaxScroll > 0) {
-            int trackX = this.hudSettingsLeft + this.hudSettingsWidth - 4;
+            int trackX = this.hudSettingsLeft + this.hudSettingsWidth - HUD_PANEL_INSET - 3;
             int trackTop = this.hudSettingsTop + 1;
             int trackHeight = Math.max(12, this.hudSettingsBottom - this.hudSettingsTop - 2);
             int viewportHeight = Math.max(1, this.hudSettingsBottom - this.hudSettingsTop);
@@ -754,7 +760,7 @@ extends Screen {
             return true;
         }
         if (button == 0 && this.category == Category.HUD && this.hudSettingsMaxScroll > 0) {
-            int trackX = this.hudSettingsLeft + this.hudSettingsWidth - 4;
+            int trackX = this.hudSettingsLeft + this.hudSettingsWidth - HUD_PANEL_INSET - 3;
             if (mouseX >= trackX - 2 && mouseX < trackX + 5
                     && mouseY >= this.hudSettingsTop && mouseY < this.hudSettingsBottom) {
                 this.draggingHudScrollbar = true;
