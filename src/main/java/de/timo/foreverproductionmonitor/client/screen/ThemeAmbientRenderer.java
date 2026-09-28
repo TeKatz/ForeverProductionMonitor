@@ -384,6 +384,29 @@ final class ThemeAmbientRenderer {
         }
     }
 
+    private static void orthogonalPacket(GuiGraphics g,
+                                         int startX, int startY, int endX, int endY,
+                                         float progress, int color, int lineAlpha, int packetAlpha) {
+        int line = alpha(color, lineAlpha);
+        g.fill(Math.min(startX, endX), endY, Math.max(startX, endX) + 1, endY + 1, line);
+        g.fill(startX, Math.min(startY, endY), startX + 1, Math.max(startY, endY) + 1, line);
+
+        int vertical = Math.abs(endY - startY);
+        int horizontal = Math.abs(endX - startX);
+        int total = Math.max(1, vertical + horizontal);
+        int distance = Math.min(total, Math.round(Math.max(0.0f, Math.min(1.0f, progress)) * total));
+        int px = startX;
+        int py = startY;
+        if (distance <= vertical) {
+            py = startY + Integer.signum(endY - startY) * distance;
+        } else {
+            py = endY;
+            int horizontalDistance = distance - vertical;
+            px = startX + Integer.signum(endX - startX) * horizontalDistance;
+        }
+        g.fill(px - 1, py - 1, px + 3, py + 2, alpha(color, packetAlpha));
+    }
+
     private static void standardPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
@@ -407,28 +430,38 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Forever is the whole modpack rather than one machine: a shared production
-        // backbone links AE-like storage, Mekanism chemistry, Oritech processing and
-        // Quantum transport into one coherent megabase network.
         int busY = b - Math.max(24, height / 7);
         int busLeft = l + Math.max(18, width / 12);
         int busRight = r - Math.max(18, width / 12);
+        int coreX = l + width / 2;
+        int coreY = busY - Math.max(24, Math.min(44, height / 6));
         g.fill(busLeft, busY, busRight, busY + 2, alpha(p.border(), 34));
 
         int[] systemColors = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
         int[] moduleX = new int[4];
+        int hoveredModule = -1;
         for (int i = 0; i < 4; ++i) {
             moduleX[i] = busLeft + (i + 1) * (busRight - busLeft) / 5;
+            ThemeInteractionState.registerHit(ClientConfig.InterfaceStyle.FOREVER, i,
+                    moduleX[i] - 11, busY - 12, moduleX[i] + 12, busY + 10);
+            boolean hovered = ThemeInteractionState.isHovered(
+                    moduleX[i] - 11, busY - 12, moduleX[i] + 12, busY + 10);
+            if (hovered) {
+                hoveredModule = i;
+            }
+
             int color = systemColors[i];
-            g.fill(moduleX[i] - 8, busY - 7, moduleX[i] + 9, busY + 8, alpha(0xFF0B141D, 82));
-            g.fill(moduleX[i] - 6, busY - 5, moduleX[i] + 7, busY + 6, alpha(p.border(), 36));
-            g.fill(moduleX[i] - 3, busY - 2, moduleX[i] + 4, busY + 3, alpha(color, 54));
-            g.fill(moduleX[i] - 1, busY - 10, moduleX[i] + 2, busY - 6, alpha(color, 42));
+            int shellAlpha = hovered ? 116 : 82;
+            int borderAlpha = hovered ? 70 : 36;
+            int coreAlpha = hovered ? 106 : 54;
+            g.fill(moduleX[i] - 8, busY - 7, moduleX[i] + 9, busY + 8, alpha(0xFF0B141D, shellAlpha));
+            g.fill(moduleX[i] - 6, busY - 5, moduleX[i] + 7, busY + 6, alpha(p.border(), borderAlpha));
+            g.fill(moduleX[i] - 3, busY - 2, moduleX[i] + 4, busY + 3, alpha(color, coreAlpha));
+            g.fill(moduleX[i] - 1, busY - 10, moduleX[i] + 2, busY - 6,
+                    alpha(color, hovered ? 84 : 42));
         }
 
         // Central crafting/network core.
-        int coreX = l + width / 2;
-        int coreY = busY - Math.max(24, Math.min(44, height / 6));
         g.fill(coreX - 16, coreY - 9, coreX + 17, coreY + 10, alpha(0xFF0A131C, 92));
         g.fill(coreX - 13, coreY - 6, coreX + 14, coreY + 7, alpha(p.border(), 42));
         g.fill(coreX - 8, coreY - 3, coreX + 9, coreY + 4, alpha(p.accentA(), 48));
@@ -439,8 +472,7 @@ final class ThemeAmbientRenderer {
         g.fill(coreX - 1, coreY - 1, coreX + 2, coreY + 2,
                 alpha(p.text(), Math.round(30 + corePulse * 54.0f)));
 
-        // Pack-wide data packets travel along the same backbone instead of random
-        // decorative ribbons.
+        // Normal pack-wide traffic.
         for (int i = 0; i < 4; ++i) {
             float packet = (phase(11000L + i * 1400L, 0.1f + i * 0.17f) + i * 0.19f) % 1.0f;
             int px = busLeft + Math.round(packet * Math.max(1, busRight - busLeft - 2));
@@ -448,8 +480,23 @@ final class ThemeAmbientRenderer {
                     alpha(systemColors[i], motionAlpha(22, 54)));
         }
 
-        // A paired quantum link across the upper edge references the pack's many
-        // cross-network bridges while remaining quiet behind actual UI content.
+        // Hovering a subsystem temporarily routes traffic from the central core to it.
+        if (hoveredModule >= 0) {
+            orthogonalPacket(g, coreX, coreY + 10, moduleX[hoveredModule], busY,
+                    phase(2600L, 0.18f), systemColors[hoveredModule], 30, motionAlpha(54, 92));
+        }
+
+        // Clicking a subsystem sends one deliberate, brighter network pulse.
+        for (int i = 0; i < 4; ++i) {
+            float click = ThemeInteractionState.clickProgress(ClientConfig.InterfaceStyle.FOREVER, i, 950L);
+            if (click > 0.0f) {
+                orthogonalPacket(g, coreX, coreY + 10, moduleX[i], busY,
+                        smoothstep(click), systemColors[i], 46, 126);
+                g.fill(coreX - 2, coreY - 2, coreX + 3, coreY + 3,
+                        alpha(systemColors[i], Math.round(80 + (1.0f - click) * 70.0f)));
+            }
+        }
+
         if (width > 220 && height > 100) {
             int qy = t + Math.max(20, height / 6);
             int q1 = l + width / 4;
@@ -469,40 +516,49 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Controller casing first: a dark terminal inset inside cool metal rails.
         g.fill(l + 7, t + 8, r - 7, t + 10, alpha(AE2_CONTROLLER_FRAME_LIGHT, 34));
         g.fill(l + 7, b - 10, r - 7, b - 8, alpha(AE2_CONTROLLER_FRAME_MID, 30));
         g.fill(l + 7, t + 10, l + 9, b - 10, alpha(AE2_CONTROLLER_FRAME_LIGHT, 30));
         g.fill(r - 9, t + 10, r - 7, b - 10, alpha(AE2_CONTROLLER_FRAME_DARK, 30));
 
-        // A real Controller-like cell bank is the visual anchor. Colour changes live
-        // inside the cells, surrounded by neutral graphite just like the original block.
         int cellSize = Math.max(13, Math.min(22, Math.min(width / 16, height / 9)));
         int bankX = l + 18;
         int bankY = b - (cellSize * 2 + 18);
         float sweep = phase(19000L, 0.12f) * 6.0f;
         int active = Math.floorMod((int)Math.floor(sweep), 6);
         float blend = smoothstep(sweep - (float)Math.floor(sweep));
+
         for (int row = 0; row < 2; ++row) {
             for (int col = 0; col < 3; ++col) {
                 int idx = row * 3 + col;
                 int cx = bankX + col * (cellSize + 3);
                 int cy = bankY + row * (cellSize + 3);
-                g.fill(cx, cy, cx + cellSize, cy + cellSize, alpha(AE2_CONTROLLER_FRAME_MID, 68));
-                g.fill(cx + 2, cy + 2, cx + cellSize - 2, cy + cellSize - 2, alpha(AE2_CONTROLLER_INSET, 98));
+                ThemeInteractionState.registerHit(ClientConfig.InterfaceStyle.AE2, 100 + idx,
+                        cx, cy, cx + cellSize, cy + cellSize);
+                boolean hovered = ThemeInteractionState.isHovered(cx, cy, cx + cellSize, cy + cellSize);
+
+                g.fill(cx, cy, cx + cellSize, cy + cellSize,
+                        alpha(AE2_CONTROLLER_FRAME_MID, hovered ? 96 : 68));
+                g.fill(cx + 2, cy + 2, cx + cellSize - 2, cy + cellSize - 2,
+                        alpha(AE2_CONTROLLER_INSET, 98));
                 float glow = idx == active ? 1.0f - blend : (idx == (active + 1) % 6 ? blend : 0.0f);
+                if (hovered) {
+                    glow = Math.max(glow, 0.82f);
+                }
                 int color = ae2ControllerColor(idx * 0.11f, 34 + Math.round(glow * 70.0f));
                 g.fill(cx + 4, cy + 4, cx + cellSize - 4, cy + cellSize - 4, color);
             }
         }
 
-        // ME Drive / terminal module at the upper-right: fixed slots, tiny status LEDs.
+        int driveLeft = -1;
+        int driveTop = -1;
+        int driveH = 0;
         if (width > 220 && height > 115) {
             int driveW = Math.max(56, Math.min(78, width / 5));
-            int driveH = 42;
+            driveH = 42;
             int driveRight = r - 18;
-            int driveLeft = driveRight - driveW;
-            int driveTop = t + 18;
+            driveLeft = driveRight - driveW;
+            driveTop = t + 18;
             g.fill(driveLeft, driveTop, driveRight, driveTop + driveH, alpha(AE2_CONTROLLER_FRAME_MID, 62));
             g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, driveTop + driveH - 2, alpha(AE2_CONTROLLER_INSET, 104));
             for (int row = 0; row < 4; ++row) {
@@ -514,8 +570,6 @@ final class ThemeAmbientRenderer {
             }
         }
 
-        // One restrained orthogonal network trace links the controller bank to the
-        // terminal module. No full-screen maze.
         int traceY = bankY - 8;
         int traceStart = bankX + cellSize;
         int traceEnd = r - Math.max(82, width / 5);
@@ -523,7 +577,24 @@ final class ThemeAmbientRenderer {
             controllerTrace(g, traceStart, traceY, traceEnd - traceStart, -Math.max(8, height / 8),
                     ae2ControllerColor(0.08f, 34), false);
             int packetX = traceStart + Math.round(phase(10500L, 0.33f) * (traceEnd - traceStart));
-            g.fill(packetX, traceY - 1, packetX + 3, traceY + 2, ae2ControllerColor(0.22f, motionAlpha(32, 66)));
+            g.fill(packetX, traceY - 1, packetX + 3, traceY + 2,
+                    ae2ControllerColor(0.22f, motionAlpha(32, 66)));
+        }
+
+        // Clicking any Controller cell sends one packet from that cell into the network.
+        for (int idx = 0; idx < 6; ++idx) {
+            float click = ThemeInteractionState.clickProgress(ClientConfig.InterfaceStyle.AE2, 100 + idx, 900L);
+            if (click <= 0.0f) {
+                continue;
+            }
+            int row = idx / 3;
+            int col = idx % 3;
+            int sourceX = bankX + col * (cellSize + 3) + cellSize / 2;
+            int sourceY = bankY + row * (cellSize + 3) + cellSize / 2;
+            int targetX = driveLeft >= 0 ? driveLeft + 5 : Math.max(sourceX + 18, traceEnd);
+            int targetY = driveLeft >= 0 ? driveTop + driveH / 2 : traceY;
+            orthogonalPacket(g, sourceX, sourceY, targetX, targetY,
+                    smoothstep(click), ae2ControllerColor(idx * 0.11f, 255), 38, 112);
         }
     }
 
@@ -715,8 +786,6 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Keep the whole Quantum identity inside one compact computer multiblock.
-        // Nothing is allowed to float elsewhere in the panel.
         int assemblyW = Math.max(78, Math.min(132, width / 3));
         int assemblyH = Math.max(72, Math.min(116, height / 2));
         int left = r - assemblyW - 18;
@@ -730,36 +799,46 @@ final class ThemeAmbientRenderer {
         g.fill(left + assemblyW + 2, top - 2, left + assemblyW + 4, top + assemblyH + 2, alpha(QUANTUM_FRAME, 40));
 
         int gap = 3;
-        int cols = 3;
-        int rows = 3;
         int cellW = Math.max(18, (assemblyW - gap * 2) / 3);
         int cellH = Math.max(18, (assemblyH - gap * 2) / 3);
-        float pulse = phase(12600L, 0.23f);
-
         int coreX = left + cellW + gap;
         int coreY = top + cellH + gap;
-        for (int row = 0; row < rows; ++row) {
-            for (int col = 0; col < cols; ++col) {
+        int cx = coreX + cellW / 2;
+        int cy = coreY + cellH / 2;
+
+        ThemeInteractionState.registerHit(ClientConfig.InterfaceStyle.QUANTUM, 200,
+                coreX, coreY, coreX + cellW, coreY + cellH);
+        float hover = ThemeInteractionState.hoverFactor(cx, cy, Math.max(cellW, cellH) * 1.35f);
+        float click = ThemeInteractionState.clickProgress(ClientConfig.InterfaceStyle.QUANTUM, 200, 1150L);
+        float pulse = phase(12600L, 0.23f);
+
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 3; ++col) {
                 int x = left + col * (cellW + gap);
                 int y = top + row * (cellH + gap);
                 boolean core = row == 1 && col == 1;
                 float distance = Math.abs(row - 1) + Math.abs(col - 1);
                 float wave = 0.5f + 0.5f * (float)Math.sin((pulse - distance * 0.10f) * Math.PI * 2.0);
-                int glow = core ? Math.round(70 + wave * 60.0f) : Math.round(24 + wave * 30.0f);
-                quantumCasingCell(g, x, y, cellW, cellH, glow, core);
+                float clickWave = click > 0.0f
+                        ? Math.max(0.0f, 1.0f - Math.abs(click * 2.25f - distance * 0.52f) * 2.1f)
+                        : 0.0f;
+                int glow = core ? Math.round(70 + wave * 60.0f + hover * 40.0f)
+                        : Math.round(24 + wave * 30.0f + clickWave * 74.0f);
+                if (core && click > 0.0f) {
+                    glow += Math.round((1.0f - click) * 52.0f);
+                }
+                quantumCasingCell(g, x, y, cellW, cellH, Math.min(190, glow), core);
             }
         }
 
-        // Energy lanes stay entirely inside the casing and converge on the centre.
-        int cx = coreX + cellW / 2;
-        int cy = coreY + cellH / 2;
-        int lane = alpha(QUANTUM_PURPLE, motionAlpha(20, 46));
+        int laneAlpha = motionAlpha(20, 46) + Math.round(hover * 20.0f)
+                + (click > 0.0f ? Math.round((1.0f - click) * 46.0f) : 0);
+        int lane = alpha(QUANTUM_PURPLE, Math.min(118, laneAlpha));
         g.fill(left + cellW / 2, cy, cx, cy + 1, lane);
         g.fill(cx + 1, cy, left + assemblyW - cellW / 2, cy + 1, lane);
         g.fill(cx, top + cellH / 2, cx + 1, cy, lane);
         g.fill(cx, cy + 1, cx + 1, top + assemblyH - cellH / 2, lane);
 
-        // Gold service contacts are part of the bottom casing rather than free hazard strips.
         int contactY = top + assemblyH - 2;
         for (int i = 0; i < 4; ++i) {
             int x = left + 8 + i * Math.max(10, (assemblyW - 16) / 4);
@@ -851,17 +930,22 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // Three star layers with very slow parallax drift.
+        // Cursor parallax is deliberately tiny: it adds depth without making the
+        // starfield feel attached to the pointer.
         float twinkle = phase(13000L, 0.23f);
         int[] counts = {18, 13, 9};
         long[] speeds = {90000L, 65000L, 43000L};
         int[] alphas = {34, 48, 68};
+        int[] parallax = {1, 2, 4};
         for (int layer = 0; layer < 3; ++layer) {
-            int drift = GuiMotion.ambientMotionEnabled() ? (int)(phase(speeds[layer], 0.17f * (layer + 1)) * width) : 0;
+            int drift = GuiMotion.ambientMotionEnabled()
+                    ? (int)(phase(speeds[layer], 0.17f * (layer + 1)) * width) : 0;
+            int pointerX = -ThemeInteractionState.parallaxX(l, r, parallax[layer]);
+            int pointerY = -ThemeInteractionState.parallaxY(t, b, Math.max(1, parallax[layer] / 2));
             for (int i = 0; i < counts[layer]; ++i) {
                 int seed = 1103 + layer * 1009 + i * 97;
-                int sx = l + mod(hash(seed) + drift, Math.max(1, width));
-                int sy = t + 3 + mod(hash(seed + 811), Math.max(1, height - 6));
+                int sx = l + mod(hash(seed) + drift, Math.max(1, width)) + pointerX;
+                int sy = t + 3 + mod(hash(seed + 811), Math.max(1, height - 6)) + pointerY;
                 double shimmer = 0.5 + 0.5 * Math.sin(twinkle * Math.PI * 2.0 + i * 1.37 + layer);
                 int starAlpha = alphas[layer] + (int)(shimmer * (GuiMotion.ambientMotionEnabled() ? 42 : 18));
                 int color = i % 5 == 0 ? p.accentB() : (i % 3 == 0 ? p.accentA() : p.text());
@@ -869,9 +953,11 @@ final class ThemeAmbientRenderer {
             }
         }
 
-        // A recognizable constellation drifts as one object instead of independent blobs.
-        int constellationX = l + mod((int)(phase(76000L, 0.36f) * (width + 70)) - 35, Math.max(1, width));
-        int constellationY = t + Math.max(16, height / 4);
+        int constellationOffsetX = -ThemeInteractionState.parallaxX(l, r, 2);
+        int constellationOffsetY = -ThemeInteractionState.parallaxY(t, b, 1);
+        int constellationX = l + mod((int)(phase(76000L, 0.36f) * (width + 70)) - 35,
+                Math.max(1, width)) + constellationOffsetX;
+        int constellationY = t + Math.max(16, height / 4) + constellationOffsetY;
         int[][] pts = {{0, 4}, {13, 0}, {25, 8}, {39, 3}, {52, 12}};
         for (int i = 0; i < pts.length - 1; ++i) {
             int x1 = constellationX + pts[i][0];
@@ -881,11 +967,11 @@ final class ThemeAmbientRenderer {
             diagonal(g, x1, y1, x2, y2, alpha(p.accentA(), 22));
             star(g, x1, y1, 1, alpha(p.text(), 86));
         }
-        star(g, constellationX + pts[pts.length - 1][0], constellationY + pts[pts.length - 1][1], 1, alpha(p.text(), 86));
+        star(g, constellationX + pts[pts.length - 1][0],
+                constellationY + pts[pts.length - 1][1], 1, alpha(p.text(), 86));
 
-        // Very slow galaxy.
-        int gx = l + width * 3 / 4;
-        int gy = t + height / 3;
+        int gx = l + width * 3 / 4 - ThemeInteractionState.parallaxX(l, r, 4);
+        int gy = t + height / 3 - ThemeInteractionState.parallaxY(t, b, 2);
         float galaxyTurn = phase(52000L, 0.11f) * 0.45f;
         for (int arm = 0; arm < 2; ++arm) {
             for (int i = 0; i < 18; ++i) {
@@ -899,9 +985,8 @@ final class ThemeAmbientRenderer {
         }
         star(g, gx, gy, 2, alpha(p.text(), 90));
 
-        // Black hole with slow accretion rotation.
-        int bx = l + Math.max(20, width / 5);
-        int by = t + height * 2 / 3;
+        int bx = l + Math.max(20, width / 5) - ThemeInteractionState.parallaxX(l, r, 1);
+        int by = t + height * 2 / 3 - ThemeInteractionState.parallaxY(t, b, 1);
         float blackHoleTurn = phase(36000L, 0.36f);
         for (int i = 0; i < 18; ++i) {
             double angle = i * Math.PI * 2.0 / 18.0 + blackHoleTurn * Math.PI * 2.0;
