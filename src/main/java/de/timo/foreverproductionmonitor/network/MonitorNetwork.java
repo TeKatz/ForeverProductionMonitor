@@ -81,6 +81,7 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(RequestStatistics.TYPE, RequestStatistics.STREAM_CODEC, MonitorNetwork::handleStatisticsRequest);
         payloadRegistrar.playToClient(StatisticsSnapshot.TYPE, StatisticsSnapshot.STREAM_CODEC, MonitorNetwork::handleStatisticsSnapshot);
         payloadRegistrar.playToServer(RequestHud.TYPE, RequestHud.STREAM_CODEC, MonitorNetwork::handleHudRequest);
+        payloadRegistrar.playToServer(RequestHudFiltered.TYPE, RequestHudFiltered.STREAM_CODEC, MonitorNetwork::handleHudFilteredRequest);
         payloadRegistrar.playToClient(HudSnapshot.TYPE, HudSnapshot.STREAM_CODEC, MonitorNetwork::handleHudSnapshot);
         payloadRegistrar.playToServer(RequestLocateDevice.TYPE, RequestLocateDevice.STREAM_CODEC, MonitorNetwork::handleLocateRequest);
         payloadRegistrar.playToClient(LocateDeviceResult.TYPE, LocateDeviceResult.STREAM_CODEC, MonitorNetwork::handleLocateResult);
@@ -89,6 +90,7 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(UpdateDashboardPin.TYPE, UpdateDashboardPin.STREAM_CODEC, MonitorNetwork::handleDashboardUpdate);
         payloadRegistrar.playToServer(RequestNetworkMap.TYPE, RequestNetworkMap.STREAM_CODEC, MonitorNetwork::handleNetworkMapRequest);
         payloadRegistrar.playToClient(NetworkMapPayload.TYPE, NetworkMapPayload.STREAM_CODEC, MonitorNetwork::handleNetworkMapSnapshot);
+        CraftingDiagnosticsNetwork.register(payloadRegistrar);
     }
 
     public static void request(ProductionTabletItem.MonitorLink monitorLink, String string, SortMode sortMode, int n, int n2, int n3) {
@@ -97,6 +99,15 @@ public final class MonitorNetwork {
 
     public static void requestHud(HudMode hudMode, int n, int n2) {
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestHud(hudMode, n, n2), (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    public static void requestHud(HudMode hudMode, int sampleIntervalTicks, int entryCount,
+                                  boolean includeItems, boolean includeFluids, boolean includeEnergy,
+                                  boolean includeInfinite, boolean storedLowestFirst) {
+        PacketDistributor.sendToServer((CustomPacketPayload)new RequestHudFiltered(
+                hudMode, sampleIntervalTicks, entryCount,
+                includeItems, includeFluids, includeEnergy, includeInfinite, storedLowestFirst),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     public static void requestStatistics(ProductionTabletItem.MonitorLink monitorLink, StatisticsPage statisticsPage, String string, int n, int n2, DeviceSort deviceSort, DeviceFilter deviceFilter) {
@@ -125,7 +136,7 @@ public final class MonitorNetwork {
         PacketDistributor.sendToServer((CustomPacketPayload)new UpdateDashboardPin(monitorLink.dimension(), monitorLink.pos(), dashboardAction, entryKind, aEKey, alarmMode, l, n, l2), (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
-    private static ProductionMonitorBlockEntity linkedMonitor(ServerPlayer serverPlayer, ResourceLocation resourceLocation, BlockPos blockPos) {
+    static ProductionMonitorBlockEntity linkedMonitor(ServerPlayer serverPlayer, ResourceLocation resourceLocation, BlockPos blockPos) {
         ProductionMonitorBlockEntity productionMonitorBlockEntity;
         if (!MonitorNetwork.hasMatchingTablet(serverPlayer, resourceLocation, blockPos)) {
             return null;
@@ -389,6 +400,93 @@ public final class MonitorNetwork {
         };
     }
 
+    private static void handleHudFilteredRequest(RequestHudFiltered requestHud, IPayloadContext iPayloadContext) {
+        Object playerObject = iPayloadContext.player();
+        if (!(playerObject instanceof ServerPlayer)) {
+            return;
+        }
+        ServerPlayer serverPlayer = (ServerPlayer)playerObject;
+        Optional<ProductionTabletItem.MonitorLink> link = TabletCurios.findEquippedLink((LivingEntity)serverPlayer);
+        if (link.isEmpty()) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new HudSnapshot(Status.INVALID_LINK, requestHud.mode(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+
+        ProductionTabletItem.MonitorLink monitorLink = link.get();
+        ResourceKey<net.minecraft.world.level.Level> resourceKey =
+                ResourceKey.create(Registries.DIMENSION, monitorLink.dimension());
+        ServerLevel serverLevel = serverPlayer.server.getLevel(resourceKey);
+        if (serverLevel == null || !serverLevel.hasChunkAt(monitorLink.pos())) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new HudSnapshot(Status.CHUNK_UNLOADED, requestHud.mode(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+
+        BlockEntity blockEntity = serverLevel.getBlockEntity(monitorLink.pos());
+        if (!(blockEntity instanceof ProductionMonitorBlockEntity productionMonitorBlockEntity)) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new HudSnapshot(Status.MONITOR_MISSING, requestHud.mode(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+        if (!productionMonitorBlockEntity.isMonitorOnline()) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new HudSnapshot(Status.NETWORK_OFFLINE, requestHud.mode(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+
+        productionMonitorBlockEntity.requestSampleInterval(
+                requestHud.sampleIntervalTicks(), serverLevel.getGameTime());
+
+        List<Entry> entries;
+        if (requestHud.mode() == HudMode.PINNED) {
+            entries = productionMonitorBlockEntity.dashboardSnapshot(serverLevel.getGameTime()).stream()
+                    .map(dashboardEntrySnapshot -> new Entry(
+                            MonitorNetwork.fromDashboardKind(dashboardEntrySnapshot.kind()),
+                            dashboardEntrySnapshot.key(),
+                            dashboardEntrySnapshot.amount(),
+                            dashboardEntrySnapshot.currentPerMinute(),
+                            dashboardEntrySnapshot.averagePerMinute(),
+                            dashboardEntrySnapshot.secondsSinceChange(),
+                            dashboardEntrySnapshot.infinite(),
+                            dashboardEntrySnapshot.state() == ProductionMonitorBlockEntity.AlarmState.ACTIVE))
+                    .filter(entry -> MonitorNetwork.hudContentFilter(
+                            entry.kind(), entry.infinite(),
+                            requestHud.includeItems(), requestHud.includeFluids(),
+                            requestHud.includeEnergy(), requestHud.includeInfinite()))
+                    .limit(requestHud.entryCount())
+                    .toList();
+        } else {
+            List<DisplayEntry> displayEntries = MonitorNetwork.displaySnapshot(
+                            productionMonitorBlockEntity, serverLevel.getGameTime()).stream()
+                    .filter(displayEntry -> MonitorNetwork.hudFilter(requestHud.mode(), displayEntry))
+                    .filter(displayEntry -> MonitorNetwork.hudContentFilter(
+                            displayEntry.kind(), displayEntry.infinite(),
+                            requestHud.includeItems(), requestHud.includeFluids(),
+                            requestHud.includeEnergy(), requestHud.includeInfinite()))
+                    .sorted(MonitorNetwork.hudComparator(
+                            requestHud.mode(), requestHud.storedLowestFirst()))
+                    .limit(requestHud.entryCount())
+                    .toList();
+
+            ArrayList<Entry> converted = new ArrayList<>(displayEntries.size());
+            for (DisplayEntry displayEntry : displayEntries) {
+                converted.add(displayEntry.toNetworkEntry());
+            }
+            entries = converted;
+        }
+
+        Status status = productionMonitorBlockEntity.isWarmingUp()
+                ? Status.WARMING_UP : Status.ONLINE;
+        PacketDistributor.sendToPlayer(serverPlayer,
+                (CustomPacketPayload)new HudSnapshot(status, requestHud.mode(), entries),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
     private static void handleHudRequest(RequestHud requestHud, IPayloadContext iPayloadContext) {
         Object object;
         Object object2 = iPayloadContext.player();
@@ -476,14 +574,40 @@ public final class MonitorNetwork {
         };
     }
 
+    private static boolean hudContentFilter(EntryKind kind, boolean infinite,
+                                            boolean includeItems, boolean includeFluids,
+                                            boolean includeEnergy, boolean includeInfinite) {
+        if (infinite && !includeInfinite) {
+            return false;
+        }
+        return switch (kind) {
+            case ITEM -> includeItems;
+            case FLUID -> includeFluids;
+            case ENERGY -> includeEnergy;
+        };
+    }
+
     private static Comparator<DisplayEntry> hudComparator(HudMode hudMode) {
-        Comparator<DisplayEntry> comparator = Comparator.comparing(MonitorNetwork::displayName, String.CASE_INSENSITIVE_ORDER);
+        return MonitorNetwork.hudComparator(hudMode, false);
+    }
+
+    private static Comparator<DisplayEntry> hudComparator(HudMode hudMode, boolean storedLowestFirst) {
+        Comparator<DisplayEntry> comparator = Comparator.comparing(
+                MonitorNetwork::displayName, String.CASE_INSENSITIVE_ORDER);
         return switch (hudMode) {
             default -> throw new IncompatibleClassChangeError();
-            case HudMode.STORED -> Comparator.comparingLong(DisplayEntry::stored).reversed().thenComparing(comparator);
-            case HudMode.INCOMING -> Comparator.comparingLong(DisplayEntry::averagePerMinute).reversed().thenComparing(comparator);
-            case HudMode.OUTGOING -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
-            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED -> Comparator.<DisplayEntry>comparingLong(displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute())).reversed().thenComparing(comparator);
+            case HudMode.STORED -> storedLowestFirst
+                    ? Comparator.comparingLong(DisplayEntry::stored).thenComparing(comparator)
+                    : Comparator.comparingLong(DisplayEntry::stored).reversed().thenComparing(comparator);
+            case HudMode.INCOMING -> Comparator.comparingLong(DisplayEntry::averagePerMinute)
+                    .reversed().thenComparing(comparator);
+            case HudMode.OUTGOING -> Comparator.<DisplayEntry>comparingLong(
+                    displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute()))
+                    .reversed().thenComparing(comparator);
+            case HudMode.ACTIVITY, HudMode.FLUIDS, HudMode.ENERGY, HudMode.PINNED ->
+                    Comparator.<DisplayEntry>comparingLong(
+                            displayEntry -> MonitorNetwork.absSafe(displayEntry.averagePerMinute()))
+                            .reversed().thenComparing(comparator);
         };
     }
 
@@ -825,6 +949,43 @@ public final class MonitorNetwork {
         }, registryFriendlyByteBuf -> new RequestHud((HudMode)registryFriendlyByteBuf.readEnum(HudMode.class), registryFriendlyByteBuf.readVarInt(), registryFriendlyByteBuf.readVarInt()));
 
         public RequestHud {
+            sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
+            entryCount = Math.max(1, Math.min(10, entryCount));
+        }
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record RequestHudFiltered(HudMode mode, int sampleIntervalTicks, int entryCount,
+                                     boolean includeItems, boolean includeFluids,
+                                     boolean includeEnergy, boolean includeInfinite,
+                                     boolean storedLowestFirst) implements CustomPacketPayload
+    {
+        public static final CustomPacketPayload.Type<RequestHudFiltered> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("request_hud_filtered"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RequestHudFiltered> STREAM_CODEC =
+                StreamCodec.of((buf, request) -> {
+                    buf.writeEnum((Enum)request.mode);
+                    buf.writeVarInt(request.sampleIntervalTicks);
+                    buf.writeVarInt(request.entryCount);
+                    buf.writeBoolean(request.includeItems);
+                    buf.writeBoolean(request.includeFluids);
+                    buf.writeBoolean(request.includeEnergy);
+                    buf.writeBoolean(request.includeInfinite);
+                    buf.writeBoolean(request.storedLowestFirst);
+                }, buf -> new RequestHudFiltered(
+                        (HudMode)buf.readEnum(HudMode.class),
+                        buf.readVarInt(),
+                        buf.readVarInt(),
+                        buf.readBoolean(),
+                        buf.readBoolean(),
+                        buf.readBoolean(),
+                        buf.readBoolean(),
+                        buf.readBoolean()));
+
+        public RequestHudFiltered {
             sampleIntervalTicks = MonitorNetwork.clampSampleInterval(sampleIntervalTicks);
             entryCount = Math.max(1, Math.min(10, entryCount));
         }
@@ -1418,4 +1579,3 @@ public final class MonitorNetwork {
         }
     }
 }
-

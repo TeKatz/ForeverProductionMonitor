@@ -20,6 +20,7 @@ package de.timo.foreverproductionmonitor.client.screen;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
+import appeng.core.definitions.AEItems;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.screen.AlarmRuleScreen;
@@ -71,6 +72,7 @@ extends Screen {
     private ForeverButton nbtItemsButton;
     private ForeverButton devicesTab;
     private ForeverButton mapTab;
+    private ForeverButton craftingTab;
     private GearButton settingsButton;
     private MonitorNetwork.MonitorSnapshot snapshot;
     private MonitorNetwork.StatisticsSnapshot statisticsSnapshot;
@@ -139,12 +141,13 @@ extends Screen {
         int n = this.contentLeft;
         int n2 = Math.max(5, this.contentRight - this.contentLeft);
         int n3 = 4;
-        int n4 = Math.max(1, (n2 - n3 * 4) / 5);
-        this.dashboardTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18));
-        this.productionTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18));
-        this.storageTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18));
-        this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18));
-        this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18));
+        int n4 = Math.max(1, (n2 - n3 * 5) / 6);
+        this.dashboardTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.dashboard"), button -> this.switchView(ViewMode.DASHBOARD), ForeverButton.Style.SECONDARY, n, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
+        this.productionTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.production"), button -> this.switchView(ViewMode.PRODUCTION), ForeverButton.Style.SECONDARY, n + n4 + n3, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
+        this.storageTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.storage"), button -> this.switchView(ViewMode.STORAGE), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 2, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
+        this.devicesTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.devices"), button -> this.switchView(ViewMode.DEVICES), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 3, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
+        this.mapTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create((Component)Component.translatable((String)"screen.forever_production_monitor.tab.map"), button -> this.switchView(ViewMode.MAP), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 4, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
+        this.craftingTab = (ForeverButton)this.addRenderableWidget(ForeverButton.create(Component.translatable("screen.forever_production_monitor.tab.crafting"), button -> this.minecraft.setScreen(new CraftingDiagnosticsScreen(this, this.link)), ForeverButton.Style.SECONDARY, n + (n4 + n3) * 5, this.top + 37, n4, 18).setRole(ForeverButton.Role.TAB));
         this.settingsButton = (GearButton)this.addRenderableWidget(new GearButton(this.left + this.panelWidth - 25, this.top + 7, button -> this.minecraft.setScreen((Screen)new ProductionMonitorThemeScreen(this))));
         int n5 = Math.max(60, Math.min(260, n2));
         this.search = new EditBox(this.font, this.left + 18, this.top + 62, n5, 20, (Component)Component.translatable((String)"screen.forever_production_monitor.search"));
@@ -296,6 +299,7 @@ extends Screen {
         this.storageTab.setStyle(this.viewMode == ViewMode.STORAGE || this.viewMode == ViewMode.COMPONENTS ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.devicesTab.setStyle(this.viewMode == ViewMode.DEVICES ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
         this.mapTab.setStyle(this.viewMode == ViewMode.MAP ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED);
+        this.craftingTab.setStyle(ForeverButton.Style.THEMED);
         this.sortButton.setStyle(ForeverButton.Style.THEMED_ACTIVE);
         this.filterButton.setStyle(ForeverButton.Style.THEMED);
         this.previousButton.setStyle(ForeverButton.Style.THEMED);
@@ -440,6 +444,12 @@ extends Screen {
 
     private void followNetworkPath(ResourceLocation dimension, BlockPos pos) {
         this.switchMapDimension(dimension, pos == null ? null : pos.immutable(), true);
+    }
+
+    public void locateCraftingProvider(ResourceLocation dimension, BlockPos pos) {
+        this.minecraft.setScreen(this);
+        this.switchView(ViewMode.MAP);
+        this.switchMapDimension(dimension, pos.immutable(), true);
     }
 
     private void prepareMapForCurrentDimension() {
@@ -695,6 +705,7 @@ extends Screen {
     }
 
     public void render(GuiGraphics guiGraphics, int n, int n2, float f) {
+        ThemeInteractionState.beginFrame(n, n2);
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         guiGraphics.fill(0, 0, this.width, this.height, palette.backdrop());
         this.drawPanel(guiGraphics);
@@ -720,6 +731,10 @@ extends Screen {
         }
         for (Renderable renderable : this.renderables) {
             renderable.render(guiGraphics, n, n2, f);
+        }
+        if (this.craftingTab != null && this.craftingTab.getWidth() >= 110) {
+            guiGraphics.renderItem(AEItems.BLANK_PATTERN.stack(),
+                    this.craftingTab.getX() + 5, this.craftingTab.getY() + 1);
         }
         if (this.viewMode == ViewMode.MAP) {
             this.drawDimensionDropdownOverlay(guiGraphics, n, n2);
@@ -1257,6 +1272,9 @@ extends Screen {
     }
 
     public boolean mouseClicked(double d, double d2, int n) {
+        if (ThemeInteractionState.mouseClicked(d, d2, n)) {
+            return true;
+        }
         Object object;
         int n2;
         int n3;
@@ -1266,21 +1284,30 @@ extends Screen {
         if (this.contentTransitionRunning()) {
             return super.mouseClicked(d, d2, n);
         }
-        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownClick(d, d2, n)) {
-            return true;
-        }
-        // The map search box is an overlay inside the 3D viewport in 3.3.0.
-        // Give the widget first refusal so camera dragging/zoom never steals search input.
-        if (this.viewMode == ViewMode.MAP && this.search != null && this.search.isMouseOver(d, d2)) {
-            if (n == 1) {
+        if (this.search != null && this.search.visible && this.search.active) {
+            boolean overSearch = this.search.isMouseOver(d, d2);
+            if (overSearch && n == 1) {
                 this.search.setValue("");
                 this.searchDelay = 0;
                 this.search.setFocused(true);
                 this.requestedPage = 0;
-                this.networkMapView.setSearch("");
+                if (this.viewMode == ViewMode.MAP && this.networkMapView != null) {
+                    this.networkMapView.setSearch("");
+                } else {
+                    this.requestNow();
+                }
                 return true;
             }
-            return super.mouseClicked(d, d2, n);
+            if (overSearch && n == 0) {
+                this.search.setFocused(true);
+                return super.mouseClicked(d, d2, n);
+            }
+            if (!overSearch && (n == 0 || n == 1)) {
+                this.search.setFocused(false);
+            }
+        }
+        if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownClick(d, d2, n)) {
+            return true;
         }
         if (this.viewMode == ViewMode.MAP && this.networkMapView != null && this.networkMapView.mouseClicked(d, d2, n)) {
             return true;
@@ -1333,14 +1360,6 @@ extends Screen {
                     return true;
                 }
             }
-        }
-        if (n == 1 && this.search != null && this.search.isMouseOver(d, d2)) {
-            this.search.setValue("");
-            this.searchDelay = 0;
-            this.search.setFocused(true);
-            this.requestedPage = 0;
-            this.requestNow();
-            return true;
         }
         return super.mouseClicked(d, d2, n);
     }

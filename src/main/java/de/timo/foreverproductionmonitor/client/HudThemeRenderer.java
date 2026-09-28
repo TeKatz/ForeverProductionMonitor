@@ -20,10 +20,10 @@ final class HudThemeRenderer {
     static Colors colors(ClientConfig.InterfaceStyle style) {
         return switch (style) {
             case STANDARD -> new Colors(0xFF080A0D, 0xFF4F5968, 0xFF14181F, 0xFF202833, 0xFF191F28, 0xFF161B22, 0xFF6E7C90, 0xFF9AA8BA, 0xFFF0F2F5);
-            case FOREVER -> new Colors(0xFF07060B, 0xFF684B86, 0xFF121019, 0xFF21182D, 0xFF1A1422, 0xFF16111D, 0xFFE29AE8, 0xFF8E5AC7, 0xFFF4EDF7);
-            case AE2 -> new Colors(0xFF08090B, 0xFF727782, 0xFF16181D, 0xFF25282E, 0xFF1B1E24, 0xFF181A20, 0xFFC9CCD3, 0xFF8D929C, 0xFFF2F3F5);
-            case ORITECH -> new Colors(0xFF090806, 0xFF796E5B, 0xFF191713, 0xFF29241C, 0xFF211E18, 0xFF1C1915, 0xFFE1A54A, 0xFFA56E35, 0xFFF0E7D4);
-            case MEKANISM -> new Colors(0xFF061012, 0xFF316D77, 0xFF0E1C20, 0xFF153038, 0xFF12262C, 0xFF0F2126, 0xFF5AD1D8, 0xFF6EDB9D, 0xFFE8FFFF);
+            case FOREVER -> new Colors(0xFF09111A, 0xFF365366, 0xFF0D1620, 0xFF172432, 0xFF111C28, 0xFF0D1620, 0xFF55D6FF, 0xFFB66BFF, 0xFFF2F7FC);
+            case AE2 -> new Colors(0xFF111318, 0xFF626973, 0xFF1F2329, 0xFF30353D, 0xFF252930, 0xFF1F2329, 0xFFBCC2CA, 0xFFE2E5E9, 0xFFF5F6F7);
+            case ORITECH -> new Colors(0xFF0D1113, 0xFF4B5B60, 0xFF161B1E, 0xFF252D31, 0xFF171E21, 0xFF13191C, 0xFFFF7A2D, 0xFF45DCE6, 0xFFF2F4F5);
+            case MEKANISM -> new Colors(0xFF101A1E, 0xFF49656B, 0xFF132127, 0xFF21333A, 0xFF18262C, 0xFF132127, 0xFF5AD1D8, 0xFF6EDB9D, 0xFFE9F4F5);
             case QUANTUM -> new Colors(0xFF060409, 0xFF5B4165, 0xFF15121A, 0xFF241D2C, 0xFF1D1724, 0xFF18131E, 0xFF8C43D6, 0xFFD39DFF, 0xFFF1ECF6);
             case HOLOGRAPHIC -> new Colors(0xFF031014, 0xFF196573, 0xFF071A20, 0xFF0A2931, 0xFF09232A, 0xFF071E24, 0xFF35E5FF, 0xFF8AF6FF, 0xFFE9FEFF);
             case MONOCHROME -> new Colors(0xFF050805, 0xFF4C654B, 0xFF0C120C, 0xFF132013, 0xFF101A10, 0xFF0D160D, 0xFF91B58C, 0xFFBED3BA, 0xFFE6F0E3);
@@ -36,6 +36,7 @@ final class HudThemeRenderer {
             case REDSTONE -> new Colors(0xFF0D0505, 0xFF68282A, 0xFF180B0B, 0xFF281010, 0xFF211010, 0xFF1B0D0D, 0xFFE13A36, 0xFFFF8A45, 0xFFFFEAE2);
             case FROST -> new Colors(0xFF071018, 0xFF4D718A, 0xFF0E1A23, 0xFF162A37, 0xFF12232E, 0xFF0F1D27, 0xFF7DCAEE, 0xFFD2F0FF, 0xFFF4FBFF);
             case NATURE -> new Colors(0xFF040804, 0xFF31502E, 0xFF0A130A, 0xFF102010, 0xFF0D1A0D, 0xFF0A160A, 0xFF4E9847, 0xFFD278A4, 0xFFE3EAD6);
+            case CAT -> new Colors(0xFF102228, 0xFF527D81, 0xFF152B31, 0xFF1D3940, 0xFF26434A, 0xFF20383E, 0xFFFFAD96, 0xFFFFD49F, 0xFFFFF4E5);
             case CUSTOM -> customColors();
         };
     }
@@ -78,38 +79,181 @@ final class HudThemeRenderer {
         int right = layout == ClientConfig.HudLayoutStyle.NONE ? x + WIDTH : x + WIDTH - 1;
         g.fill(left, y, right, y + 17, withAlpha((row & 1) == 0 ? c.rowEven() : c.rowOdd(), alpha));
 
+        // Every theme gets a small row-level identity cue. These stay near the
+        // edges so names, icons and values remain untouched even at compact HUD sizes.
         switch (theme) {
+            case STANDARD -> {
+                g.fill(x + 2, y + 15, x + 13, y + 16, withAlpha(c.border(), 40));
+                float pulse = 0.5f + 0.5f * (float)Math.sin((phase(9600L, 0.18f) + row * 0.13f) * Math.PI * 2.0);
+                g.fill(x + WIDTH - 7, y + 7, x + WIDTH - 5, y + 9,
+                        withAlpha(c.accentB(), 30 + Math.round(pulse * 34.0f)));
+            }
+            case FOREVER -> {
+                int[] systems = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
+                int system = systems[Math.floorMod(row, systems.length)];
+                g.fill(x + 2, y + 3, x + 4, y + 14, withAlpha(system, 58));
+                g.fill(x + WIDTH - 16, y + 5, x + WIDTH - 5, y + 12, withAlpha(0xFF0A141D, 96));
+                g.fill(x + WIDTH - 13, y + 7, x + WIDTH - 9, y + 10, withAlpha(system, 54));
+                float packet = (phase(8400L, 0.24f) + row * 0.17f) % 1.0f;
+                int px = x + WIDTH - 32 + Math.round(packet * 12.0f);
+                g.fill(px, y + 14, px + 3, y + 15, withAlpha(c.accentA(), motionAlpha(18, 42)));
+            }
             case AE2 -> {
-                int trace = controllerColor(row * 0.07f, Math.min(62, alpha));
+                int trace = controllerColor(row * 0.07f, Math.min(64, alpha));
                 g.fill(x + 2, y + 3, x + 3, y + 14, trace);
-                g.fill(x + 3, y + 13, x + 12, y + 14, trace);
+                g.fill(x + 3, y + 13, x + 13, y + 14, trace);
+                int mx = x + WIDTH - 13;
+                int my = y + 4;
+                g.fill(mx, my, mx + 9, my + 9, withAlpha(0xFF24272D, 104));
+                g.fill(mx + 2, my + 2, mx + 7, my + 7,
+                        controllerColor(0.12f + row * 0.05f, motionAlpha(38, 76)));
             }
             case ORITECH -> {
-                g.fill(x + 2, y + 3, x + 4, y + 14, withAlpha(c.accentA(), 74));
-                rivet(g, x + WIDTH - 6, y + 7, withAlpha(c.accentB(), 88));
+                g.fill(x + 2, y + 3, x + 4, y + 14, withAlpha(c.accentA(), 78));
+                g.fill(x + WIDTH - 12, y + 4, x + WIDTH - 4, y + 13, withAlpha(0xFF10171A, 110));
+                float energy = 0.5f + 0.5f * (float)Math.sin((phase(8800L, 0.22f) + row * 0.11f) * Math.PI * 2.0);
+                g.fill(x + WIDTH - 10, y + 6, x + WIDTH - 6, y + 11,
+                        withAlpha(c.accentB(), 44 + Math.round(energy * 38.0f)));
             }
             case MEKANISM -> {
-                g.fill(x + 2, y + 4, x + 4, y + 13, withAlpha(c.accentA(), 58));
-                g.fill(x + 4, y + 8, x + 12, y + 9, withAlpha(c.border(), 40));
+                // Small configuration port + energy gauge, matching Mekanism's machine UI.
+                int port = (row & 1) == 0 ? 0xFF4E8BD8 : 0xFFD85858;
+                g.fill(x + 2, y + 5, x + 5, y + 11, withAlpha(port, 62));
+                g.fill(x + WIDTH - 10, y + 4, x + WIDTH - 5, y + 13, withAlpha(c.border(), 58));
+                float energy = 0.5f + 0.5f * (float)Math.sin((phase(9200L, 0.28f) + row * 0.13f) * Math.PI * 2.0);
+                int fill = 2 + Math.round(energy * 5.0f);
+                g.fill(x + WIDTH - 8, y + 12 - fill, x + WIDTH - 7, y + 12,
+                        withAlpha(c.accentB(), 56));
+                int px = x + WIDTH - 25 + Math.round(phase(7600L, 0.25f) * 10.0f);
+                g.fill(px, y + 14, px + 3, y + 15, withAlpha(c.accentA(), motionAlpha(18, 40)));
             }
             case QUANTUM -> {
-                g.fill(x + 2, y + 4, x + 5, y + 13, withAlpha(c.accentA(), 58));
-                if ((row & 1) == 0) g.fill(x + WIDTH - 12, y + 14, x + WIDTH - 3, y + 15, withAlpha(0xFFD2A62B, 48));
+                // One contained compute cell; no detached linework across the row.
+                int qx = x + WIDTH - 16;
+                int qy = y + 3;
+                g.fill(qx, qy, qx + 12, qy + 11, withAlpha(0xFF17151C, 104));
+                g.fill(qx + 2, qy + 2, qx + 10, qy + 9, withAlpha(0xFF3A1B58, 76));
+                float pulse = 0.5f + 0.5f * (float)Math.sin((phase(10200L, 0.31f) + row * 0.09f) * Math.PI * 2.0);
+                g.fill(qx + 4, qy + 4, qx + 8, qy + 7,
+                        withAlpha(c.accentB(), 36 + Math.round(pulse * 50.0f)));
+                g.fill(qx + 2, qy + 10, qx + 10, qy + 11, withAlpha(0xFFD2A62B, 34));
+            }
+            case HOLOGRAPHIC -> {
+                corner(g, x + 3, y + 3, true, true, withAlpha(c.accentA(), 34));
+                float scan = phase(6800L, 0.34f);
+                int sx = x + 8 + Math.round(scan * (WIDTH - 22));
+                g.fill(sx, y + 14, Math.min(x + WIDTH - 4, sx + 7), y + 15,
+                        withAlpha(c.accentB(), motionAlpha(20, 52)));
+            }
+            case MONOCHROME -> {
+                g.fill(x + 3, y + 15, x + WIDTH - 3, y + 16, withAlpha(c.titleText(), 12));
+                float scan = phase(13800L, 0.27f);
+                int sx = x + 4 + Math.round(scan * (WIDTH - 24));
+                g.fill(sx, y + 15, sx + 14, y + 16, withAlpha(c.accentA(), motionAlpha(18, 36)));
+            }
+            case MINIMAL -> {
+                int span = 16 + ((row & 1) == 0 ? 8 : 0);
+                int center = x + WIDTH / 2;
+                g.fill(center - span / 2, y + 15, center + span / 2, y + 16, withAlpha(c.accentA(), 30));
+                g.fill(center, y + 14, center + 1, y + 16, withAlpha(c.accentB(), 44));
+            }
+            case CARBON -> {
+                rivet(g, x + 4, y + 7, withAlpha(c.accentA(), 46));
+                for (int px = x + WIDTH - 22; px < x + WIDTH - 5; px += 5) {
+                    g.fill(px, y + 5, px + 2, y + 12, withAlpha(c.border(), 26));
+                }
+                float conveyor = phase(9200L, 0.2f);
+                int cx = x + WIDTH - 22 + Math.round(conveyor * 13.0f);
+                g.fill(cx, y + 13, cx + 3, y + 14, withAlpha(c.accentA(), motionAlpha(20, 48)));
+            }
+            case TERMINAL -> {
+                g.fill(x + 2, y + 3, x + 3, y + 14, withAlpha(c.accentA(), 38));
+                int prompt = withAlpha(c.accentB(), 52);
+                g.fill(x + WIDTH - 13, y + 6, x + WIDTH - 11, y + 8, prompt);
+                g.fill(x + WIDTH - 11, y + 8, x + WIDTH - 9, y + 10, prompt);
+                boolean cursor = !motionEnabled() || phase(1150L, 0.2f) < 0.58f;
+                if (cursor) g.fill(x + WIDTH - 8, y + 10, x + WIDTH - 4, y + 11, withAlpha(c.accentA(), 68));
+            }
+            case DEEP_SPACE -> {
+                int sx = x + WIDTH - 8 - mod(hash(3100 + row * 47), 10);
+                int sy = y + 4 + mod(hash(4700 + row * 61), 8);
+                float twinkle = 0.5f + 0.5f * (float)Math.sin((phase(12400L, 0.17f) + row * 0.19f) * Math.PI * 2.0);
+                star(g, sx, sy, withAlpha((row % 3) == 0 ? c.accentB() : c.titleText(),
+                        28 + Math.round(twinkle * 42.0f)));
+            }
+            case COPPER -> {
+                rivet(g, x + 4, y + 6, withAlpha(c.accentA(), 64));
+                rivet(g, x + WIDTH - 7, y + 9, withAlpha(c.accentB(), 54));
+                g.fill(x + WIDTH - 18, y + 14, x + WIDTH - 9, y + 15,
+                        withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 28));
+            }
+            case AURORA -> {
+                float flow = phase(15000L, 0.21f) + row * 0.08f;
+                int y1 = y + 13 + (int)Math.round(Math.sin(flow * Math.PI * 2.0) * 1.5);
+                int y2 = y + 10 + (int)Math.round(Math.sin(flow * Math.PI * 2.0 + 1.8) * 1.5);
+                g.fill(x + WIDTH - 25, y1, x + WIDTH - 14, y1 + 1, withAlpha(c.accentA(), 30));
+                g.fill(x + WIDTH - 17, y2, x + WIDTH - 5, y2 + 1, withAlpha(c.accentB(), 28));
+            }
+            case REDSTONE -> {
+                float power = 0.5f + 0.5f * (float)Math.sin((phase(7200L, 0.24f) + row * 0.12f) * Math.PI * 2.0);
+                int dust = withAlpha(c.accentA(), 34 + Math.round(power * 42.0f));
+                g.fill(x + 2, y + 8, x + 11, y + 9, dust);
+                g.fill(x + 10, y + 6, x + 11, y + 11, dust);
+                g.fill(x + WIDTH - 8, y + 7, x + WIDTH - 5, y + 10,
+                        withAlpha(c.accentB(), 32 + Math.round(power * 48.0f)));
+            }
+            case FROST -> {
+                g.fill(x + 2, y + 15, x + 12, y + 16, withAlpha(c.accentB(), 32));
+                if ((row & 1) == 0) {
+                    snowflake(g, x + WIDTH - 7, y + 7, withAlpha(c.accentB(), 38));
+                } else {
+                    iceCorner(g, x + WIDTH - 4, y + 13, withAlpha(c.accentA(), 24));
+                }
             }
             case NATURE -> {
                 int leaf = withAlpha(c.accentA(), 64);
                 g.fill(x + 2, y + 3, x + 3, y + 14, withAlpha(c.accentA(), 42));
                 drawLeaf(g, x + 5, y + 6 + (row & 1) * 4, leaf, (row & 1) == 0);
+                if (row % 3 == 0) {
+                    flower(g, x + WIDTH - 8, y + 8, withAlpha(c.accentB(), 34), withAlpha(c.titleText(), 28));
+                }
             }
-            case FROST -> {
-                g.fill(x + 2, y + 15, x + 12, y + 16, withAlpha(c.accentB(), 32));
-                if ((row & 1) == 0) snowflake(g, x + WIDTH - 7, y + 7, withAlpha(c.accentB(), 38));
+            case CAT -> {
+                g.fill(x + 1, y + 2, x + 2, y + 15,
+                        withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 62));
+                float step = phase(9800L, 0.22f);
+                int px = x + WIDTH - 10 - Math.round((step + row * 0.13f - (float)Math.floor(step + row * 0.13f)) * 13.0f);
+                drawPaw(g, px, y + 8, withAlpha((row & 1) == 0 ? c.accentB() : c.accentA(), motionAlpha(24, 44)));
             }
-            case REDSTONE -> g.fill(x + 2, y + 8, x + 11, y + 9, withAlpha(c.accentA(), 52));
-            case TERMINAL -> g.fill(x + 2, y + 3, x + 3, y + 14, withAlpha(c.accentA(), 34));
-            default -> {
-                if (layout == ClientConfig.HudLayoutStyle.FULL) {
-                    g.fill(x + 2, y + 16, x + WIDTH - 2, y + 17, withAlpha(c.border(), 28));
+            case CUSTOM -> {
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> g.fill(x + 2, y + 15, x + WIDTH - 2, y + 16,
+                            withAlpha(c.border(), 24));
+                    case SPLIT -> {
+                        g.fill(x + 2, y + 3, x + 3, y + 14,
+                                withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 58));
+                        g.fill(x + WIDTH - 10, y + 5, x + WIDTH - 7, y + 12,
+                                withAlpha(c.accentA(), 38));
+                        g.fill(x + WIDTH - 6, y + 5, x + WIDTH - 3, y + 12,
+                                withAlpha(c.accentB(), 38));
+                    }
+                    case CORNERS -> {
+                        int accent = (row & 1) == 0 ? c.accentA() : c.accentB();
+                        g.fill(x + 2, y + 3, x + 8, y + 4, withAlpha(accent, 54));
+                        g.fill(x + 2, y + 3, x + 3, y + 9, withAlpha(accent, 54));
+                        g.fill(x + WIDTH - 8, y + 13, x + WIDTH - 2, y + 14, withAlpha(accent, 34));
+                    }
+                    case CIRCUIT -> {
+                        int accent = (row & 1) == 0 ? c.accentA() : c.accentB();
+                        g.fill(x + 2, y + 8, x + 14, y + 9, withAlpha(accent, 42));
+                        g.fill(x + 13, y + 6, x + 14, y + 11, withAlpha(accent, 42));
+                        float packet = (phase(9200L, 0.22f) + row * 0.17f) % 1.0f;
+                        int px = x + WIDTH - 30 + Math.round(packet * 18.0f);
+                        g.fill(px, y + 14, px + 3, y + 15,
+                                withAlpha(accent, motionAlpha(22, 52)));
+                    }
                 }
             }
         }
@@ -125,22 +269,30 @@ final class HudThemeRenderer {
 
         switch (theme) {
             case AE2 -> {
-                int trace = controllerColor(0.05f, a);
-                g.fill(cx - 5, cy - 1, cx - 1, cy + 1, trace);
-                g.fill(cx - 1, cy - 4, cx + 1, cy + 1, trace);
-                g.fill(cx - 1, cy - 4, cx + 5, cy - 2, trace);
-                g.fill(cx + 3, cy - 2, cx + 5, cy + 4, trace);
+                g.fill(cx - 6, cy - 6, cx + 7, cy + 7, withAlpha(0xFF626973, a / 2));
+                g.fill(cx - 4, cy - 4, cx + 5, cy + 5, withAlpha(0xFF24272D, a));
+                g.fill(cx - 2, cy - 2, cx + 3, cy + 3, controllerColor(0.05f, a));
+                g.fill(cx + 3, cy - 4, cx + 5, cy - 2, controllerColor(0.22f, a / 2));
             }
-            case ORITECH -> gear(g, cx, cy, 4, withAlpha(c.accentA(), a), withAlpha(c.accentB(), a));
+            case ORITECH -> {
+                g.fill(cx - 5, cy - 5, cx + 6, cy + 6, withAlpha(0xFF11181B, a));
+                g.fill(cx - 5, cy - 5, cx - 3, cy + 6, withAlpha(c.accentA(), a));
+                g.fill(cx - 2, cy - 3, cx + 4, cy + 4, withAlpha(c.border(), a));
+                g.fill(cx, cy - 1, cx + 3, cy + 2, withAlpha(c.accentB(), a));
+            }
             case MEKANISM -> {
-                g.fill(cx - 4, cy - 1, cx + 5, cy + 2, withAlpha(c.border(), a));
-                g.fill(cx - 1, cy - 4, cx + 2, cy + 5, withAlpha(c.accentA(), a));
-                g.fill(cx, cy - 2, cx + 1, cy + 3, withAlpha(c.accentB(), a));
+                g.fill(cx - 5, cy - 5, cx - 1, cy + 5, withAlpha(c.border(), a));
+                g.fill(cx - 4, cy - 1, cx - 2, cy + 4, withAlpha(c.accentA(), a));
+                g.fill(cx + 1, cy - 5, cx + 5, cy + 5, withAlpha(c.border(), a));
+                g.fill(cx + 2, cy - 3, cx + 4, cy + 4, withAlpha(c.accentB(), a));
+                g.fill(cx - 1, cy, cx + 2, cy + 1, withAlpha(c.titleText(), a / 2));
             }
             case QUANTUM -> {
-                g.fill(cx - 5, cy - 5, cx + 6, cy + 6, withAlpha(0xFF17151C, a));
-                g.fill(cx - 3, cy - 3, cx + 4, cy + 4, withAlpha(0xFF3A1B58, a));
+                g.fill(cx - 6, cy - 5, cx + 7, cy + 6, withAlpha(0xFF777981, a / 2));
+                g.fill(cx - 4, cy - 4, cx + 5, cy + 5, withAlpha(0xFF17151C, a));
+                g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(0xFF3A1B58, a));
                 g.fill(cx - 1, cy - 1, cx + 2, cy + 2, withAlpha(c.accentB(), a));
+                g.fill(cx - 3, cy + 4, cx + 4, cy + 5, withAlpha(0xFFD2A62B, a / 2));
             }
             case HOLOGRAPHIC -> {
                 corner(g, cx - 5, cy - 5, true, true, withAlpha(c.accentA(), a));
@@ -182,18 +334,44 @@ final class HudThemeRenderer {
                 drawLeaf(g, cx - 2, cy + 2, withAlpha(c.accentA(), a), false);
                 flower(g, cx + 1, cy - 5, withAlpha(c.accentB(), a), withAlpha(c.titleText(), a));
             }
+            case CAT -> drawCatFace(g, cx, cy, c, a);
             case FOREVER -> {
-                g.fill(cx - 5, cy - 2, cx - 1, cy + 3, withAlpha(c.accentA(), a));
-                g.fill(cx + 1, cy - 3, cx + 5, cy + 2, withAlpha(c.accentB(), a));
-                g.fill(cx, cy - 1, cx + 1, cy + 2, withAlpha(c.titleText(), a));
+                // Central network core with four subsystem nodes.
+                g.fill(cx - 3, cy - 3, cx + 4, cy + 4, withAlpha(0xFF0A141D, a));
+                g.fill(cx - 1, cy - 1, cx + 2, cy + 2, withAlpha(c.accentA(), a));
+                g.fill(cx - 6, cy - 1, cx - 4, cy + 1, withAlpha(0xFFC9D3DD, a));
+                g.fill(cx + 5, cy - 1, cx + 7, cy + 1, withAlpha(0xFFFF8A3D, a));
+                g.fill(cx - 1, cy - 6, cx + 1, cy - 4, withAlpha(0xFF55D6C7, a));
+                g.fill(cx - 1, cy + 5, cx + 1, cy + 7, withAlpha(0xFFB66BFF, a));
             }
             case STANDARD -> {
                 g.fill(cx - 4, cy - 4, cx + 5, cy + 5, withAlpha(c.accentA(), a / 2));
                 g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.panel(), a));
             }
             case CUSTOM -> {
-                g.fill(cx - 5, cy - 5, cx + 2, cy + 2, withAlpha(c.accentA(), a));
-                g.fill(cx - 1, cy - 1, cx + 6, cy + 6, withAlpha(c.accentB(), a));
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> {
+                        g.fill(cx - 4, cy - 4, cx + 5, cy + 5, withAlpha(c.border(), a / 2));
+                        g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.accentA(), a));
+                    }
+                    case SPLIT -> {
+                        g.fill(cx - 5, cy - 5, cx + 2, cy + 2, withAlpha(c.accentA(), a));
+                        g.fill(cx - 1, cy - 1, cx + 6, cy + 6, withAlpha(c.accentB(), a));
+                    }
+                    case CORNERS -> {
+                        corner(g, cx - 5, cy - 5, true, true, withAlpha(c.accentA(), a));
+                        corner(g, cx + 5, cy + 5, false, false, withAlpha(c.accentB(), a));
+                        g.fill(cx, cy, cx + 1, cy + 1, withAlpha(c.titleText(), a));
+                    }
+                    case CIRCUIT -> {
+                        g.fill(cx - 5, cy, cx + 5, cy + 1, withAlpha(c.accentA(), a));
+                        g.fill(cx, cy - 5, cx + 1, cy + 5, withAlpha(c.accentB(), a));
+                        g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.panel(), a));
+                        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, withAlpha(c.titleText(), a));
+                    }
+                }
             }
         }
     }
@@ -204,54 +382,98 @@ final class HudThemeRenderer {
         switch (theme) {
             case STANDARD -> {
                 g.fill(x + 4, y + 17, x + WIDTH - 4, y + 18, withAlpha(c.accentA(), 54));
+                float travel = phase(16000L, 0.2f);
                 if (motionEnabled()) {
-                    float travel = phase(16000L, 0.2f);
                     g.pose().pushPose();
                     g.pose().translate(x + 10 + travel * 150.0f, y, 0.0f);
                     g.fill(0, 2, 12, 3, withAlpha(c.accentB(), motionAlpha(20, 48)));
                     g.pose().popPose();
                 }
+                float status = 0.5f + 0.5f * (float)Math.sin(travel * Math.PI * 2.0);
+                g.fill(x + WIDTH - 9, y + 7, x + WIDTH - 6, y + 10,
+                        withAlpha(c.accentB(), 30 + Math.round(status * 34.0f)));
             }
             case FOREVER -> {
-                int split = x + 112;
-                g.fill(x, y, split, y + 2, withAlpha(c.accentA(), 98));
-                g.fill(split, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 98));
-                float wave = (float)Math.sin(phase(17000L, 0.25f) * Math.PI * 2.0);
-                g.pose().pushPose();
-                g.pose().translate(0.0f, wave * 1.5f, 0.0f);
-                diagonal(g, x + 20, y + h - 8, x + 60, y + h - 14, withAlpha(c.accentA(), 38));
-                diagonal(g, x + 126, y + 7, x + 166, y + 13, withAlpha(c.accentB(), 38));
-                g.pose().popPose();
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.accentA(), 88));
+                g.fill(x + 4, y + h - 4, x + WIDTH - 4, y + h - 3, withAlpha(c.border(), 42));
+                int[] systems = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
+                int busY = y + h - 4;
+                for (int i = 0; i < 4; ++i) {
+                    int nx = x + 30 + i * 40;
+                    g.fill(nx - 4, busY - 5, nx + 5, busY + 2, withAlpha(0xFF0A141D, 96));
+                    g.fill(nx - 2, busY - 3, nx + 3, busY, withAlpha(systems[i], 58));
+                }
+                float packet = phase(8800L, 0.27f);
+                int px = x + 10 + Math.round(packet * 164.0f);
+                g.fill(px, busY - 1, Math.min(x + WIDTH - 5, px + 4), busY + 2,
+                        withAlpha(c.accentA(), motionAlpha(24, 58)));
+                // Tiny paired quantum link in the header.
+                g.fill(x + WIDTH - 40, y + 7, x + WIDTH - 34, y + 13, withAlpha(0xFF1B1722, 94));
+                g.fill(x + WIDTH - 18, y + 7, x + WIDTH - 12, y + 13, withAlpha(0xFF1B1722, 94));
+                g.fill(x + WIDTH - 34, y + 9, x + WIDTH - 18, y + 10, withAlpha(0xFFB66BFF, 32));
             }
             case AE2 -> {
-                g.fill(x, y, x + WIDTH, y + 2, withAlpha(0xFFC9CCD3, 84));
-                int traceA = controllerColor(0.00f, 68);
-                int traceB = controllerColor(0.18f, 54);
-                controllerTrace(g, x + 18, y + 4, 44, 11, traceA, false);
-                controllerTrace(g, x + WIDTH - 18, y + h - 5, -48, -10, traceB, true);
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(0xFFE2E5E9, 90));
+                g.fill(x + 2, y + 2, x + 4, y + h - 3, withAlpha(0xFF626973, 64));
+                // Three visible ME Controller cells in the header.
+                for (int i = 0; i < 3; ++i) {
+                    int mx = x + WIDTH - 46 + i * 13;
+                    g.fill(mx, y + 4, mx + 11, y + 15, withAlpha(0xFF24272D, 112));
+                    g.fill(mx + 2, y + 6, mx + 9, y + 13,
+                            controllerColor(i * 0.13f, motionAlpha(40, 76)));
+                }
+                controllerTrace(g, x + 18, y + h - 5, 48, -8, controllerColor(0.31f, 40), false);
             }
             case ORITECH -> {
-                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.accentA(), 76));
-                rivet(g, x + 4, y + 4, withAlpha(c.accentB(), 94));
-                rivet(g, x + WIDTH - 6, y + h - 6, withAlpha(c.accentA(), 94));
-                gear(g, x + WIDTH - 12, y + 9, 4, withAlpha(c.border(), 88), withAlpha(c.accentB(), 92));
+                // Compact Oritech machine frame: orange structure, cyan powered glass,
+                // and one small travelling gantry carriage instead of repeated dashes.
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.border(), 88));
+                g.fill(x + 2, y + 2, x + 4, y + h - 3, withAlpha(c.accentA(), 82));
+                g.fill(x + 4, y + 3, x + WIDTH - 17, y + 4, withAlpha(c.border(), 54));
+
+                int moduleX = x + WIDTH - 15;
+                g.fill(moduleX, y + 4, x + WIDTH - 4, y + 15, withAlpha(0xFF10171A, 120));
+                g.fill(moduleX + 3, y + 7, x + WIDTH - 7, y + 12,
+                        withAlpha(c.accentB(), motionAlpha(48, 82)));
+
+                float travel = phase(12000L, 0.28f);
+                float pingPong = 0.5f - 0.5f * (float)Math.cos(travel * Math.PI * 2.0);
+                int carriageX = x + 18 + Math.round(pingPong * 82.0f);
+                g.fill(carriageX - 4, y + 4, carriageX + 5, y + 10, withAlpha(0xFF11181B, 112));
+                g.fill(carriageX - 2, y + 6, carriageX + 3, y + 9,
+                        withAlpha(c.accentB(), motionAlpha(46, 78)));
+                g.fill(carriageX, y + 9, carriageX + 1, y + 15, withAlpha(c.border(), 58));
+
+                rivet(g, x + 7, y + h - 7, withAlpha(c.border(), 68));
+                rivet(g, x + WIDTH - 8, y + h - 7, withAlpha(c.border(), 68));
             }
             case MEKANISM -> {
-                g.fill(x + 2, y + 3, x + 4, y + h - 3, withAlpha(c.accentA(), 64));
-                g.fill(x + WIDTH - 4, y + 3, x + WIDTH - 2, y + h - 3, withAlpha(c.accentB(), 64));
-                float level = 0.35f + 0.35f * (0.5f + 0.5f * (float)Math.sin(phase(16000L, 0.3f) * Math.PI * 2.0));
-                tank(g, x + WIDTH - 16, y + 4, 7, 12, level, withAlpha(c.accentA(), 52), withAlpha(c.border(), 66));
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.border(), 76));
+                // Chemical tank at left.
+                float chem = 0.42f + 0.26f * (0.5f + 0.5f * (float)Math.sin(phase(15000L, 0.3f) * Math.PI * 2.0));
+                tank(g, x + 5, y + 4, 7, 12, chem, withAlpha(c.accentA(), 58), withAlpha(c.border(), 72));
+                // Energy gauge at right.
+                g.fill(x + WIDTH - 11, y + 4, x + WIDTH - 5, y + 15, withAlpha(c.border(), 68));
+                float power = 0.55f + 0.32f * (0.5f + 0.5f * (float)Math.sin(phase(11000L, 0.2f) * Math.PI * 2.0));
+                int fill = Math.max(2, Math.round(8.0f * power));
+                g.fill(x + WIDTH - 9, y + 13 - fill, x + WIDTH - 7, y + 13, withAlpha(c.accentB(), 68));
+                // Mekanism side configuration tabs.
+                g.fill(x + 15, y + 5, x + 18, y + 9, withAlpha(0xFF4E8BD8, 66));
+                g.fill(x + 15, y + 10, x + 18, y + 14, withAlpha(0xFFD85858, 62));
             }
             case QUANTUM -> {
-                g.fill(x, y, x + WIDTH, y + 2, withAlpha(c.accentA(), 74));
-                for (int i = 0; i < 4; ++i) {
-                    int mx = x + WIDTH - 54 + i * 12;
-                    g.fill(mx, y + 4, mx + 10, y + 14, withAlpha(0xFF17151C, 104));
-                    g.fill(mx + 2, y + 6, mx + 8, y + 12, withAlpha(i == 2 ? c.accentB() : c.accentA(), 42 + i * 6));
+                g.fill(x, y, x + WIDTH, y + 2, withAlpha(0xFF777981, 72));
+                // One coherent mini compute bank in the upper-right.
+                int baseX = x + WIDTH - 46;
+                int activeCell = Math.min(2, (int)(phase(8800L, 0.56f) * 3.0f));
+                for (int i = 0; i < 3; ++i) {
+                    int mx = baseX + i * 13;
+                    g.fill(mx, y + 4, mx + 11, y + 15, withAlpha(0xFF17151C, 112));
+                    g.fill(mx + 2, y + 6, mx + 9, y + 13, withAlpha(0xFF3A1B58, 68));
+                    int glow = i == activeCell ? motionAlpha(54, 94) : 30;
+                    g.fill(mx + 4, y + 8, mx + 7, y + 11, withAlpha(c.accentB(), glow));
                 }
-                for (int hx = x + 8; hx < x + 54; hx += 8) {
-                    g.fill(hx, y + h - 3, hx + 4, y + h - 2, withAlpha(0xFFD2A62B, 48));
-                }
+                g.fill(baseX + 2, y + 15, baseX + 37, y + 16, withAlpha(0xFFD2A62B, 40));
             }
             case HOLOGRAPHIC -> {
                 for (int sy = y + 4; sy < y + h - 3; sy += 6) {
@@ -276,7 +498,11 @@ final class HudThemeRenderer {
                 }
             }
             case MINIMAL -> {
-                g.fill(x + 16, y + 17, x + WIDTH - 16, y + 18, withAlpha(c.accentA(), 30));
+                float breathe = 0.5f + 0.5f * (float)Math.sin(phase(14000L, 0.22f) * Math.PI * 2.0);
+                int half = 44 + Math.round(breathe * 26.0f);
+                int center = x + WIDTH / 2;
+                g.fill(center - half, y + 17, center + half, y + 18, withAlpha(c.accentA(), 24 + Math.round(breathe * 16.0f)));
+                g.fill(center, y + 4, center + 1, y + 8, withAlpha(c.accentB(), 28));
             }
             case CARBON -> {
                 for (int px = x + 10; px < x + WIDTH - 10; px += 24) {
@@ -349,13 +575,53 @@ final class HudThemeRenderer {
                 }
             }
             case NATURE -> natureFrame(g, x, y, h, c);
+            case CAT -> catFrame(g, x, y, h, c);
             case CUSTOM -> {
-                g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 86));
-                g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 86));
-                corner(g, x + 2, y + 2, true, true, withAlpha(c.accentA(), 48));
-                corner(g, x + WIDTH - 2, y + h - 2, false, false, withAlpha(c.accentB(), 48));
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> {
+                        g.fill(x + 4, y + 17, x + WIDTH - 4, y + 18,
+                                withAlpha(c.border(), 64));
+                    }
+                    case SPLIT -> {
+                        g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 86));
+                        g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 86));
+                        float glide = phase(12600L, 0.35f);
+                        int gx = x + 8 + Math.round(glide * (WIDTH - 24));
+                        g.fill(gx, y + h - 3, Math.min(x + WIDTH - 4, gx + 10), y + h - 2,
+                                withAlpha(glide < 0.58f ? c.accentA() : c.accentB(), motionAlpha(18, 42)));
+                    }
+                    case CORNERS -> {
+                        corner(g, x + 2, y + 2, true, true, withAlpha(c.accentA(), 68));
+                        corner(g, x + WIDTH - 2, y + h - 2, false, false, withAlpha(c.accentB(), 68));
+                        g.fill(x + 12, y + 17, x + WIDTH - 12, y + 18,
+                                withAlpha(c.border(), 48));
+                    }
+                    case CIRCUIT -> {
+                        g.fill(x + 4, y + 17, x + WIDTH - 4, y + 18,
+                                withAlpha(c.border(), 42));
+                        g.fill(x + 5, y + h - 4, x + 36, y + h - 3,
+                                withAlpha(c.accentA(), 48));
+                        g.fill(x + 35, y + h - 8, x + 36, y + h - 3,
+                                withAlpha(c.accentA(), 48));
+                        float packet = phase(9800L, 0.18f);
+                        int px = x + 42 + Math.round(packet * (WIDTH - 56));
+                        g.fill(px, y + h - 3, Math.min(x + WIDTH - 4, px + 4), y + h - 2,
+                                withAlpha(c.accentB(), motionAlpha(24, 58)));
+                    }
+                }
             }
         }
+    }
+
+    private static void catFrame(GuiGraphics g, int x, int y, int h, Colors c) {
+        // Keep the header clean around the cat mark. The old top stripe/glint sat
+        // directly above its ears and visually boxed the face in.
+        g.fill(x + 3, y + 17, x + WIDTH - 3, y + 18, withAlpha(c.accentA(), 130));
+        g.fill(x + 3, y + h - 3, x + WIDTH - 3, y + h - 2, withAlpha(c.accentB(), 76));
+        g.fill(x + WIDTH - 14, y + 7, x + WIDTH - 8, y + 8, withAlpha(c.accentB(), 130));
+        g.fill(x + WIDTH - 12, y + 5, x + WIDTH - 11, y + 11, withAlpha(c.titleText(), 115));
     }
 
     private static void natureFrame(GuiGraphics g, int x, int y, int h, Colors c) {
@@ -422,11 +688,37 @@ final class HudThemeRenderer {
     }
 
     private static Colors customColors() {
-        float hue = ClientConfig.effectiveHudCustomHue() / 359.0f;
-        int a = hsv(hue, 0.72f, 0.95f);
-        int b = hsv((hue + 0.11f) % 1.0f, 0.62f, 0.90f);
-        return new Colors(0xFF06070A, darken(a, 0.48f), darken(a, 0.12f), darken(a, 0.20f),
-                darken(a, 0.16f), darken(a, 0.13f), a, b, 0xFFF2F3F5);
+        float primaryHue = ClientConfig.effectiveHudCustomHue() / 359.0f;
+        float secondaryHue = ((Integer)ClientConfig.VALUES.hudCustomSecondaryHue.get()) / 359.0f;
+        float primarySat = ((Double)ClientConfig.VALUES.hudCustomPrimarySaturation.get()).floatValue();
+        float secondarySat = ((Double)ClientConfig.VALUES.hudCustomSecondarySaturation.get()).floatValue();
+        float surfaceSat = ((Double)ClientConfig.VALUES.hudCustomSurfaceSaturation.get()).floatValue();
+        float base = ((Double)ClientConfig.VALUES.hudCustomBrightness.get()).floatValue();
+        float contrast = ((Double)ClientConfig.VALUES.hudCustomContrast.get()).floatValue();
+        float headerStrength = ((Double)ClientConfig.VALUES.hudCustomHeaderStrength.get()).floatValue();
+        float rowContrast = ((Double)ClientConfig.VALUES.hudCustomRowContrast.get()).floatValue();
+        float borderStrength = ((Double)ClientConfig.VALUES.hudCustomBorderStrength.get()).floatValue();
+        float accentBrightness = ((Double)ClientConfig.VALUES.hudCustomAccentBrightness.get()).floatValue();
+
+        float panelV = clamp01(base * 0.74f);
+        int panel = hsv(primaryHue, surfaceSat, panelV);
+        int outer = hsv(primaryHue, surfaceSat * 0.78f,
+                clamp01(panelV * 0.55f / Math.max(0.65f, contrast)));
+        int border = hsv(primaryHue, Math.min(1.0f, surfaceSat + 0.10f),
+                clamp01(base * 0.95f * borderStrength * contrast));
+        int header = hsv(primaryHue, surfaceSat,
+                clamp01(base * 1.04f * headerStrength * contrast));
+        int rowEven = hsv(primaryHue, surfaceSat * 0.90f,
+                clamp01(panelV * (0.92f + (rowContrast - 1.0f) * 0.24f)));
+        int rowOdd = hsv(primaryHue, surfaceSat * 0.84f,
+                clamp01(panelV * (0.76f - (rowContrast - 1.0f) * 0.20f)));
+        int accentA = hsv(primaryHue, primarySat,
+                clamp01((base + 0.52f) * accentBrightness));
+        int accentB = hsv(secondaryHue, secondarySat,
+                clamp01((base + 0.56f) * accentBrightness));
+        int title = hsv(primaryHue, surfaceSat * 0.08f,
+                clamp01(0.91f + base * 0.08f));
+        return new Colors(outer, border, panel, header, rowEven, rowOdd, accentA, accentB, title);
     }
 
     private static int controllerColor(float offset, int opacity) {
@@ -492,6 +784,104 @@ final class HudThemeRenderer {
     private static void snowflake(GuiGraphics g, int x, int y, int color) {
         g.fill(x - 1, y, x + 2, y + 1, color);
         g.fill(x, y - 1, x + 1, y + 2, color);
+    }
+
+    private static void drawPaw(GuiGraphics g, int cx, int cy, int color) {
+        g.fill(cx - 2, cy + 1, cx + 3, cy + 4, color);
+        g.fill(cx - 4, cy - 2, cx - 2, cy, color);
+        g.fill(cx - 1, cy - 4, cx + 1, cy - 2, color);
+        g.fill(cx + 2, cy - 2, cx + 4, cy, color);
+    }
+
+    private static void drawEar(GuiGraphics g, int x, int y, boolean left, int outer, int inner) {
+        int d = left ? 1 : -1;
+        g.fill(Math.min(x, x + d * 7), y + 5, Math.max(x, x + d * 7) + 1, y + 7, outer);
+        g.fill(Math.min(x + d, x + d * 6), y + 3, Math.max(x + d, x + d * 6) + 1, y + 5, outer);
+        g.fill(Math.min(x + d * 2, x + d * 5), y + 1, Math.max(x + d * 2, x + d * 5) + 1, y + 3, outer);
+        g.fill(Math.min(x + d * 3, x + d * 4), y + 1, Math.max(x + d * 3, x + d * 4) + 1, y + 3, inner);
+    }
+
+    private static void drawCatFace(GuiGraphics g, int cx, int cy, Colors c, int alpha) {
+        int outline = withAlpha(0xFF173238, alpha);
+        int fur = withAlpha(c.titleText(), alpha);
+        int coral = withAlpha(c.accentA(), Math.max(48, alpha - 8));
+        int apricot = withAlpha(c.accentB(), Math.max(42, alpha - 22));
+        int eye = withAlpha(0xFF547176, Math.max(38, alpha - 36));
+        int eyeGlint = withAlpha(c.accentB(), Math.max(34, alpha - 60));
+
+        float cycle = phase(7600L, 0.24f);
+        boolean blink = cycle > 0.91f && cycle < 0.955f;
+        boolean twitch = motionEnabled() && cycle > 0.62f && cycle < 0.69f;
+
+        // Pointed ears and a simple rounded cat head.
+        int earOffset = twitch ? 1 : 0;
+        g.fill(cx - 6, cy - 9 + earOffset, cx - 4, cy - 7 + earOffset, outline);
+        g.fill(cx - 7, cy - 7 + earOffset, cx - 3, cy - 4, outline);
+        g.fill(cx + 4, cy - 9, cx + 6, cy - 7, outline);
+        g.fill(cx + 3, cy - 7, cx + 7, cy - 4, outline);
+
+        g.fill(cx - 6, cy - 5, cx + 7, cy + 5, outline);
+        g.fill(cx - 5, cy - 4, cx + 6, cy + 4, fur);
+        g.fill(cx - 4, cy + 3, cx + 5, cy + 6, fur);
+
+        // Tiny warm accents only; no large facial patch.
+        g.fill(cx - 5, cy - 7 + earOffset, cx - 4, cy - 5, coral);
+        g.fill(cx + 4, cy - 7, cx + 5, cy - 5, coral);
+        g.fill(cx, cy - 4, cx + 2, cy - 3, apricot);
+
+        // Softer teal eyes. At HUD scale the old near-black blocks looked unsettling.
+        if (blink) {
+            g.fill(cx - 4, cy - 1, cx - 1, cy, eye);
+            g.fill(cx + 2, cy - 1, cx + 5, cy, eye);
+        } else {
+            g.fill(cx - 3, cy - 2, cx - 1, cy, eye);
+            g.fill(cx + 2, cy - 2, cx + 4, cy, eye);
+            g.fill(cx - 3, cy - 2, cx - 2, cy - 1, eyeGlint);
+            g.fill(cx + 2, cy - 2, cx + 3, cy - 1, eyeGlint);
+        }
+
+        // Small muzzle and a simple W-shaped mouth.
+        g.fill(cx - 2, cy + 1, cx + 4, cy + 4, withAlpha(c.titleText(), Math.max(40, alpha - 10)));
+        g.fill(cx, cy + 1, cx + 2, cy + 2, coral);
+        g.fill(cx, cy + 2, cx + 1, cy + 4, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
+        g.fill(cx - 1, cy + 4, cx, cy + 5, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
+        g.fill(cx + 1, cy + 4, cx + 2, cy + 5, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
+
+        int whisker = withAlpha(c.titleText(), Math.max(26, alpha / 3));
+        diagonal(g, cx - 3, cy + 1, cx - 9, cy, whisker);
+        diagonal(g, cx - 3, cy + 3, cx - 9, cy + 4, whisker);
+        diagonal(g, cx + 4, cy + 1, cx + 10, cy, whisker);
+        diagonal(g, cx + 4, cy + 3, cx + 10, cy + 4, whisker);
+    }
+
+    private static void drawTail(GuiGraphics g, int sx, int sy, int length, int amplitude, float turn, int color) {
+        int prevX = sx;
+        int prevY = sy;
+        for (int i = 2; i <= length; i += 3) {
+            int px = sx + i;
+            int py = sy - (int)Math.round(Math.sin((i / (double)length) * Math.PI * 1.35 + turn * Math.PI * 2.0)
+                    * amplitude * (i / (double)length));
+            diagonal(g, prevX, prevY, px, py, color);
+            prevX = px;
+            prevY = py;
+        }
+    }
+
+    private static void yarnBall(GuiGraphics g, int cx, int cy, Colors c, float turn) {
+        int body = withAlpha(c.accentA(), 70);
+        int thread = withAlpha(c.accentB(), 72);
+        g.fill(cx - 4, cy - 3, cx + 5, cy + 4, body);
+        g.fill(cx - 3, cy - 4, cx + 4, cy + 5, body);
+        int o = Math.round((float)Math.sin(turn * Math.PI * 2.0) * 2.0f);
+        diagonal(g, cx - 3, cy - 2 + o, cx + 3, cy + 2 + o, thread);
+        diagonal(g, cx - 3, cy + 2 - o, cx + 3, cy - 2 - o, withAlpha(c.titleText(), 38));
+    }
+
+    private static void drawHeart(GuiGraphics g, int cx, int cy, int color) {
+        g.fill(cx - 2, cy - 1, cx, cy + 1, color);
+        g.fill(cx + 1, cy - 1, cx + 3, cy + 1, color);
+        g.fill(cx - 1, cy, cx + 2, cy + 3, color);
+        g.fill(cx, cy + 3, cx + 1, cy + 4, color);
     }
 
     private static void drawLeaf(GuiGraphics g, int x, int y, int color, boolean right) {

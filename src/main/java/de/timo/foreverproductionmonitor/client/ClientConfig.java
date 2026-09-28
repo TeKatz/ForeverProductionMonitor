@@ -34,7 +34,7 @@ public final class ClientConfig {
             case InterfaceStyle.AE2 -> HudFrameStyle.AE2;
             case InterfaceStyle.ORITECH -> HudFrameStyle.ORITECH;
             case InterfaceStyle.MEKANISM, InterfaceStyle.HOLOGRAPHIC, InterfaceStyle.TERMINAL, InterfaceStyle.DEEP_SPACE, InterfaceStyle.FROST -> HudFrameStyle.AE2;
-            case InterfaceStyle.QUANTUM, InterfaceStyle.AURORA, InterfaceStyle.NATURE -> HudFrameStyle.FOREVER;
+            case InterfaceStyle.QUANTUM, InterfaceStyle.AURORA, InterfaceStyle.NATURE, InterfaceStyle.CAT -> HudFrameStyle.FOREVER;
             case InterfaceStyle.MONOCHROME, InterfaceStyle.CARBON, InterfaceStyle.COPPER, InterfaceStyle.REDSTONE -> HudFrameStyle.STANDARD;
             case InterfaceStyle.MINIMAL -> HudFrameStyle.NONE;
             case InterfaceStyle.CUSTOM -> HudFrameStyle.CUSTOM;
@@ -48,7 +48,9 @@ public final class ClientConfig {
     }
 
     public static int effectiveHudCustomHue() {
-        return (Boolean)ClientConfig.VALUES.matchHudTheme.get() != false ? (Integer)ClientConfig.VALUES.interfaceCustomHue.get() : (Integer)ClientConfig.VALUES.hudCustomHue.get();
+        // Matching determines which theme family the HUD uses. CUSTOM deliberately
+        // keeps its own palette so the compact HUD can be tuned independently.
+        return (Integer)ClientConfig.VALUES.hudCustomHue.get();
     }
 
     static {
@@ -71,16 +73,54 @@ public final class ClientConfig {
         public final ModConfigSpec.BooleanValue hudAnimations;
         public final ModConfigSpec.DoubleValue hudAnimationIntensity;
         public final ModConfigSpec.IntValue hudCustomHue;
+        public final ModConfigSpec.IntValue hudCustomSecondaryHue;
+        public final ModConfigSpec.DoubleValue hudCustomPrimarySaturation;
+        public final ModConfigSpec.DoubleValue hudCustomSecondarySaturation;
+        public final ModConfigSpec.DoubleValue hudCustomSurfaceSaturation;
+        public final ModConfigSpec.DoubleValue hudCustomBrightness;
+        public final ModConfigSpec.DoubleValue hudCustomContrast;
+        public final ModConfigSpec.DoubleValue hudCustomHeaderStrength;
+        public final ModConfigSpec.DoubleValue hudCustomRowContrast;
+        public final ModConfigSpec.DoubleValue hudCustomBorderStrength;
+        public final ModConfigSpec.DoubleValue hudCustomAccentBrightness;
+        public final ModConfigSpec.EnumValue<CustomHudDecorationStyle> hudCustomDecorationStyle;
         public final ModConfigSpec.IntValue hudEntryCount;
         public final ModConfigSpec.BooleanValue hudShowIcons;
         public final ModConfigSpec.BooleanValue hudShowNames;
         public final ModConfigSpec.BooleanValue hudShowValues;
+        public final ModConfigSpec.BooleanValue hudIncludeItems;
+        public final ModConfigSpec.BooleanValue hudIncludeFluids;
+        public final ModConfigSpec.BooleanValue hudIncludeEnergy;
+        public final ModConfigSpec.BooleanValue hudIncludeInfinite;
+        public final ModConfigSpec.EnumValue<HudStoredSort> hudStoredSort;
         public final ModConfigSpec.EnumValue<RateUnit> rateUnit;
         public final ModConfigSpec.EnumValue<RefreshInterval> refreshInterval;
         public final ModConfigSpec.EnumValue<InterfaceStyle> interfaceStyle;
         public final ModConfigSpec.IntValue interfaceCustomHue;
         public final ModConfigSpec.IntValue interfaceCustomSecondaryHue;
         public final ModConfigSpec.DoubleValue interfaceCustomBrightness;
+        public final ModConfigSpec.DoubleValue interfaceCustomPrimarySaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomSecondarySaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomSurfaceSaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomContrast;
+        public final ModConfigSpec.DoubleValue interfaceCustomHeaderStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomBorderStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomAccentBrightness;
+        public final ModConfigSpec.EnumValue<CustomBackgroundStyle> interfaceCustomBackgroundStyle;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundDensity;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundSpeed;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundOpacity;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundScale;
+        public final ModConfigSpec.EnumValue<CustomParticleStyle> interfaceCustomParticleStyle;
+        public final ModConfigSpec.EnumValue<CustomParticleColorMode> interfaceCustomParticleColorMode;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleAmount;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleSpeed;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleSize;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleOpacity;
+        public final ModConfigSpec.EnumValue<CustomTabStyle> interfaceCustomTabStyle;
+        public final ModConfigSpec.EnumValue<CustomButtonStyle> interfaceCustomButtonStyle;
+        public final ModConfigSpec.DoubleValue interfaceCustomTabAccentStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomButtonHoverStrength;
         public final ModConfigSpec.DoubleValue interfaceOpacity;
         public final ModConfigSpec.BooleanValue guiAnimations;
         public final ModConfigSpec.BooleanValue updatePulseEnabled;
@@ -88,6 +128,7 @@ public final class ClientConfig {
         public final ModConfigSpec.DoubleValue updatePulseDuration;
         public final ModConfigSpec.BooleanValue ambientMotionEnabled;
         public final ModConfigSpec.DoubleValue ambientMotionIntensity;
+        public final ModConfigSpec.BooleanValue themeInteractionsEnabled;
         public final ModConfigSpec.BooleanValue matchHudTheme;
         public final ModConfigSpec.BooleanValue invertMapRotation;
         public final ModConfigSpec.EnumValue<DefaultTab> defaultTab;
@@ -122,11 +163,27 @@ public final class ClientConfig {
             this.hudLayoutStyle = builder.comment("Compact HUD frame geometry").defineEnum("layout", (Enum)HudLayoutStyle.FULL);
             this.hudAnimations = builder.comment("Enable compact HUD theme animations").define("animations", true);
             this.hudAnimationIntensity = builder.comment("Strength of compact HUD theme animations").defineInRange("animationIntensity", 0.35, 0.0, 1.0);
-            this.hudCustomHue = builder.comment("Hue used by the custom HUD theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
+            this.hudCustomHue = builder.comment("Primary hue used by the custom HUD theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
+            this.hudCustomSecondaryHue = builder.comment("Secondary hue used by the custom HUD theme").defineInRange("customSecondaryHue", 315, 0, 359);
+            this.hudCustomPrimarySaturation = builder.comment("Saturation of the primary custom HUD accent").defineInRange("customPrimarySaturation", 0.62, 0.0, 1.0);
+            this.hudCustomSecondarySaturation = builder.comment("Saturation of the secondary custom HUD accent").defineInRange("customSecondarySaturation", 0.48, 0.0, 1.0);
+            this.hudCustomSurfaceSaturation = builder.comment("Amount of primary hue mixed into custom HUD surfaces").defineInRange("customSurfaceSaturation", 0.16, 0.0, 0.75);
+            this.hudCustomBrightness = builder.comment("Brightness of custom HUD surfaces").defineInRange("customBrightness", 0.36, 0.15, 0.85);
+            this.hudCustomContrast = builder.comment("Contrast between custom HUD surface layers").defineInRange("customContrast", 1.0, 0.65, 1.45);
+            this.hudCustomHeaderStrength = builder.comment("Brightness strength of the custom HUD header").defineInRange("customHeaderStrength", 1.0, 0.65, 1.45);
+            this.hudCustomRowContrast = builder.comment("Contrast between alternating custom HUD rows").defineInRange("customRowContrast", 1.0, 0.65, 1.45);
+            this.hudCustomBorderStrength = builder.comment("Brightness strength of custom HUD borders").defineInRange("customBorderStrength", 1.0, 0.5, 1.5);
+            this.hudCustomAccentBrightness = builder.comment("Brightness multiplier for custom HUD accents").defineInRange("customAccentBrightness", 1.0, 0.65, 1.25);
+            this.hudCustomDecorationStyle = builder.comment("Decorative language used by the custom HUD").defineEnum("customDecorationStyle", (Enum)CustomHudDecorationStyle.CLEAN);
             this.hudEntryCount = builder.comment("Number of rows shown by the compact HUD").defineInRange("entryCount", 5, 1, 10);
             this.hudShowIcons = builder.comment("Show resource icons in compact HUD rows").define("showIcons", true);
             this.hudShowNames = builder.comment("Show resource names in compact HUD rows").define("showNames", true);
             this.hudShowValues = builder.comment("Show amounts or rates in compact HUD rows").define("showValues", true);
+            this.hudIncludeItems = builder.comment("Allow item entries in the compact HUD").define("includeItems", true);
+            this.hudIncludeFluids = builder.comment("Allow fluid entries in the compact HUD").define("includeFluids", true);
+            this.hudIncludeEnergy = builder.comment("Allow FE energy entries in the compact HUD").define("includeEnergy", true);
+            this.hudIncludeInfinite = builder.comment("Allow infinite/creative storage entries in the compact HUD").define("includeInfinite", true);
+            this.hudStoredSort = builder.comment("Sort direction used by the compact HUD Stored mode").defineEnum("storedSort", (Enum)HudStoredSort.HIGHEST);
             this.rateUnit = builder.comment("Rate display unit used by the dashboard and compact HUD").defineEnum("rateUnit", (Enum)RateUnit.MINUTE);
             this.refreshInterval = builder.comment("How often the monitor samples and refreshes while actively viewed").defineEnum("refreshInterval", (Enum)RefreshInterval.FIVE_SECONDS);
             builder.pop();
@@ -135,6 +192,28 @@ public final class ClientConfig {
             this.interfaceCustomHue = builder.comment("Hue used by the custom dashboard theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
             this.interfaceCustomSecondaryHue = builder.comment("Secondary hue used by the custom dashboard theme").defineInRange("customSecondaryHue", 38, 0, 359);
             this.interfaceCustomBrightness = builder.comment("Brightness of custom dashboard surfaces").defineInRange("customBrightness", 0.52, 0.2, 0.9);
+            this.interfaceCustomPrimarySaturation = builder.comment("Saturation of the primary custom accent").defineInRange("customPrimarySaturation", 0.62, 0.0, 1.0);
+            this.interfaceCustomSecondarySaturation = builder.comment("Saturation of the secondary custom accent").defineInRange("customSecondarySaturation", 0.52, 0.0, 1.0);
+            this.interfaceCustomSurfaceSaturation = builder.comment("Amount of primary hue mixed into custom theme surfaces").defineInRange("customSurfaceSaturation", 0.25, 0.0, 0.75);
+            this.interfaceCustomContrast = builder.comment("Contrast between custom theme surfaces").defineInRange("customContrast", 1.0, 0.65, 1.45);
+            this.interfaceCustomHeaderStrength = builder.comment("Brightness strength of custom headers").defineInRange("customHeaderStrength", 1.0, 0.65, 1.45);
+            this.interfaceCustomBorderStrength = builder.comment("Brightness strength of custom borders").defineInRange("customBorderStrength", 1.0, 0.5, 1.5);
+            this.interfaceCustomAccentBrightness = builder.comment("Brightness multiplier for custom accent colours").defineInRange("customAccentBrightness", 1.0, 0.65, 1.25);
+            this.interfaceCustomBackgroundStyle = builder.comment("Background decoration used by the custom theme").defineEnum("customBackgroundStyle", (Enum)CustomBackgroundStyle.GRID);
+            this.interfaceCustomBackgroundDensity = builder.comment("Density of the selected custom background").defineInRange("customBackgroundDensity", 0.45, 0.1, 1.0);
+            this.interfaceCustomBackgroundSpeed = builder.comment("Motion speed of the selected custom background").defineInRange("customBackgroundSpeed", 0.35, 0.0, 1.0);
+            this.interfaceCustomBackgroundOpacity = builder.comment("Opacity of custom background decoration").defineInRange("customBackgroundOpacity", 0.28, 0.0, 1.0);
+            this.interfaceCustomBackgroundScale = builder.comment("Scale/spacing of the custom background pattern").defineInRange("customBackgroundScale", 1.0, 0.5, 2.0);
+            this.interfaceCustomParticleStyle = builder.comment("Particle layer used by the custom theme").defineEnum("customParticleStyle", (Enum)CustomParticleStyle.NONE);
+            this.interfaceCustomParticleColorMode = builder.comment("Colour source for custom theme particles").defineEnum("customParticleColorMode", (Enum)CustomParticleColorMode.MIXED);
+            this.interfaceCustomParticleAmount = builder.comment("Amount of custom theme particles").defineInRange("customParticleAmount", 0.35, 0.0, 1.0);
+            this.interfaceCustomParticleSpeed = builder.comment("Speed of custom theme particles").defineInRange("customParticleSpeed", 0.35, 0.0, 1.0);
+            this.interfaceCustomParticleSize = builder.comment("Size of custom theme particles").defineInRange("customParticleSize", 1.0, 0.5, 2.0);
+            this.interfaceCustomParticleOpacity = builder.comment("Opacity of custom theme particles").defineInRange("customParticleOpacity", 0.45, 0.0, 1.0);
+            this.interfaceCustomTabStyle = builder.comment("Visual shape used by custom-theme navigation tabs").defineEnum("customTabStyle", (Enum)CustomTabStyle.FRAMED);
+            this.interfaceCustomButtonStyle = builder.comment("Visual shape used by custom-theme action buttons").defineEnum("customButtonStyle", (Enum)CustomButtonStyle.FILLED);
+            this.interfaceCustomTabAccentStrength = builder.comment("Strength of the active-tab accent").defineInRange("customTabAccentStrength", 0.85, 0.0, 1.0);
+            this.interfaceCustomButtonHoverStrength = builder.comment("Strength of custom button hover effects").defineInRange("customButtonHoverStrength", 0.65, 0.0, 1.0);
             this.interfaceOpacity = builder.comment("Opacity of the full dashboard").defineInRange("opacity", 0.95, 0.55, 1.0);
             this.guiAnimations = builder.comment("Enable subtle client-side GUI animations").define("guiAnimations", true);
             this.updatePulseEnabled = builder.comment("Show a subtle outline pulse when monitor data is refreshed").define("updatePulseEnabled", true);
@@ -142,6 +221,7 @@ public final class ClientConfig {
             this.updatePulseDuration = builder.comment("Duration of the monitor data refresh pulse in seconds").defineInRange("updatePulseDuration", 1.8, 0.6, 4.0);
             this.ambientMotionEnabled = builder.comment("Show subtle continuous accent motion on the monitor frame").define("ambientMotionEnabled", true);
             this.ambientMotionIntensity = builder.comment("Strength of continuous monitor accent motion").defineInRange("ambientMotionIntensity", 0.3, 0.0, 1.0);
+            this.themeInteractionsEnabled = builder.comment("Allow decorative themes to react to mouse movement and clicks").define("themeInteractionsEnabled", true);
             this.matchHudTheme = builder.comment("Make the compact HUD follow the dashboard theme").define("matchHudTheme", false);
             this.invertMapRotation = builder.comment("Invert horizontal and vertical left-drag rotation in the network map").define("invertMapRotation", false);
             builder.pop();
@@ -170,6 +250,15 @@ public final class ClientConfig {
         }
     }
 
+    public static enum HudStoredSort {
+        HIGHEST,
+        LOWEST;
+
+        public HudStoredSort next() {
+            return this == HIGHEST ? LOWEST : HIGHEST;
+        }
+    }
+
     public static enum HudFrameStyle {
         NONE,
         ORITECH,
@@ -183,6 +272,13 @@ public final class ClientConfig {
             HudFrameStyle[] hudFrameStyleArray = HudFrameStyle.values();
             return hudFrameStyleArray[(this.ordinal() + 1) % hudFrameStyleArray.length];
         }
+    }
+
+    public static enum CustomHudDecorationStyle {
+        CLEAN,
+        SPLIT,
+        CORNERS,
+        CIRCUIT;
     }
 
     public static enum HudLayoutStyle {
@@ -215,13 +311,69 @@ public final class ClientConfig {
         REDSTONE,
         FROST,
         NATURE,
+        CAT,
         CUSTOM;
 
 
         public InterfaceStyle next() {
-            InterfaceStyle[] interfaceStyleArray = InterfaceStyle.values();
-            return interfaceStyleArray[(this.ordinal() + 1) % interfaceStyleArray.length];
+            InterfaceStyle[] styles = selectableValues();
+            for (int i = 0; i < styles.length; ++i) {
+                if (styles[i] == this) {
+                    return styles[(i + 1) % styles.length];
+                }
+            }
+            return STANDARD;
         }
+
+        public static InterfaceStyle[] selectableValues() {
+            // AURORA remains serialized for backwards-compatible configs, but is
+            // intentionally retired from all user-facing theme selection.
+            return new InterfaceStyle[]{
+                    STANDARD, FOREVER, AE2, ORITECH, MEKANISM, QUANTUM,
+                    HOLOGRAPHIC, MONOCHROME, MINIMAL, CARBON, TERMINAL,
+                    DEEP_SPACE, COPPER, REDSTONE, FROST, NATURE, CAT, CUSTOM
+            };
+        }
+    }
+
+    public static enum CustomBackgroundStyle {
+        NONE,
+        GRID,
+        CIRCUIT,
+        STARFIELD,
+        SCAN_LINES,
+        ENERGY_WAVES;
+    }
+
+    public static enum CustomParticleStyle {
+        NONE,
+        PIXELS,
+        SPARKS,
+        DATA_PACKETS,
+        STARS;
+    }
+
+    public static enum CustomParticleColorMode {
+        PRIMARY,
+        SECONDARY,
+        MIXED,
+        WHITE;
+    }
+
+    public static enum CustomTabStyle {
+        FLAT,
+        FILLED,
+        UNDERLINE,
+        FRAMED,
+        SEGMENTED;
+    }
+
+    public static enum CustomButtonStyle {
+        FLAT,
+        FILLED,
+        OUTLINE,
+        UNDERLINE,
+        SEGMENTED;
     }
 
     public static enum RefreshInterval {

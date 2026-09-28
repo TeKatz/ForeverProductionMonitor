@@ -10,6 +10,7 @@
  */
 package de.timo.foreverproductionmonitor.client.screen;
 
+import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.screen.InterfaceTheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,6 +20,7 @@ import net.minecraft.network.chat.Component;
 public final class ForeverButton
 extends Button {
     private Style style;
+    private Role role = Role.BUTTON;
     private float hoverProgress;
     private long lastRenderNanos;
     private long styleChangedNanos;
@@ -40,6 +42,11 @@ extends Button {
         this.style = style;
     }
 
+    public ForeverButton setRole(Role role) {
+        this.role = role == null ? Role.BUTTON : role;
+        return this;
+    }
+
     protected void renderWidget(GuiGraphics guiGraphics, int n, int n2, float f) {
         int n3;
         int n4;
@@ -55,6 +62,23 @@ extends Button {
             this.hoverProgress = hovered ? 1.0f : 0.0f;
         }
         boolean bl = animations ? false : hovered;
+
+        boolean customThemedControl =
+                (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get()
+                        == ClientConfig.InterfaceStyle.CUSTOM
+                && (this.style == Style.THEMED
+                    || this.style == Style.THEMED_ACTIVE
+                    || this.style == Style.SECONDARY);
+        if (customThemedControl) {
+            InterfaceTheme.Palette palette = InterfaceTheme.current();
+            CustomThemeRenderer.drawControl(guiGraphics, this.role == Role.TAB,
+                    this.getX(), this.getY(), this.getWidth(), this.getHeight(),
+                    this.active, this.style == Style.THEMED_ACTIVE, this.hoverProgress, palette);
+            int textColor = this.active ? palette.text() : palette.muted();
+            this.renderScrollingString(guiGraphics, Minecraft.getInstance().font, 3, textColor);
+            return;
+        }
+
         if (!this.active) {
             n4 = -12960184;
         } else {
@@ -171,5 +195,10 @@ extends Button {
         THEMED,
         THEMED_ACTIVE;
 
+    }
+
+    public static enum Role {
+        BUTTON,
+        TAB;
     }
 }
