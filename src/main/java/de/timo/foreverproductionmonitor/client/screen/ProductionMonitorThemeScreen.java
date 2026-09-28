@@ -171,7 +171,7 @@ extends Screen {
     private void buildHud(int n, int n2) {
         boolean matched = (Boolean)ClientConfig.VALUES.matchHudTheme.get();
         ClientConfig.InterfaceStyle independentTheme = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.hudThemeStyle.get();
-        boolean customActive = !matched && independentTheme == ClientConfig.InterfaceStyle.CUSTOM;
+        boolean customActive = ClientConfig.effectiveHudTheme() == ClientConfig.InterfaceStyle.CUSTOM;
         int itemCount = customActive ? 17 : 16;
         int columns = this.gridColumns(4, itemCount, this.contentTop);
 
@@ -258,9 +258,15 @@ extends Screen {
                 d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
 
         if (customActive) {
-            this.addRenderableWidget(new SettingSlider(this.gridX(16, columns), this.gridY(16, columns), this.gridWidth(16, columns),
-                    "settings.hud.hue", 0.0, 359.0, ((Integer)ClientConfig.VALUES.hudCustomHue.get()).intValue(),
-                    d -> ClientConfig.VALUES.hudCustomHue.set(((int)Math.round(d))), false));
+            this.addRenderableWidget(ForeverButton.create(
+                    ProductionMonitorThemeScreen.translated("settings.hud.open_custom_designer"),
+                    button -> {
+                        if (this.minecraft != null) {
+                            this.minecraft.setScreen(new CustomHudScreen(this));
+                        }
+                    },
+                    ForeverButton.Style.THEMED_ACTIVE,
+                    this.gridX(16, columns), this.gridY(16, columns), this.gridWidth(16, columns), 20));
         }
 
         this.previewTop = this.gridY(itemCount - 1, columns) + 28;
@@ -470,6 +476,18 @@ extends Screen {
                 ClientConfig.VALUES.hudLayoutStyle.set(((ClientConfig.HudLayoutStyle)((Object)ClientConfig.VALUES.hudLayoutStyle.getDefault())));
                 ClientConfig.VALUES.hudAnimations.set(((Boolean)ClientConfig.VALUES.hudAnimations.getDefault()));
                 ClientConfig.VALUES.hudAnimationIntensity.set(((Double)ClientConfig.VALUES.hudAnimationIntensity.getDefault()));
+                ClientConfig.VALUES.hudCustomHue.set(((Integer)ClientConfig.VALUES.hudCustomHue.getDefault()));
+                ClientConfig.VALUES.hudCustomSecondaryHue.set(((Integer)ClientConfig.VALUES.hudCustomSecondaryHue.getDefault()));
+                ClientConfig.VALUES.hudCustomPrimarySaturation.set(((Double)ClientConfig.VALUES.hudCustomPrimarySaturation.getDefault()));
+                ClientConfig.VALUES.hudCustomSecondarySaturation.set(((Double)ClientConfig.VALUES.hudCustomSecondarySaturation.getDefault()));
+                ClientConfig.VALUES.hudCustomSurfaceSaturation.set(((Double)ClientConfig.VALUES.hudCustomSurfaceSaturation.getDefault()));
+                ClientConfig.VALUES.hudCustomBrightness.set(((Double)ClientConfig.VALUES.hudCustomBrightness.getDefault()));
+                ClientConfig.VALUES.hudCustomContrast.set(((Double)ClientConfig.VALUES.hudCustomContrast.getDefault()));
+                ClientConfig.VALUES.hudCustomHeaderStrength.set(((Double)ClientConfig.VALUES.hudCustomHeaderStrength.getDefault()));
+                ClientConfig.VALUES.hudCustomRowContrast.set(((Double)ClientConfig.VALUES.hudCustomRowContrast.getDefault()));
+                ClientConfig.VALUES.hudCustomBorderStrength.set(((Double)ClientConfig.VALUES.hudCustomBorderStrength.getDefault()));
+                ClientConfig.VALUES.hudCustomAccentBrightness.set(((Double)ClientConfig.VALUES.hudCustomAccentBrightness.getDefault()));
+                ClientConfig.VALUES.hudCustomDecorationStyle.set((ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.getDefault());
                 ClientConfig.VALUES.hudEntryCount.set(((Integer)ClientConfig.VALUES.hudEntryCount.getDefault()));
                 ClientConfig.VALUES.hudShowIcons.set(((Boolean)ClientConfig.VALUES.hudShowIcons.getDefault()));
                 ClientConfig.VALUES.hudShowNames.set(((Boolean)ClientConfig.VALUES.hudShowNames.getDefault()));
@@ -524,6 +542,17 @@ extends Screen {
         ClientConfig.VALUES.hudAnimations.save();
         ClientConfig.VALUES.hudAnimationIntensity.save();
         ClientConfig.VALUES.hudCustomHue.save();
+        ClientConfig.VALUES.hudCustomSecondaryHue.save();
+        ClientConfig.VALUES.hudCustomPrimarySaturation.save();
+        ClientConfig.VALUES.hudCustomSecondarySaturation.save();
+        ClientConfig.VALUES.hudCustomSurfaceSaturation.save();
+        ClientConfig.VALUES.hudCustomBrightness.save();
+        ClientConfig.VALUES.hudCustomContrast.save();
+        ClientConfig.VALUES.hudCustomHeaderStrength.save();
+        ClientConfig.VALUES.hudCustomRowContrast.save();
+        ClientConfig.VALUES.hudCustomBorderStrength.save();
+        ClientConfig.VALUES.hudCustomAccentBrightness.save();
+        ClientConfig.VALUES.hudCustomDecorationStyle.save();
         ClientConfig.VALUES.hudEntryCount.save();
         ClientConfig.VALUES.hudShowIcons.save();
         ClientConfig.VALUES.hudShowNames.save();
