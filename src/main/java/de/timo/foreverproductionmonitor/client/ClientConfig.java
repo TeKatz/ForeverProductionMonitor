@@ -81,6 +81,13 @@ public final class ClientConfig {
         public final ModConfigSpec.IntValue interfaceCustomHue;
         public final ModConfigSpec.IntValue interfaceCustomSecondaryHue;
         public final ModConfigSpec.DoubleValue interfaceCustomBrightness;
+        public final ModConfigSpec.DoubleValue interfaceCustomPrimarySaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomSecondarySaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomSurfaceSaturation;
+        public final ModConfigSpec.DoubleValue interfaceCustomContrast;
+        public final ModConfigSpec.DoubleValue interfaceCustomHeaderStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomBorderStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomAccentBrightness;
         public final ModConfigSpec.DoubleValue interfaceOpacity;
         public final ModConfigSpec.BooleanValue guiAnimations;
         public final ModConfigSpec.BooleanValue updatePulseEnabled;
@@ -88,6 +95,7 @@ public final class ClientConfig {
         public final ModConfigSpec.DoubleValue updatePulseDuration;
         public final ModConfigSpec.BooleanValue ambientMotionEnabled;
         public final ModConfigSpec.DoubleValue ambientMotionIntensity;
+        public final ModConfigSpec.BooleanValue themeInteractionsEnabled;
         public final ModConfigSpec.BooleanValue matchHudTheme;
         public final ModConfigSpec.BooleanValue invertMapRotation;
         public final ModConfigSpec.EnumValue<DefaultTab> defaultTab;
@@ -135,6 +143,13 @@ public final class ClientConfig {
             this.interfaceCustomHue = builder.comment("Hue used by the custom dashboard theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
             this.interfaceCustomSecondaryHue = builder.comment("Secondary hue used by the custom dashboard theme").defineInRange("customSecondaryHue", 38, 0, 359);
             this.interfaceCustomBrightness = builder.comment("Brightness of custom dashboard surfaces").defineInRange("customBrightness", 0.52, 0.2, 0.9);
+            this.interfaceCustomPrimarySaturation = builder.comment("Saturation of the primary custom accent").defineInRange("customPrimarySaturation", 0.62, 0.0, 1.0);
+            this.interfaceCustomSecondarySaturation = builder.comment("Saturation of the secondary custom accent").defineInRange("customSecondarySaturation", 0.52, 0.0, 1.0);
+            this.interfaceCustomSurfaceSaturation = builder.comment("Amount of primary hue mixed into custom theme surfaces").defineInRange("customSurfaceSaturation", 0.25, 0.0, 0.75);
+            this.interfaceCustomContrast = builder.comment("Contrast between custom theme surfaces").defineInRange("customContrast", 1.0, 0.65, 1.45);
+            this.interfaceCustomHeaderStrength = builder.comment("Brightness strength of custom headers").defineInRange("customHeaderStrength", 1.0, 0.65, 1.45);
+            this.interfaceCustomBorderStrength = builder.comment("Brightness strength of custom borders").defineInRange("customBorderStrength", 1.0, 0.5, 1.5);
+            this.interfaceCustomAccentBrightness = builder.comment("Brightness multiplier for custom accent colours").defineInRange("customAccentBrightness", 1.0, 0.65, 1.25);
             this.interfaceOpacity = builder.comment("Opacity of the full dashboard").defineInRange("opacity", 0.95, 0.55, 1.0);
             this.guiAnimations = builder.comment("Enable subtle client-side GUI animations").define("guiAnimations", true);
             this.updatePulseEnabled = builder.comment("Show a subtle outline pulse when monitor data is refreshed").define("updatePulseEnabled", true);
@@ -142,6 +157,7 @@ public final class ClientConfig {
             this.updatePulseDuration = builder.comment("Duration of the monitor data refresh pulse in seconds").defineInRange("updatePulseDuration", 1.8, 0.6, 4.0);
             this.ambientMotionEnabled = builder.comment("Show subtle continuous accent motion on the monitor frame").define("ambientMotionEnabled", true);
             this.ambientMotionIntensity = builder.comment("Strength of continuous monitor accent motion").defineInRange("ambientMotionIntensity", 0.3, 0.0, 1.0);
+            this.themeInteractionsEnabled = builder.comment("Allow decorative themes to react to mouse movement and clicks").define("themeInteractionsEnabled", true);
             this.matchHudTheme = builder.comment("Make the compact HUD follow the dashboard theme").define("matchHudTheme", false);
             this.invertMapRotation = builder.comment("Invert horizontal and vertical left-drag rotation in the network map").define("invertMapRotation", false);
             builder.pop();
