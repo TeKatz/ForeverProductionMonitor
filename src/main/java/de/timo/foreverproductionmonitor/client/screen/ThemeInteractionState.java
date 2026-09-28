@@ -27,14 +27,23 @@ final class ThemeInteractionState {
     }
 
     static void beginFrame(int mouseX, int mouseY) {
+        hitCount = 0;
+        if (!(Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()) {
+            pointerX = Integer.MIN_VALUE;
+            pointerY = Integer.MIN_VALUE;
+            CatThemeRenderer.beginFrame(Integer.MIN_VALUE, Integer.MIN_VALUE);
+            return;
+        }
         pointerX = mouseX;
         pointerY = mouseY;
-        hitCount = 0;
         CatThemeRenderer.beginFrame(mouseX, mouseY);
     }
 
     static void registerHit(ClientConfig.InterfaceStyle style, int id,
                             int left, int top, int right, int bottom) {
+        if (!(Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()) {
+            return;
+        }
         if (hitCount >= MAX_HITS || right <= left || bottom <= top) {
             return;
         }
@@ -82,6 +91,9 @@ final class ThemeInteractionState {
     }
 
     static boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (!(Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()) {
+            return false;
+        }
         if (CatThemeRenderer.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -107,6 +119,9 @@ final class ThemeInteractionState {
     }
 
     static float clickProgress(ClientConfig.InterfaceStyle style, int id, long durationMillis) {
+        if (!(Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()) {
+            return 0.0f;
+        }
         if (clickedStyle != style || clickedId != id || clickedNanos == 0L || durationMillis <= 0L) {
             return 0.0f;
         }
