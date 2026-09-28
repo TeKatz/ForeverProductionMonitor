@@ -464,4 +464,11 @@
   ,"screen.forever_production_monitor.custom_hud.decoration.circuit": "Schaltkreis"
   ,"screen.forever_production_monitor.custom_hud.opacity": "HUD-Deckkraft: %s"
   ,"screen.forever_production_monitor.custom_hud.animation_intensity": "Animationsstärke: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_items": "Items: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_fluids": "Flüssigkeiten: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_energy": "Energie: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_infinite": "Infinite Speicher: %s"
+  ,"screen.forever_production_monitor.settings.hud.stored_sort": "Speicher-Sortierung: %s"
+  ,"settings.forever_production_monitor.hud.stored_sort.highest": "Höchste zuerst"
+  ,"settings.forever_production_monitor.hud.stored_sort.lowest": "Niedrigste zuerst"
 }
