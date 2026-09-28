@@ -39,7 +39,7 @@ final class CatThemeRenderer {
             int track = width - (width >= 560 ? 250 : 115);
             int glintX = x + 82 + Math.round(track * travel);
             g.fill(glintX - 9, y + 2, glintX + 9, y + 3,
-                    GuiMotion.alpha(CREAM, Math.round(48 * GuiMotion.ambientMotionIntensity())));
+                    GuiMotion.alpha(CREAM, Math.round(90 * motionStrength())));
         }
     }
 
@@ -58,17 +58,18 @@ final class CatThemeRenderer {
 
     private static void drawAwakeCat(GuiGraphics g, int x, int y) {
         boolean animated = GuiMotion.ambientMotionEnabled();
-        float intensity = GuiMotion.ambientMotionIntensity();
+        float intensity = motionStrength();
         float cycle = animated ? GuiMotion.cycle(9600L) : 0.25f;
         float breath = (float)Math.sin(cycle * Math.PI * 2.0);
         float blink = animated ? Math.max(window(cycle, 0.60f, 0.627f, 0.651f),
                 window(cycle, 0.693f, 0.708f, 0.725f)) : 0.0f;
         float ear = animated ? window(cycle, 0.30f, 0.333f, 0.37f) * intensity : 0.0f;
-        float yawn = animated ? window(GuiMotion.cycle(17300L), 0.54f, 0.60f, 0.68f) : 0.0f;
+        float yawn = animated ? window(GuiMotion.cycle(17300L), 0.54f, 0.60f, 0.68f)
+                * intensity : 0.0f;
 
         g.pose().pushPose();
-        g.pose().translate(x, y + breath * 0.8f * intensity, 0.0f);
-        g.pose().mulPose(Axis.ZP.rotationDegrees(breath * 1.3f * intensity));
+        g.pose().translate(x, y + breath * 3.0f * intensity, 0.0f);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(breath * 3.2f * intensity));
         // Tapered cheeks, layered fur and cream muzzle give the face a clear silhouette.
         g.fill(-15, -7, 16, 9, FUR_SHADE);
         g.fill(-13, -12 - Math.round(ear * 2.0f), -4, -4, FUR);
@@ -84,11 +85,12 @@ final class CatThemeRenderer {
         g.fill(-5, 8, 6, 10, CREAM);
 
         int eyeHeight = Math.max(1, Math.round(4.0f * (1.0f - blink)));
-        g.fill(-9, 2 - eyeHeight, -6, 2, INK);
-        g.fill(7, 2 - eyeHeight, 10, 2, INK);
+        int gaze = Math.round(window(cycle, 0.36f, 0.46f, 0.56f) * intensity);
+        g.fill(-9 + gaze, 2 - eyeHeight, -6 + gaze, 2, INK);
+        g.fill(7 + gaze, 2 - eyeHeight, 10 + gaze, 2, INK);
         if (eyeHeight >= 3) {
-            g.fill(-8, -1, -7, 0, CREAM);
-            g.fill(8, -1, 9, 0, CREAM);
+            g.fill(-8 + gaze, -1, -7 + gaze, 0, CREAM);
+            g.fill(8 + gaze, -1, 9 + gaze, 0, CREAM);
         }
         int blush = Math.round(50 + 30 * (0.5f + 0.5f * breath));
         g.fill(-13, 3, -10, 6, GuiMotion.alpha(PINK, blush));
@@ -112,7 +114,7 @@ final class CatThemeRenderer {
 
     private static void drawSleepingCat(GuiGraphics g, int x, int y) {
         boolean animated = GuiMotion.ambientMotionEnabled();
-        float intensity = GuiMotion.ambientMotionIntensity();
+        float intensity = motionStrength();
         float breath = animated ? (float)Math.sin(GuiMotion.cycle(4800L) * Math.PI * 2.0) : 0.0f;
         float tail = animated ? GuiMotion.cycle(8100L) : 0.25f;
         float paws = animated ? GuiMotion.cycle(2800L) : 0.25f;
@@ -120,8 +122,8 @@ final class CatThemeRenderer {
         // The body expands continuously around its center rather than hopping pixels.
         g.pose().pushPose();
         g.pose().translate(x, y + 2.0f, 0.0f);
-        g.pose().scale(1.0f + breath * 0.015f * intensity,
-                1.0f + breath * 0.045f * intensity, 1.0f);
+        g.pose().scale(1.0f + breath * 0.035f * intensity,
+                1.0f + breath * 0.13f * intensity, 1.0f);
         g.fill(-27, -7, 12, 10, SLEEP_SHADE);
         g.fill(-22, -10, 7, 8, SLEEP_FUR);
         g.fill(-17, -10, -13, 4, SLEEP_SHADE);
@@ -134,7 +136,7 @@ final class CatThemeRenderer {
         g.pose().translate(x, y, 0.0f);
         for (int i = 0; i < 12; ++i) {
             float along = i / 11.0f;
-            float sweep = (float)Math.sin(tail * Math.PI * 2.0) * 2.4f * along * intensity;
+            float sweep = (float)Math.sin(tail * Math.PI * 2.0) * 5.0f * along * intensity;
             float px = -22.0f - 23.0f * along;
             float py = 7.0f - 11.0f * (float)Math.sin(along * Math.PI) + sweep;
             g.pose().pushPose();
@@ -158,7 +160,7 @@ final class CatThemeRenderer {
         g.fill(1, 2, 3, 4, PINK);
         for (int i = 0; i < 2; ++i) {
             float lift = animated ? (float)Math.sin(paws * Math.PI * 2.0 + i * Math.PI)
-                    * 1.1f * intensity : 0.0f;
+                    * 3.0f * intensity : 0.0f;
             g.pose().pushPose();
             g.pose().translate(-4 + i * 7, 6 + lift, 0.0f);
             g.fill(-3, 0, 4, 4, SLEEP_FUR);
@@ -168,17 +170,19 @@ final class CatThemeRenderer {
         g.pose().popPose();
 
         // Little dream signs rise and fade in the otherwise free corner of the header.
-        for (int i = 0; i < 2; ++i) {
-            float progress = animated ? (GuiMotion.cycle(5700L) + i * 0.5f) % 1.0f : 0.2f + i * 0.35f;
-            int opacity = Math.round((float)Math.sin(progress * Math.PI) * 125.0f);
-            g.pose().pushPose();
-            g.pose().translate(x + 27 + i * 7 + (float)Math.sin(progress * Math.PI * 2.0) * 1.5f,
-                    y - 1 - progress * 9.0f, 0.0f);
-            int color = GuiMotion.alpha(CREAM, opacity);
-            g.fill(0, 0, 5, 1, color);
-            g.fill(3, 1, 4, 3, color);
-            g.fill(0, 3, 5, 4, color);
-            g.pose().popPose();
+        if (animated) {
+            for (int i = 0; i < 2; ++i) {
+                float progress = (GuiMotion.cycle(5700L) + i * 0.5f) % 1.0f;
+                int opacity = Math.round((float)Math.sin(progress * Math.PI) * 125.0f * intensity);
+                g.pose().pushPose();
+                g.pose().translate(x + 27 + i * 7 + (float)Math.sin(progress * Math.PI * 2.0)
+                                * 1.5f * intensity, y - 1 - progress * 9.0f * intensity, 0.0f);
+                int color = GuiMotion.alpha(CREAM, opacity);
+                g.fill(0, 0, 5, 1, color);
+                g.fill(3, 1, 4, 3, color);
+                g.fill(0, 3, 5, 4, color);
+                g.pose().popPose();
+            }
         }
     }
 
@@ -187,7 +191,7 @@ final class CatThemeRenderer {
         if (right - left < 120 || bottom - top < 64) return;
         int height = bottom - top - 24;
         float walk = GuiMotion.ambientMotionEnabled() ? GuiMotion.cycle(19000L) : 0.15f;
-        float intensity = GuiMotion.ambientMotionIntensity();
+        float intensity = motionStrength();
         for (int i = 0; i < 5; ++i) {
             float progress = (walk + i * 0.2f) % 1.0f;
             int opacity = Math.round((45 + 55 * (float)Math.sin(progress * Math.PI))
@@ -206,7 +210,7 @@ final class CatThemeRenderer {
             int cx = left + 18 + Math.round(span * smooth((1.0f - (float)Math.cos(
                     GuiMotion.cycle(16000L) * Math.PI * 2.0)) * 0.5f));
             g.fill(cx - 8, bottom - 4, cx + 8, bottom - 3,
-                    GuiMotion.alpha(CREAM, Math.round(66 * intensity)));
+                    GuiMotion.alpha(CREAM, Math.round(90 * intensity)));
         }
     }
 
@@ -220,6 +224,10 @@ final class CatThemeRenderer {
     private static float smooth(float value) {
         float v = Math.max(0.0f, Math.min(1.0f, value));
         return v * v * (3.0f - 2.0f * v);
+    }
+
+    private static float motionStrength() {
+        return (float)Math.sqrt(GuiMotion.ambientMotionIntensity());
     }
 
     private static float window(float time, float start, float peak, float end) {

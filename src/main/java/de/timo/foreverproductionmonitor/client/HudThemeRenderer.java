@@ -538,7 +538,7 @@ final class HudThemeRenderer {
         int detail = withAlpha(0xFF16282C, alpha);
         float cycle = phase(6100L, 0.25f);
         float bob = motionEnabled() ? (float)Math.sin(cycle * Math.PI * 2.0)
-                * ((Double)ClientConfig.VALUES.hudAnimationIntensity.get()).floatValue() * 0.7f : 0.0f;
+                * (float)Math.sqrt((Double)ClientConfig.VALUES.hudAnimationIntensity.get()) * 2.2f : 0.0f;
         float blink = cycle > 0.88f && cycle < 0.95f
                 ? smoothstep(Math.min((cycle - 0.88f) / 0.035f, (0.95f - cycle) / 0.035f)) : 0.0f;
         int eyeHeight = Math.max(1, Math.round(3.0f * (1.0f - blink)));
