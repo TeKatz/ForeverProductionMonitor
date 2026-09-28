@@ -3,6 +3,8 @@ package de.timo.foreverproductionmonitor.client.screen;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.ForeverProductionMonitorClient;
 import de.timo.foreverproductionmonitor.client.ProductionHud;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -24,6 +26,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  */
 public final class CustomHudScreen extends Screen {
     private final Screen parent;
+    private final List<AbstractWidget> controlWidgets = new ArrayList<>();
     private Category category = Category.COLORS;
     private EnumDropdown<ClientConfig.CustomHudDecorationStyle> decorationDropdown;
     private int left;
@@ -46,6 +49,7 @@ public final class CustomHudScreen extends Screen {
     @Override
     protected void init() {
         this.decorationDropdown = null;
+        this.controlWidgets.clear();
         this.panelWidth = Math.max(1, Math.min(900, this.width - 12));
         this.panelHeight = Math.max(1, Math.min(520, this.height - 12));
         this.left = (this.width - this.panelWidth) / 2;
@@ -108,7 +112,7 @@ public final class CustomHudScreen extends Screen {
     }
 
     private int controlsY() {
-        return this.contentTop + 31;
+        return this.contentTop + 40;
     }
 
     private void buildColors() {
@@ -174,8 +178,10 @@ public final class CustomHudScreen extends Screen {
 
     private void addSlider(int y, String key, double min, double max, double value,
                            DoubleConsumer setter, boolean decimal) {
-        this.addRenderableWidget(new HudSlider(
-                this.controlsLeft, y, this.controlsWidth, key, min, max, value, setter, decimal));
+        HudSlider slider = new HudSlider(
+                this.controlsLeft, y, this.controlsWidth, key, min, max, value, setter, decimal);
+        this.addWidget(slider);
+        this.controlWidgets.add(slider);
     }
 
     @Override
@@ -189,7 +195,7 @@ public final class CustomHudScreen extends Screen {
                 this.left + this.panelWidth / 2, this.top + 13, palette.text());
 
         graphics.drawString(this.font, categoryName(this.category),
-                this.controlsLeft, this.contentTop + 23, palette.text(), false);
+                this.controlsLeft, this.contentTop + 24, palette.text(), false);
         graphics.drawString(this.font,
                 Component.translatable("screen.forever_production_monitor.custom_hud.preview"),
                 this.previewLeft, this.contentTop, palette.text(), false);
@@ -197,8 +203,12 @@ public final class CustomHudScreen extends Screen {
         for (Renderable renderable : this.renderables) {
             renderable.render(graphics, mouseX, mouseY, partialTick);
         }
-        if (this.decorationDropdown != null) {
-            this.decorationDropdown.render(graphics, mouseX, mouseY, partialTick);
+
+        updateControlVisibility();
+        for (AbstractWidget widget : this.controlWidgets) {
+            if (widget.visible) {
+                widget.render(graphics, mouseX, mouseY, partialTick);
+            }
         }
 
         int previewTop = this.contentTop + 18;
@@ -216,7 +226,30 @@ public final class CustomHudScreen extends Screen {
                 this.previewLeft + this.previewWidth - 10, previewTop + previewHeight - 10);
 
         if (this.decorationDropdown != null) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(0.0f, 0.0f, 400.0f);
             this.decorationDropdown.renderOverlay(graphics, mouseX, mouseY);
+            graphics.pose().popPose();
+        }
+    }
+
+    private void updateControlVisibility() {
+        if (this.decorationDropdown == null || !this.decorationDropdown.isOpen()) {
+            for (AbstractWidget widget : this.controlWidgets) {
+                widget.visible = true;
+            }
+            return;
+        }
+
+        int overlayTop = this.decorationDropdown.getY() + this.decorationDropdown.getHeight() + 1;
+        int overlayBottom = this.decorationDropdown.overlayBottom();
+        for (AbstractWidget widget : this.controlWidgets) {
+            boolean covered = widget != this.decorationDropdown
+                    && widget.getX() < this.decorationDropdown.getX() + this.decorationDropdown.getWidth()
+                    && widget.getX() + widget.getWidth() > this.decorationDropdown.getX()
+                    && widget.getY() < overlayBottom
+                    && widget.getY() + widget.getHeight() > overlayTop;
+            widget.visible = !covered;
         }
     }
 
@@ -412,6 +445,14 @@ public final class CustomHudScreen extends Screen {
                 this.open = false;
             }
             return false;
+        }
+
+        boolean isOpen() {
+            return this.open;
+        }
+
+        int overlayBottom() {
+            return this.getY() + this.getHeight() + 1 + this.values.length * ROW_HEIGHT + 2;
         }
 
         @Override
