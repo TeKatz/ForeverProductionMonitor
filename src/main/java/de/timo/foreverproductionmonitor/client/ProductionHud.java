@@ -23,6 +23,7 @@ import appeng.core.definitions.AEBlocks;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.ClientMonitorState;
 import de.timo.foreverproductionmonitor.network.MonitorNetwork;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.DeltaTracker;
@@ -50,7 +51,8 @@ public final class ProductionHud {
         if (hudSnapshot == null) {
             return;
         }
-        ProductionHud.renderConfigured(guiGraphics, hudSnapshot.mode(), hudSnapshot.status(), hudSnapshot.entries());
+        ProductionHud.renderConfigured(guiGraphics, hudSnapshot.mode(), hudSnapshot.status(),
+                ProductionHud.prepareEntries(hudSnapshot.mode(), hudSnapshot.entries()));
     }
 
     public static void renderPreview(GuiGraphics guiGraphics) {
@@ -59,8 +61,10 @@ public final class ProductionHud {
         }
         MonitorNetwork.HudMode hudMode = (MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.get());
         MonitorNetwork.HudSnapshot hudSnapshot = ClientMonitorState.hudSnapshot();
-        List<MonitorNetwork.Entry> list = hudSnapshot != null && !hudSnapshot.entries().isEmpty() ? hudSnapshot.entries() : ProductionHud.previewEntries(hudMode);
-        ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE, list);
+        List<MonitorNetwork.Entry> list = hudSnapshot != null && !hudSnapshot.entries().isEmpty()
+                ? hudSnapshot.entries() : ProductionHud.previewEntries(hudMode);
+        ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE,
+                ProductionHud.prepareEntries(hudMode, list));
     }
 
     public static void renderPreview(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
@@ -69,8 +73,10 @@ public final class ProductionHud {
         }
         MonitorNetwork.HudMode hudMode = (MonitorNetwork.HudMode)((Object)ClientConfig.VALUES.hudMode.get());
         MonitorNetwork.HudSnapshot hudSnapshot = ClientMonitorState.hudSnapshot();
-        List<MonitorNetwork.Entry> list = hudSnapshot != null && !hudSnapshot.entries().isEmpty() ? hudSnapshot.entries() : ProductionHud.previewEntries(hudMode);
-        ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE, list, left, top, right, bottom, true);
+        List<MonitorNetwork.Entry> list = hudSnapshot != null && !hudSnapshot.entries().isEmpty()
+                ? hudSnapshot.entries() : ProductionHud.previewEntries(hudMode);
+        ProductionHud.renderConfigured(guiGraphics, hudMode, MonitorNetwork.Status.ONLINE,
+                ProductionHud.prepareEntries(hudMode, list), left, top, right, bottom, true);
     }
 
     private static void renderConfigured(GuiGraphics guiGraphics, MonitorNetwork.HudMode hudMode, MonitorNetwork.Status status, List<MonitorNetwork.Entry> list) {
@@ -421,6 +427,34 @@ public final class ProductionHud {
             }
         };
         return Math.round(f5 * 255.0f) << 16 | Math.round(f4 * 255.0f) << 8 | Math.round(blue * 255.0f);
+    }
+
+    private static List<MonitorNetwork.Entry> prepareEntries(
+            MonitorNetwork.HudMode hudMode, List<MonitorNetwork.Entry> entries) {
+        boolean includeItems = (Boolean)ClientConfig.VALUES.hudIncludeItems.get();
+        boolean includeFluids = (Boolean)ClientConfig.VALUES.hudIncludeFluids.get();
+        boolean includeEnergy = (Boolean)ClientConfig.VALUES.hudIncludeEnergy.get();
+        boolean includeInfinite = (Boolean)ClientConfig.VALUES.hudIncludeInfinite.get();
+
+        java.util.stream.Stream<MonitorNetwork.Entry> stream = entries.stream().filter(entry -> {
+            if (entry.infinite() && !includeInfinite) {
+                return false;
+            }
+            return switch (entry.kind()) {
+                case ITEM -> includeItems;
+                case FLUID -> includeFluids;
+                case ENERGY -> includeEnergy;
+            };
+        });
+
+        if (hudMode == MonitorNetwork.HudMode.STORED) {
+            Comparator<MonitorNetwork.Entry> comparator = Comparator.comparingLong(MonitorNetwork.Entry::stored);
+            if (ClientConfig.VALUES.hudStoredSort.get() == ClientConfig.HudStoredSort.HIGHEST) {
+                comparator = comparator.reversed();
+            }
+            stream = stream.sorted(comparator);
+        }
+        return stream.toList();
     }
 
     private static List<MonitorNetwork.Entry> previewEntries(MonitorNetwork.HudMode hudMode) {
