@@ -618,7 +618,7 @@ extends Screen {
             if (!this.open) {
                 return;
             }
-            ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.values();
+            ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.selectableValues();
             int rows = this.visibleRows();
             int listY = this.getY() + this.getHeight();
             float openProgress = GuiMotion.easeOut(GuiMotion.progress(this.openedNanos, 140L));
@@ -659,7 +659,7 @@ extends Screen {
             }
             if (this.open) {
                 int row = (int)((mouseY - this.getY() - this.getHeight() - 1) / 18.0);
-                ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.values();
+                ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.selectableValues();
                 int revealedHeight = (int)((this.visibleRows() * 18 + 2) * GuiMotion.easeOut(GuiMotion.progress(this.openedNanos, 140L)));
                 if (mouseX >= this.getX() && mouseX < this.getX() + this.getWidth() && mouseY >= this.getY() + this.getHeight() && mouseY < this.getY() + this.getHeight() + revealedHeight && row >= 0 && row < this.visibleRows()) {
                     ProductionMonitorThemeScreen.this.themeDropdownScroll = this.scroll;
@@ -679,27 +679,34 @@ extends Screen {
             if (!this.open || !inside || scrollY == 0.0) {
                 return false;
             }
-            int max = Math.max(0, ClientConfig.InterfaceStyle.values().length - this.visibleRows());
+            int max = Math.max(0, ClientConfig.InterfaceStyle.selectableValues().length - this.visibleRows());
             this.scroll = Math.max(0, Math.min(max, this.scroll + (scrollY < 0.0 ? 1 : -1)));
             ProductionMonitorThemeScreen.this.themeDropdownScroll = this.scroll;
             return true;
         }
 
         private void ensureSelectedVisible() {
-            int selected = this.current.get().ordinal();
+            ClientConfig.InterfaceStyle[] styles = ClientConfig.InterfaceStyle.selectableValues();
+            int selected = 0;
+            for (int i = 0; i < styles.length; ++i) {
+                if (styles[i] == this.current.get()) {
+                    selected = i;
+                    break;
+                }
+            }
             int rows = this.visibleRows();
             if (selected < this.scroll) {
                 this.scroll = selected;
             } else if (selected >= this.scroll + rows) {
                 this.scroll = selected - rows + 1;
             }
-            this.scroll = Math.max(0, Math.min(ClientConfig.InterfaceStyle.values().length - rows, this.scroll));
+            this.scroll = Math.max(0, Math.min(styles.length - rows, this.scroll));
             ProductionMonitorThemeScreen.this.themeDropdownScroll = this.scroll;
         }
 
         private int visibleRows() {
             int available = ProductionMonitorThemeScreen.this.contentBottom - this.getY() - this.getHeight();
-            return Math.min(MAX_VISIBLE, Math.max(1, Math.min(ClientConfig.InterfaceStyle.values().length, available / 18)));
+            return Math.min(MAX_VISIBLE, Math.max(1, Math.min(ClientConfig.InterfaceStyle.selectableValues().length, available / 18)));
         }
 
         protected void updateWidgetNarration(NarrationElementOutput output) {
