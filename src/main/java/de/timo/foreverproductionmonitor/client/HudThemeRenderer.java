@@ -226,9 +226,35 @@ final class HudThemeRenderer {
                 drawPaw(g, px, y + 8, withAlpha((row & 1) == 0 ? c.accentB() : c.accentA(), motionAlpha(24, 44)));
             }
             case CUSTOM -> {
-                g.fill(x + 2, y + 3, x + 3, y + 14, withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 54));
-                g.fill(x + WIDTH - 10, y + 5, x + WIDTH - 7, y + 12, withAlpha(c.accentA(), 38));
-                g.fill(x + WIDTH - 6, y + 5, x + WIDTH - 3, y + 12, withAlpha(c.accentB(), 38));
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> g.fill(x + 2, y + 15, x + WIDTH - 2, y + 16,
+                            withAlpha(c.border(), 24));
+                    case SPLIT -> {
+                        g.fill(x + 2, y + 3, x + 3, y + 14,
+                                withAlpha((row & 1) == 0 ? c.accentA() : c.accentB(), 58));
+                        g.fill(x + WIDTH - 10, y + 5, x + WIDTH - 7, y + 12,
+                                withAlpha(c.accentA(), 38));
+                        g.fill(x + WIDTH - 6, y + 5, x + WIDTH - 3, y + 12,
+                                withAlpha(c.accentB(), 38));
+                    }
+                    case CORNERS -> {
+                        int accent = (row & 1) == 0 ? c.accentA() : c.accentB();
+                        g.fill(x + 2, y + 3, x + 8, y + 4, withAlpha(accent, 54));
+                        g.fill(x + 2, y + 3, x + 3, y + 9, withAlpha(accent, 54));
+                        g.fill(x + WIDTH - 8, y + 13, x + WIDTH - 2, y + 14, withAlpha(accent, 34));
+                    }
+                    case CIRCUIT -> {
+                        int accent = (row & 1) == 0 ? c.accentA() : c.accentB();
+                        g.fill(x + 2, y + 8, x + 14, y + 9, withAlpha(accent, 42));
+                        g.fill(x + 13, y + 6, x + 14, y + 11, withAlpha(accent, 42));
+                        float packet = (phase(9200L, 0.22f) + row * 0.17f) % 1.0f;
+                        int px = x + WIDTH - 30 + Math.round(packet * 18.0f);
+                        g.fill(px, y + 14, px + 3, y + 15,
+                                withAlpha(accent, motionAlpha(22, 52)));
+                    }
+                }
             }
         }
     }
@@ -323,8 +349,29 @@ final class HudThemeRenderer {
                 g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.panel(), a));
             }
             case CUSTOM -> {
-                g.fill(cx - 5, cy - 5, cx + 2, cy + 2, withAlpha(c.accentA(), a));
-                g.fill(cx - 1, cy - 1, cx + 6, cy + 6, withAlpha(c.accentB(), a));
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> {
+                        g.fill(cx - 4, cy - 4, cx + 5, cy + 5, withAlpha(c.border(), a / 2));
+                        g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.accentA(), a));
+                    }
+                    case SPLIT -> {
+                        g.fill(cx - 5, cy - 5, cx + 2, cy + 2, withAlpha(c.accentA(), a));
+                        g.fill(cx - 1, cy - 1, cx + 6, cy + 6, withAlpha(c.accentB(), a));
+                    }
+                    case CORNERS -> {
+                        corner(g, cx - 5, cy - 5, true, true, withAlpha(c.accentA(), a));
+                        corner(g, cx + 5, cy + 5, false, false, withAlpha(c.accentB(), a));
+                        g.fill(cx, cy, cx + 1, cy + 1, withAlpha(c.titleText(), a));
+                    }
+                    case CIRCUIT -> {
+                        g.fill(cx - 5, cy, cx + 5, cy + 1, withAlpha(c.accentA(), a));
+                        g.fill(cx, cy - 5, cx + 1, cy + 5, withAlpha(c.accentB(), a));
+                        g.fill(cx - 2, cy - 2, cx + 3, cy + 3, withAlpha(c.panel(), a));
+                        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, withAlpha(c.titleText(), a));
+                    }
+                }
             }
         }
     }
@@ -530,14 +577,40 @@ final class HudThemeRenderer {
             case NATURE -> natureFrame(g, x, y, h, c);
             case CAT -> catFrame(g, x, y, h, c);
             case CUSTOM -> {
-                g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 86));
-                g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 86));
-                corner(g, x + 2, y + 2, true, true, withAlpha(c.accentA(), 48));
-                corner(g, x + WIDTH - 2, y + h - 2, false, false, withAlpha(c.accentB(), 48));
-                float glide = phase(12600L, 0.35f);
-                int gx = x + 8 + Math.round(glide * (WIDTH - 24));
-                g.fill(gx, y + h - 3, Math.min(x + WIDTH - 4, gx + 10), y + h - 2,
-                        withAlpha(glide < 0.58f ? c.accentA() : c.accentB(), motionAlpha(18, 42)));
+                ClientConfig.CustomHudDecorationStyle decoration =
+                        (ClientConfig.CustomHudDecorationStyle)ClientConfig.VALUES.hudCustomDecorationStyle.get();
+                switch (decoration) {
+                    case CLEAN -> {
+                        g.fill(x + 4, y + 17, x + WIDTH - 4, y + 18,
+                                withAlpha(c.border(), 64));
+                    }
+                    case SPLIT -> {
+                        g.fill(x, y, x + 112, y + 2, withAlpha(c.accentA(), 86));
+                        g.fill(x + 112, y, x + WIDTH, y + 2, withAlpha(c.accentB(), 86));
+                        float glide = phase(12600L, 0.35f);
+                        int gx = x + 8 + Math.round(glide * (WIDTH - 24));
+                        g.fill(gx, y + h - 3, Math.min(x + WIDTH - 4, gx + 10), y + h - 2,
+                                withAlpha(glide < 0.58f ? c.accentA() : c.accentB(), motionAlpha(18, 42)));
+                    }
+                    case CORNERS -> {
+                        corner(g, x + 2, y + 2, true, true, withAlpha(c.accentA(), 68));
+                        corner(g, x + WIDTH - 2, y + h - 2, false, false, withAlpha(c.accentB(), 68));
+                        g.fill(x + 12, y + 17, x + WIDTH - 12, y + 18,
+                                withAlpha(c.border(), 48));
+                    }
+                    case CIRCUIT -> {
+                        g.fill(x + 4, y + 17, x + WIDTH - 4, y + 18,
+                                withAlpha(c.border(), 42));
+                        g.fill(x + 5, y + h - 4, x + 36, y + h - 3,
+                                withAlpha(c.accentA(), 48));
+                        g.fill(x + 35, y + h - 8, x + 36, y + h - 3,
+                                withAlpha(c.accentA(), 48));
+                        float packet = phase(9800L, 0.18f);
+                        int px = x + 42 + Math.round(packet * (WIDTH - 56));
+                        g.fill(px, y + h - 3, Math.min(x + WIDTH - 4, px + 4), y + h - 2,
+                                withAlpha(c.accentB(), motionAlpha(24, 58)));
+                    }
+                }
             }
         }
     }
@@ -615,11 +688,37 @@ final class HudThemeRenderer {
     }
 
     private static Colors customColors() {
-        float hue = ClientConfig.effectiveHudCustomHue() / 359.0f;
-        int a = hsv(hue, 0.72f, 0.95f);
-        int b = hsv((hue + 0.11f) % 1.0f, 0.62f, 0.90f);
-        return new Colors(0xFF06070A, darken(a, 0.48f), darken(a, 0.12f), darken(a, 0.20f),
-                darken(a, 0.16f), darken(a, 0.13f), a, b, 0xFFF2F3F5);
+        float primaryHue = ClientConfig.effectiveHudCustomHue() / 359.0f;
+        float secondaryHue = ((Integer)ClientConfig.VALUES.hudCustomSecondaryHue.get()) / 359.0f;
+        float primarySat = ((Double)ClientConfig.VALUES.hudCustomPrimarySaturation.get()).floatValue();
+        float secondarySat = ((Double)ClientConfig.VALUES.hudCustomSecondarySaturation.get()).floatValue();
+        float surfaceSat = ((Double)ClientConfig.VALUES.hudCustomSurfaceSaturation.get()).floatValue();
+        float base = ((Double)ClientConfig.VALUES.hudCustomBrightness.get()).floatValue();
+        float contrast = ((Double)ClientConfig.VALUES.hudCustomContrast.get()).floatValue();
+        float headerStrength = ((Double)ClientConfig.VALUES.hudCustomHeaderStrength.get()).floatValue();
+        float rowContrast = ((Double)ClientConfig.VALUES.hudCustomRowContrast.get()).floatValue();
+        float borderStrength = ((Double)ClientConfig.VALUES.hudCustomBorderStrength.get()).floatValue();
+        float accentBrightness = ((Double)ClientConfig.VALUES.hudCustomAccentBrightness.get()).floatValue();
+
+        float panelV = clamp01(base * 0.74f);
+        int panel = hsv(primaryHue, surfaceSat, panelV);
+        int outer = hsv(primaryHue, surfaceSat * 0.78f,
+                clamp01(panelV * 0.55f / Math.max(0.65f, contrast)));
+        int border = hsv(primaryHue, Math.min(1.0f, surfaceSat + 0.10f),
+                clamp01(base * 0.95f * borderStrength * contrast));
+        int header = hsv(primaryHue, surfaceSat,
+                clamp01(base * 1.04f * headerStrength * contrast));
+        int rowEven = hsv(primaryHue, surfaceSat * 0.90f,
+                clamp01(panelV * (0.92f + (rowContrast - 1.0f) * 0.24f)));
+        int rowOdd = hsv(primaryHue, surfaceSat * 0.84f,
+                clamp01(panelV * (0.76f - (rowContrast - 1.0f) * 0.20f)));
+        int accentA = hsv(primaryHue, primarySat,
+                clamp01((base + 0.52f) * accentBrightness));
+        int accentB = hsv(secondaryHue, secondarySat,
+                clamp01((base + 0.56f) * accentBrightness));
+        int title = hsv(primaryHue, surfaceSat * 0.08f,
+                clamp01(0.91f + base * 0.08f));
+        return new Colors(outer, border, panel, header, rowEven, rowOdd, accentA, accentB, title);
     }
 
     private static int controllerColor(float offset, int opacity) {
