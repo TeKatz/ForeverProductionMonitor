@@ -369,13 +369,16 @@ final class HudThemeRenderer {
         g.fill(x + 2, y + 1, x + WIDTH - 2, y + 3, withAlpha(c.accentB(), 190));
         g.fill(x + 3, y + 17, x + WIDTH - 3, y + 18, withAlpha(c.accentA(), 130));
         g.fill(x + 3, y + h - 3, x + WIDTH - 3, y + h - 2, withAlpha(c.accentB(), 76));
-        // The animated yarn lives in the otherwise unused far corner of the title bar.
-        float orbit = phase(7600L, 0.25f);
-        int bx = x + WIDTH - 13 + (motionEnabled()
-                ? Math.round((float)Math.sin(orbit * Math.PI * 2.0) * 2.0f) : 0);
-        int by = y + 9 + (motionEnabled()
-                ? Math.round((float)Math.cos(orbit * Math.PI * 2.0)) : 0);
-        yarnBall(g, bx, by, c, orbit);
+        // An edge-bound glint moves smoothly without passing through HUD labels.
+        if (motionEnabled()) {
+            float glide = (1.0f - (float)Math.cos(phase(10500L, 0.0f) * Math.PI * 2.0)) * 0.5f;
+            g.pose().pushPose();
+            g.pose().translate(x + 20 + glide * (WIDTH - 54), y + 2, 0.0f);
+            g.fill(0, 0, 16, 1, withAlpha(c.titleText(), motionAlpha(36, 88)));
+            g.pose().popPose();
+        }
+        g.fill(x + WIDTH - 14, y + 7, x + WIDTH - 8, y + 8, withAlpha(c.accentB(), 130));
+        g.fill(x + WIDTH - 12, y + 5, x + WIDTH - 11, y + 11, withAlpha(c.titleText(), 115));
     }
 
     private static void natureFrame(GuiGraphics g, int x, int y, int h, Colors c) {
@@ -533,24 +536,26 @@ final class HudThemeRenderer {
         int fur = withAlpha(c.accentB(), alpha);
         int pink = withAlpha(c.accentA(), alpha);
         int detail = withAlpha(0xFF16282C, alpha);
-
-        g.fill(cx - 5, cy - 4, cx + 6, cy + 5, fur);
-        g.fill(cx - 5, cy - 7, cx - 1, cy - 4, fur);
-        g.fill(cx + 2, cy - 7, cx + 6, cy - 4, fur);
-        g.fill(cx - 4, cy - 5, cx - 2, cy - 3, pink);
-        g.fill(cx + 3, cy - 5, cx + 5, cy - 3, pink);
-        g.fill(cx - 2, cy + 1, cx + 3, cy + 4, withAlpha(c.titleText(), alpha));
-        boolean blink = phase(6100L, 0.4f) > 0.91f;
-        if (blink) {
-            g.fill(cx - 3, cy - 1, cx - 1, cy, detail);
-            g.fill(cx + 2, cy - 1, cx + 4, cy, detail);
-        } else {
-            g.fill(cx - 3, cy - 2, cx - 2, cy + 1, detail);
-            g.fill(cx + 3, cy - 2, cx + 4, cy + 1, detail);
-        }
-        g.fill(cx, cy + 1, cx + 2, cy + 3, pink);
-        g.fill(cx - 5, cy + 1, cx - 1, cy + 2, withAlpha(c.titleText(), alpha / 2));
-        g.fill(cx + 3, cy + 1, cx + 7, cy + 2, withAlpha(c.titleText(), alpha / 2));
+        float cycle = phase(6100L, 0.25f);
+        float bob = motionEnabled() ? (float)Math.sin(cycle * Math.PI * 2.0)
+                * ((Double)ClientConfig.VALUES.hudAnimationIntensity.get()).floatValue() * 0.7f : 0.0f;
+        float blink = cycle > 0.88f && cycle < 0.95f
+                ? smoothstep(Math.min((cycle - 0.88f) / 0.035f, (0.95f - cycle) / 0.035f)) : 0.0f;
+        int eyeHeight = Math.max(1, Math.round(3.0f * (1.0f - blink)));
+        g.pose().pushPose();
+        g.pose().translate(cx, cy + bob, 0.0f);
+        g.fill(-5, -4, 6, 5, fur);
+        g.fill(-5, -7, -1, -4, fur);
+        g.fill(2, -7, 6, -4, fur);
+        g.fill(-4, -5, -2, -3, pink);
+        g.fill(3, -5, 5, -3, pink);
+        g.fill(-2, 1, 3, 4, withAlpha(c.titleText(), alpha));
+        g.fill(-3, 1 - eyeHeight, -1, 1, detail);
+        g.fill(2, 1 - eyeHeight, 4, 1, detail);
+        g.fill(0, 1, 2, 3, pink);
+        g.fill(-5, 1, -2, 2, withAlpha(c.titleText(), alpha / 2));
+        g.fill(4, 1, 7, 2, withAlpha(c.titleText(), alpha / 2));
+        g.pose().popPose();
     }
 
     private static void drawTail(GuiGraphics g, int sx, int sy, int length, int amplitude, float turn, int color) {
