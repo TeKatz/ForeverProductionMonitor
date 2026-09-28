@@ -97,33 +97,30 @@ final class ThemeAmbientRenderer {
                 graphics.fill(x + width - 3 - span, bottom, x + width - 3, bottom + 1, alpha(b, 52));
             }
             case FOREVER -> {
-                int split = x + width * 3 / 5;
-                graphics.fill(x + 3, bottom, split, bottom + 1, alpha(a, 78));
-                graphics.fill(split, bottom, x + width - 3, bottom + 1, alpha(b, 78));
                 int cy = y + height / 2;
-                int drift = GuiMotion.ambientMotionEnabled()
-                        ? Math.round((float)Math.sin(phase(11000L, 0.24f) * Math.PI * 2.0) * 1.5f)
-                        : 0;
-                diagonal(graphics, x + 7, cy + 3 + drift, x + width / 3, cy - 3 + drift, alpha(a, 48));
-                diagonal(graphics, x + width * 2 / 3, cy - 3 - drift, x + width - 7, cy + 3 - drift, alpha(b, 48));
-                graphics.fill(split - 1, cy - 2, split + 1, cy + 3, alpha(palette.text(), 42));
+                graphics.fill(x + 5, bottom, x + width - 5, bottom + 1, alpha(palette.border(), 48));
+                int[] colors = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
+                for (int i = 0; i < 4; ++i) {
+                    int nx = x + 9 + i * Math.max(8, (width - 24) / 4);
+                    graphics.fill(nx, cy - 2, nx + 4, cy + 2, alpha(colors[i], 56));
+                }
+                int px = x + 6 + Math.round(phase(7600L, 0.28f) * Math.max(1, width - 15));
+                graphics.fill(px, bottom - 1, Math.min(x + width - 5, px + 4), bottom + 2,
+                        alpha(palette.accentA(), motionAlpha(28, 66)));
             }
             case AE2 -> {
                 int cy = y + height / 2;
-                int trace = ae2ControllerColor(active ? 0.03f : 0.0f, active ? 96 : 58);
-                graphics.fill(x + 5, cy - 1, x + width / 3, cy, trace);
-                graphics.fill(x + width / 3, cy - 4, x + width / 3 + 1, cy, trace);
-                graphics.fill(x + width / 3, cy - 4, x + width * 2 / 3, cy - 3, trace);
-                graphics.fill(x + width * 2 / 3, cy - 3, x + width * 2 / 3 + 1, cy + 3, trace);
-                graphics.fill(x + width * 2 / 3, cy + 2, x + width - 10, cy + 3, trace);
-
-                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(AE2_CONTROLLER_FRAME_LIGHT, 30));
-                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(AE2_CONTROLLER_FRAME_MID, 28));
-
-                if (active || hoverProgress > 0.25f) {
-                    int glowAlpha = active ? 88 : Math.round(24 + hoverProgress * 52.0f);
-                    graphics.fill(x + width - 9, cy - 1, x + width - 6, cy + 2,
-                            ae2ControllerColor(0.18f, glowAlpha));
+                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(AE2_CONTROLLER_FRAME_LIGHT, 34));
+                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(AE2_CONTROLLER_FRAME_MID, 32));
+                for (int i = 0; i < 3; ++i) {
+                    int sx = x + 8 + i * 9;
+                    graphics.fill(sx, cy - 4, sx + 7, cy + 4, alpha(AE2_CONTROLLER_INSET, 104));
+                    graphics.fill(sx + 2, cy - 2, sx + 5, cy + 2,
+                            ae2ControllerColor(i * 0.12f, active ? 88 : 56));
+                }
+                if (width > 54) {
+                    controllerTrace(graphics, x + 36, cy, width - 47, 0,
+                            ae2ControllerColor(0.28f, active ? 72 : 40), false);
                 }
             }
             case ORITECH -> {
@@ -143,27 +140,30 @@ final class ThemeAmbientRenderer {
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
-                graphics.fill(x + 3, y + 3, x + 4, y + height - 3, alpha(a, 70));
-                graphics.fill(x + width - 4, y + 3, x + width - 3, y + height - 3, alpha(b, 70));
-                graphics.fill(x + 4, cy, x + width - 4, cy + 1, alpha(palette.border(), 54));
-                energyCore(graphics, x + width / 2, cy, 4, palette, phase(9200L, 0.22f), 68);
-                int tankTop = y + 4;
-                int tankBottom = y + height - 4;
-                graphics.fill(x + 7, tankTop, x + 11, tankBottom, alpha(palette.border(), 66));
-                graphics.fill(x + width - 11, tankTop, x + width - 7, tankBottom, alpha(palette.border(), 66));
-                int fill = Math.max(2, (tankBottom - tankTop - 2) * 2 / 3);
-                graphics.fill(x + 8, tankBottom - fill, x + 10, tankBottom - 1, alpha(palette.accentA(), 60));
-                graphics.fill(x + width - 10, tankBottom - fill / 2, x + width - 8, tankBottom - 1, alpha(palette.accentB(), 56));
+                graphics.fill(x + 4, y + 4, x + 8, y + height - 4, alpha(palette.border(), 60));
+                graphics.fill(x + 5, cy, x + 7, y + height - 5, alpha(palette.accentA(), 64));
+                graphics.fill(x + width - 10, y + 4, x + width - 5, y + height - 4, alpha(palette.border(), 60));
+                float energy = 0.48f + 0.34f * (0.5f + 0.5f * (float)Math.sin(phase(8400L, 0.25f) * Math.PI * 2.0));
+                int gaugeH = Math.max(2, Math.round((height - 10) * energy));
+                graphics.fill(x + width - 8, y + height - 5 - gaugeH, x + width - 7, y + height - 5,
+                        alpha(palette.accentB(), 72));
+                graphics.fill(x + 13, cy, x + width - 15, cy + 1, alpha(palette.border(), 34));
+                int prog = x + 13 + Math.round(phase(7000L, 0.3f) * Math.max(1, width - 31));
+                graphics.fill(prog, cy - 1, Math.min(x + width - 15, prog + 5), cy + 2,
+                        alpha(palette.accentA(), motionAlpha(28, 62)));
             }
             case QUANTUM -> {
-                int cx = x + width / 2;
                 int cy = y + height / 2;
+                int moduleLeft = x + width - 34;
                 float pulse = 0.5f + 0.5f * (float)Math.sin(phase(8200L, 0.28f) * Math.PI * 2.0);
-                graphics.fill(cx - 10, cy - 6, cx + 11, cy + 7, alpha(QUANTUM_CASING, 180));
-                graphics.fill(cx - 10, cy - 6, cx - 8, cy + 7, alpha(QUANTUM_FRAME, 102));
-                graphics.fill(cx + 9, cy - 6, cx + 11, cy + 7, alpha(QUANTUM_FRAME, 102));
-                quantumInset(graphics, cx - 6, cy - 4, 13, 8, Math.round(52 + pulse * 48.0f));
-                hazardStrip(graphics, cx - 9, cy + 4, 18, 2, 64);
+                for (int i = 0; i < 3; ++i) {
+                    int mx = moduleLeft + i * 10;
+                    graphics.fill(mx, cy - 5, mx + 9, cy + 5, alpha(QUANTUM_CASING, 160));
+                    graphics.fill(mx + 2, cy - 3, mx + 7, cy + 3,
+                            alpha(i == 1 ? QUANTUM_PURPLE_BRIGHT : QUANTUM_PURPLE,
+                                    i == 1 ? Math.round(52 + pulse * 52.0f) : 34));
+                }
+                graphics.fill(moduleLeft + 2, cy + 6, moduleLeft + 29, cy + 7, alpha(0xFFD2A62B, 44));
             }
             case HOLOGRAPHIC -> {
                 corner(graphics, x + 2, y + 2, 5, subtle, true, true);
@@ -271,16 +271,22 @@ final class ThemeAmbientRenderer {
                 }
             }
             case FOREVER -> {
-                int split = x + width * 3 / 5;
-                graphics.fill(x + 2, y + 2, split, y + 3, a);
-                graphics.fill(split, y + 2, right - 2, y + 3, b);
+                graphics.fill(x + 4, bottom - 4, right - 4, bottom - 3, alpha(palette.border(), 34));
+                int[] colors = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
+                for (int i = 0; i < 4; ++i) {
+                    int nx = x + 10 + i * Math.max(10, (width - 28) / 4);
+                    graphics.fill(nx, bottom - 6, nx + 6, bottom - 2, alpha(colors[i], 42));
+                }
             }
             case AE2 -> {
-                int traceA = ae2ControllerColor(0.00f, 42);
-                int traceB = ae2ControllerColor(0.22f, 34);
-                graphics.fill(x + 5, bottom - 3, right - 5, bottom - 2, alpha(AE2_CONTROLLER_FRAME_DARK, 48));
-                controllerTrace(graphics, x + 7, y + 5, Math.max(18, width / 3), Math.max(6, height / 3), traceA, false);
-                controllerTrace(graphics, right - 8, bottom - 6, -Math.max(16, width / 4), -Math.max(5, height / 4), traceB, true);
+                graphics.fill(x + 4, y + 3, right - 4, y + 5, alpha(AE2_CONTROLLER_FRAME_MID, 42));
+                int cells = Math.min(4, Math.max(2, width / 55));
+                for (int i = 0; i < cells; ++i) {
+                    int sx = x + 8 + i * 11;
+                    graphics.fill(sx, y + 7, sx + 9, y + 15, alpha(AE2_CONTROLLER_INSET, 96));
+                    graphics.fill(sx + 2, y + 9, sx + 7, y + 13, ae2ControllerColor(i * 0.13f, 46));
+                }
+                graphics.fill(x + 6, bottom - 3, right - 6, bottom - 2, alpha(AE2_CONTROLLER_FRAME_DARK, 44));
             }
             case ORITECH -> {
                 // Tables stay readable: one structural rail and one powered machine module.
@@ -297,25 +303,23 @@ final class ThemeAmbientRenderer {
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
-                segmentedRail(graphics, x + 3, y + 3, bottom - 3, palette.accentA(), palette.border());
-                segmentedRail(graphics, right - 4, y + 3, bottom - 3, palette.accentB(), palette.border());
-                graphics.fill(x + 5, cy, right - 5, cy + 1, alpha(palette.border(), 34));
-                energyCore(graphics, x + Math.min(width - 14, Math.max(14, width / 5)), cy, 5, palette, phase(10500L, 0.32f), 62);
-                int gaugeX = right - Math.min(18, Math.max(10, width / 8));
-                graphics.fill(gaugeX, y + 4, gaugeX + 6, bottom - 4, alpha(palette.border(), 58));
+                graphics.fill(x + 3, y + 4, x + 7, bottom - 4, alpha(palette.border(), 52));
+                graphics.fill(x + 4, cy, x + 6, bottom - 5, alpha(palette.accentA(), 48));
+                graphics.fill(right - 9, y + 4, right - 4, bottom - 4, alpha(palette.border(), 52));
                 int gaugeH = Math.max(2, (height - 10) * 3 / 5);
-                graphics.fill(gaugeX + 1, bottom - 5 - gaugeH, gaugeX + 5, bottom - 5, alpha(palette.accentB(), 54));
+                graphics.fill(right - 7, bottom - 5 - gaugeH, right - 6, bottom - 5, alpha(palette.accentB(), 58));
+                graphics.fill(x + 13, cy, right - 14, cy + 1, alpha(palette.border(), 28));
             }
             case QUANTUM -> {
-                int moduleW = Math.max(14, Math.min(24, width / 7));
-                int start = right - moduleW * 3 - 10;
+                int moduleW = Math.max(13, Math.min(21, width / 8));
+                int start = right - moduleW * 3 - 9;
                 for (int i = 0; i < 3; ++i) {
                     int mx = start + i * (moduleW + 2);
                     if (mx < x + 4) continue;
-                    quantumCasingCell(graphics, mx, y + 3, moduleW, Math.max(8, height - 6),
-                            i == 1 ? 72 : 48, i == 1);
+                    quantumCasingCell(graphics, mx, y + 4, moduleW, Math.max(8, height - 8),
+                            i == 1 ? 74 : 40, i == 1);
                 }
-                hazardStrip(graphics, x + 5, bottom - 3, Math.max(12, width / 3), 1, 52);
+                graphics.fill(start + 2, bottom - 3, right - 5, bottom - 2, alpha(0xFFD2A62B, 38));
             }
             case HOLOGRAPHIC -> {
                 for (int py = y + 4; py < bottom - 3; py += 9) {
@@ -409,31 +413,62 @@ final class ThemeAmbientRenderer {
     private static void foreverPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int split = l + width * 3 / 5;
-        int cy = t + height / 2;
-        float wave = (float)Math.sin(phase(22000L, 0.31f) * Math.PI * 2.0);
-        float lift = GuiMotion.ambientMotionEnabled() ? wave * 3.0f : 0.0f;
 
-        // Signature is deliberately asymmetrical and open: two long ribbons crossing
-        // the 3/5 split, not a machine frame or a nested computer core.
-        g.pose().pushPose();
-        g.pose().translate(0.0f, lift, 0.0f);
-        diagonal(g, l + 18, cy + 18, split - 8, cy - 12, alpha(p.accentA(), 31));
-        diagonal(g, l + 34, cy + 22, split + 18, cy - 8, alpha(p.accentA(), 18));
-        diagonal(g, split - 2, cy - 12, r - 22, cy + 10, alpha(p.accentB(), 30));
-        diagonal(g, split + 18, cy - 8, r - 38, cy + 15, alpha(p.accentB(), 18));
-        g.pose().popPose();
+        // Forever is the whole modpack rather than one machine: a shared production
+        // backbone links AE-like storage, Mekanism chemistry, Oritech processing and
+        // Quantum transport into one coherent megabase network.
+        int busY = b - Math.max(24, height / 7);
+        int busLeft = l + Math.max(18, width / 12);
+        int busRight = r - Math.max(18, width / 12);
+        g.fill(busLeft, busY, busRight, busY + 2, alpha(p.border(), 34));
 
-        // A restrained split spine anchors the brand language.
-        g.fill(split, t + 13, split + 1, b - 13, alpha(p.border(), 22));
-        int markerY = cy + Math.round(wave * Math.min(12, height / 8.0f));
-        g.fill(split - 2, markerY - 1, split + 3, markerY + 2, alpha(p.text(), 38));
-
-        for (int x = l + 10; x < split - 9; x += 29) {
-            g.fill(x, b - 7, Math.min(x + 13, split - 8), b - 6, alpha(p.accentA(), 21));
+        int[] systemColors = {0xFFC9D3DD, 0xFF55D6C7, 0xFFFF8A3D, 0xFFB66BFF};
+        int[] moduleX = new int[4];
+        for (int i = 0; i < 4; ++i) {
+            moduleX[i] = busLeft + (i + 1) * (busRight - busLeft) / 5;
+            int color = systemColors[i];
+            g.fill(moduleX[i] - 8, busY - 7, moduleX[i] + 9, busY + 8, alpha(0xFF0B141D, 82));
+            g.fill(moduleX[i] - 6, busY - 5, moduleX[i] + 7, busY + 6, alpha(p.border(), 36));
+            g.fill(moduleX[i] - 3, busY - 2, moduleX[i] + 4, busY + 3, alpha(color, 54));
+            g.fill(moduleX[i] - 1, busY - 10, moduleX[i] + 2, busY - 6, alpha(color, 42));
         }
-        for (int x = split + 8; x < r - 10; x += 33) {
-            g.fill(x, t + 8, Math.min(x + 12, r - 8), t + 9, alpha(p.accentB(), 19));
+
+        // Central crafting/network core.
+        int coreX = l + width / 2;
+        int coreY = busY - Math.max(24, Math.min(44, height / 6));
+        g.fill(coreX - 16, coreY - 9, coreX + 17, coreY + 10, alpha(0xFF0A131C, 92));
+        g.fill(coreX - 13, coreY - 6, coreX + 14, coreY + 7, alpha(p.border(), 42));
+        g.fill(coreX - 8, coreY - 3, coreX + 9, coreY + 4, alpha(p.accentA(), 48));
+        g.fill(coreX - 3, coreY - 5, coreX + 4, coreY + 6, alpha(p.accentB(), 58));
+        g.fill(coreX, coreY + 9, coreX + 1, busY, alpha(p.border(), 34));
+
+        float corePulse = 0.5f + 0.5f * (float)Math.sin(phase(9200L, 0.21f) * Math.PI * 2.0);
+        g.fill(coreX - 1, coreY - 1, coreX + 2, coreY + 2,
+                alpha(p.text(), Math.round(30 + corePulse * 54.0f)));
+
+        // Pack-wide data packets travel along the same backbone instead of random
+        // decorative ribbons.
+        for (int i = 0; i < 4; ++i) {
+            float packet = (phase(11000L + i * 1400L, 0.1f + i * 0.17f) + i * 0.19f) % 1.0f;
+            int px = busLeft + Math.round(packet * Math.max(1, busRight - busLeft - 2));
+            g.fill(px, busY - 1, px + 3, busY + 3,
+                    alpha(systemColors[i], motionAlpha(22, 54)));
+        }
+
+        // A paired quantum link across the upper edge references the pack's many
+        // cross-network bridges while remaining quiet behind actual UI content.
+        if (width > 220 && height > 100) {
+            int qy = t + Math.max(20, height / 6);
+            int q1 = l + width / 4;
+            int q2 = l + width * 3 / 4;
+            g.fill(q1 - 6, qy - 6, q1 + 7, qy + 7, alpha(0xFF1B1722, 52));
+            g.fill(q2 - 6, qy - 6, q2 + 7, qy + 7, alpha(0xFF1B1722, 52));
+            diamond(g, q1, qy, 3, alpha(0xFFB66BFF, 48));
+            diamond(g, q2, qy, 3, alpha(0xFF55D6FF, 48));
+            g.fill(q1 + 7, qy, q2 - 6, qy + 1, alpha(p.border(), 18));
+            float bridge = phase(7600L, 0.37f);
+            int bx = q1 + 8 + Math.round(bridge * Math.max(1, q2 - q1 - 16));
+            g.fill(bx, qy - 1, bx + 4, qy + 2, alpha(0xFFB66BFF, motionAlpha(28, 64)));
         }
     }
 
@@ -441,76 +476,62 @@ final class ThemeAmbientRenderer {
         int width = r - l;
         int height = b - t;
 
-        // ME Controller-inspired body: pale structural bands framing a dark inset.
-        int frameAlpha = 28;
-        g.fill(l + 6, t + 7, r - 6, t + 9, alpha(AE2_CONTROLLER_FRAME_LIGHT, frameAlpha));
-        g.fill(l + 6, b - 9, r - 6, b - 7, alpha(AE2_CONTROLLER_FRAME_MID, frameAlpha));
-        g.fill(l + 6, t + 9, l + 8, b - 9, alpha(AE2_CONTROLLER_FRAME_LIGHT, frameAlpha));
-        g.fill(r - 8, t + 9, r - 6, b - 9, alpha(AE2_CONTROLLER_FRAME_DARK, frameAlpha));
+        // Controller casing first: a dark terminal inset inside cool metal rails.
+        g.fill(l + 7, t + 8, r - 7, t + 10, alpha(AE2_CONTROLLER_FRAME_LIGHT, 34));
+        g.fill(l + 7, b - 10, r - 7, b - 8, alpha(AE2_CONTROLLER_FRAME_MID, 30));
+        g.fill(l + 7, t + 10, l + 9, b - 10, alpha(AE2_CONTROLLER_FRAME_LIGHT, 30));
+        g.fill(r - 9, t + 10, r - 7, b - 10, alpha(AE2_CONTROLLER_FRAME_DARK, 30));
 
-        // A large orthogonal maze fills the otherwise-empty panel, but stays behind content.
-        int mazeLeft = l + Math.max(16, width / 10);
-        int mazeTop = t + Math.max(20, height / 7);
-        int mazeRight = r - Math.max(18, width / 9);
-        int mazeBottom = b - Math.max(20, height / 8);
-        int mazeW = Math.max(50, mazeRight - mazeLeft);
-        int mazeH = Math.max(40, mazeBottom - mazeTop);
-
-        // Slowly color-cycling controller traces. Each route gets a phase offset,
-        // so the panel feels alive without becoming a rainbow strobe.
-        controllerTrace(g, mazeLeft, mazeTop + mazeH / 5, mazeW * 3 / 5, mazeH / 3,
-                ae2ControllerColor(0.00f, 34), false);
-        controllerTrace(g, mazeRight, mazeTop + mazeH / 3, -mazeW / 2, mazeH / 4,
-                ae2ControllerColor(0.14f, 31), true);
-        controllerTrace(g, mazeLeft + mazeW / 5, mazeBottom, mazeW / 2, -mazeH * 2 / 5,
-                ae2ControllerColor(0.28f, 28), false);
-        controllerTrace(g, mazeRight - mazeW / 6, mazeBottom - mazeH / 7, -mazeW * 2 / 5, -mazeH / 3,
-                ae2ControllerColor(0.42f, 26), true);
-
-        // Secondary dark traces create the Controller's layered circuit-labyrinth look.
-        controllerTrace(g, mazeLeft + 9, mazeTop + 6, mazeW / 3, mazeH / 5,
-                alpha(AE2_CONTROLLER_FRAME_DARK, 32), true);
-        controllerTrace(g, mazeRight - 12, mazeBottom - 8, -mazeW / 3, -mazeH / 5,
-                alpha(AE2_CONTROLLER_FRAME_MID, 24), false);
-
-        // One small ME Drive cluster only; status colours stay contextual instead of covering every widget.
-        if (width > 240 && height > 130) {
-            int driveW = Math.max(46, Math.min(66, width / 6));
-            int driveH = Math.max(34, Math.min(48, height / 5));
-            int driveRight = r - 18;
-            int driveLeft = driveRight - driveW;
-            int driveTop = t + 16;
-            int driveBottom = driveTop + driveH;
-            g.fill(driveLeft, driveTop, driveRight, driveBottom, alpha(AE2_CONTROLLER_FRAME_MID, 54));
-            g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, driveBottom - 2, alpha(AE2_CONTROLLER_INSET, 94));
-
-            int slotW = Math.max(8, (driveW - 11) / 2);
-            int slotH = Math.max(5, (driveH - 11) / 5);
-            float activity = phase(22000L, 0.31f) * 10.0f;
-            int active = Math.floorMod((int)Math.floor(activity), 10);
-            int next = (active + 1) % 10;
-            float blend = smoothstep(activity - (float)Math.floor(activity));
-            for (int i = 0; i < 10; ++i) {
-                int col = i % 2;
-                int row = i / 2;
-                int sx = driveLeft + 4 + col * (slotW + 3);
-                int sy = driveTop + 4 + row * (slotH + 1);
-                if (sx + slotW > driveRight - 3 || sy + slotH > driveBottom - 3) continue;
-                int led = ae2CellColor(i);
-                float glow = i == active ? 1.0f - blend : (i == next ? blend : 0.0f);
-                g.fill(sx, sy, sx + slotW, sy + slotH, alpha(0xFF292C32, 92));
-                g.fill(sx + 2, sy + slotH - 2, sx + slotW - 2, sy + slotH - 1,
-                        alpha(led, 44 + Math.round(glow * 42.0f * GuiMotion.ambientMotionIntensity())));
+        // A real Controller-like cell bank is the visual anchor. Colour changes live
+        // inside the cells, surrounded by neutral graphite just like the original block.
+        int cellSize = Math.max(13, Math.min(22, Math.min(width / 16, height / 9)));
+        int bankX = l + 18;
+        int bankY = b - (cellSize * 2 + 18);
+        float sweep = phase(19000L, 0.12f) * 6.0f;
+        int active = Math.floorMod((int)Math.floor(sweep), 6);
+        float blend = smoothstep(sweep - (float)Math.floor(sweep));
+        for (int row = 0; row < 2; ++row) {
+            for (int col = 0; col < 3; ++col) {
+                int idx = row * 3 + col;
+                int cx = bankX + col * (cellSize + 3);
+                int cy = bankY + row * (cellSize + 3);
+                g.fill(cx, cy, cx + cellSize, cy + cellSize, alpha(AE2_CONTROLLER_FRAME_MID, 68));
+                g.fill(cx + 2, cy + 2, cx + cellSize - 2, cy + cellSize - 2, alpha(AE2_CONTROLLER_INSET, 98));
+                float glow = idx == active ? 1.0f - blend : (idx == (active + 1) % 6 ? blend : 0.0f);
+                int color = ae2ControllerColor(idx * 0.11f, 34 + Math.round(glow * 70.0f));
+                g.fill(cx + 4, cy + 4, cx + cellSize - 4, cy + cellSize - 4, color);
             }
         }
 
-        // One tiny controller core tile anchors the palette without dominating the screen.
-        int coreX = l + 24;
-        int coreY = b - 28;
-        g.fill(coreX, coreY, coreX + 18, coreY + 18, alpha(AE2_CONTROLLER_FRAME_MID, 42));
-        g.fill(coreX + 3, coreY + 3, coreX + 15, coreY + 15, alpha(AE2_CONTROLLER_INSET, 72));
-        int coreColor = ae2ControllerColor(0.08f, 62);
-        controllerTrace(g, coreX + 4, coreY + 5, 10, 7, coreColor, false);
+        // ME Drive / terminal module at the upper-right: fixed slots, tiny status LEDs.
+        if (width > 220 && height > 115) {
+            int driveW = Math.max(56, Math.min(78, width / 5));
+            int driveH = 42;
+            int driveRight = r - 18;
+            int driveLeft = driveRight - driveW;
+            int driveTop = t + 18;
+            g.fill(driveLeft, driveTop, driveRight, driveTop + driveH, alpha(AE2_CONTROLLER_FRAME_MID, 62));
+            g.fill(driveLeft + 2, driveTop + 2, driveRight - 2, driveTop + driveH - 2, alpha(AE2_CONTROLLER_INSET, 104));
+            for (int row = 0; row < 4; ++row) {
+                int sy = driveTop + 5 + row * 8;
+                g.fill(driveLeft + 6, sy, driveRight - 8, sy + 5, alpha(0xFF2B2E34, 94));
+                int led = ae2CellColor(row + 2);
+                g.fill(driveRight - 12, sy + 1, driveRight - 9, sy + 4,
+                        alpha(led, 42 + row * 6));
+            }
+        }
+
+        // One restrained orthogonal network trace links the controller bank to the
+        // terminal module. No full-screen maze.
+        int traceY = bankY - 8;
+        int traceStart = bankX + cellSize;
+        int traceEnd = r - Math.max(82, width / 5);
+        if (traceEnd > traceStart + 18) {
+            controllerTrace(g, traceStart, traceY, traceEnd - traceStart, -Math.max(8, height / 8),
+                    ae2ControllerColor(0.08f, 34), false);
+            int packetX = traceStart + Math.round(phase(10500L, 0.33f) * (traceEnd - traceStart));
+            g.fill(packetX, traceY - 1, packetX + 3, traceY + 2, ae2ControllerColor(0.22f, motionAlpha(32, 66)));
+        }
     }
 
     private static void oritechPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
@@ -649,110 +670,107 @@ final class ThemeAmbientRenderer {
     private static void mekanismPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int leftRail = l + 12;
-        int rightRail = r - 13;
-        int cx = l + width / 2;
+
+        // Mekanism machine GUI: one chemical tank, one energy gauge, clear I/O ports
+        // and a processing path. Repetition and decorative rails are intentionally gone.
+        int tankX = l + Math.max(18, width / 12);
+        int tankTop = t + Math.max(18, height / 7);
+        int tankBottom = b - Math.max(24, height / 8);
+        int tankW = Math.max(10, Math.min(16, width / 24));
+        g.fill(tankX, tankTop, tankX + tankW, tankBottom, alpha(p.border(), 68));
+        g.fill(tankX + 2, tankTop + 2, tankX + tankW - 2, tankBottom - 2, alpha(0xFF0B1519, 106));
+        float chem = 0.40f + 0.26f * (0.5f + 0.5f * (float)Math.sin(phase(22000L, 0.31f) * Math.PI * 2.0));
+        tankFill(g, tankX + 3, tankTop + 3, tankX + tankW - 3, tankBottom - 3, chem, alpha(p.accentA(), 64));
+
+        // Vertical power bar, visually separated from the chemical tank.
+        int powerX = r - Math.max(24, width / 13);
+        int powerW = 8;
+        g.fill(powerX, tankTop, powerX + powerW, tankBottom, alpha(p.border(), 62));
+        g.fill(powerX + 2, tankTop + 2, powerX + powerW - 2, tankBottom - 2, alpha(0xFF0A1417, 104));
+        float power = 0.56f + 0.30f * (0.5f + 0.5f * (float)Math.sin(phase(17000L, 0.22f) * Math.PI * 2.0));
+        tankFill(g, powerX + 3, tankTop + 3, powerX + powerW - 3, tankBottom - 3, power, alpha(p.accentB(), 70));
+
+        // Input -> process -> output layout.
         int cy = t + height / 2;
+        int inX = l + width / 3;
+        int outX = l + width * 2 / 3;
+        int slotSize = Math.max(15, Math.min(23, height / 8));
+        g.fill(inX - slotSize / 2, cy - slotSize / 2, inX + slotSize / 2, cy + slotSize / 2, alpha(p.border(), 50));
+        g.fill(outX - slotSize / 2, cy - slotSize / 2, outX + slotSize / 2, cy + slotSize / 2, alpha(p.border(), 50));
+        g.fill(inX - 2, cy - 2, inX + 3, cy + 3, alpha(0xFF4E8BD8, 54));
+        g.fill(outX - 2, cy - 2, outX + 3, cy + 3, alpha(0xFFD85858, 54));
 
-        segmentedRail(g, leftRail, t + 7, b - 7, p.accentA(), p.border());
-        segmentedRail(g, rightRail, t + 7, b - 7, p.accentB(), p.border());
-
-        g.fill(leftRail + 3, cy, cx - 12, cy + 1, alpha(p.border(), 38));
-        g.fill(cx + 12, cy, rightRail - 2, cy + 1, alpha(p.border(), 38));
-        energyCore(g, cx, cy, 10, p, phase(18000L, 0.24f), 86);
-
-        int tankTop = t + 10;
-        int tankBottom = Math.min(b - 11, tankTop + Math.max(30, height / 2));
-        int[] tankXs = {l + width / 4, l + width * 3 / 4};
-        for (int i = 0; i < tankXs.length; ++i) {
-            int tx = tankXs[i];
-            int fluid = i == 0 ? p.accentA() : p.accentB();
-            g.fill(tx - 7, tankTop, tx + 8, tankBottom, alpha(p.border(), 64));
-            g.fill(tx - 6, tankTop + 1, tx + 7, tankBottom - 1, alpha(p.tableOuter(), 100));
-            float tankPhase = phase(26000L + i * 7000L, 0.21f + i * 0.28f);
-            float level = 0.28f + 0.46f * (0.5f + 0.5f * (float)Math.sin(tankPhase * Math.PI * 2.0));
-            tankFill(g, tx - 5, tankTop + 2, tx + 6, tankBottom - 2, level, alpha(fluid, 56));
-            g.fill(tx - 4, tankTop + 5, tx + 5, tankTop + 6, alpha(p.text(), 22));
+        int arrowLeft = inX + slotSize / 2 + 6;
+        int arrowRight = outX - slotSize / 2 - 6;
+        if (arrowRight > arrowLeft + 8) {
+            g.fill(arrowLeft, cy - 1, arrowRight - 4, cy + 2, alpha(p.border(), 38));
+            g.fill(arrowRight - 6, cy - 4, arrowRight, cy + 5, alpha(p.border(), 38));
+            float progress = phase(9800L, 0.27f);
+            int progressX = arrowLeft + Math.round(progress * Math.max(1, arrowRight - arrowLeft - 5));
+            g.fill(progressX, cy - 2, Math.min(arrowRight, progressX + 6), cy + 3,
+                    alpha(p.accentA(), motionAlpha(32, 68)));
         }
 
-        int gaugeX = cx;
-        int gaugeY = Math.min(b - 18, t + 18);
-        gauge(g, gaugeX, gaugeY, 7, p, phase(21000L, 0.33f));
-        pipeJoint(g, leftRail, cy, alpha(p.accentA(), 70), alpha(p.border(), 76));
-        pipeJoint(g, rightRail - 1, cy, alpha(p.accentB(), 70), alpha(p.border(), 76));
+        // Three tiny side-configuration tabs are enough to evoke Mekanism's GUI.
+        int tabY = t + 16;
+        g.fill(l + 5, tabY, l + 9, tabY + 6, alpha(0xFF4E8BD8, 76));
+        g.fill(l + 5, tabY + 8, l + 9, tabY + 14, alpha(0xFFD85858, 70));
+        g.fill(l + 5, tabY + 16, l + 9, tabY + 22, alpha(p.accentB(), 68));
     }
 
     private static void quantumPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
 
-        // Build a recognisable AdvancedAE Quantum Computer silhouette rather than
-        // another abstract nested-frame UI. The tower stays low-contrast because it
-        // is ambient decoration behind the actual monitor controls.
-        int towerW = Math.max(86, Math.min(176, width * 2 / 5));
-        int towerH = Math.max(92, Math.min(218, height * 3 / 5));
-        int towerLeft = r - towerW - 18;
-        int towerTop = b - towerH - 16;
-        if (towerLeft < l + 18) {
-            towerLeft = l + Math.max(18, (width - towerW) / 2);
-        }
-        towerTop = Math.max(t + 12, towerTop);
+        // Keep the whole Quantum identity inside one compact computer multiblock.
+        // Nothing is allowed to float elsewhere in the panel.
+        int assemblyW = Math.max(78, Math.min(132, width / 3));
+        int assemblyH = Math.max(72, Math.min(116, height / 2));
+        int left = r - assemblyW - 18;
+        int top = b - assemblyH - 18;
+        if (left < l + 12) left = l + Math.max(12, width - assemblyW - 12);
+        if (top < t + 12) top = t + Math.max(12, height - assemblyH - 12);
 
-        int cols = width > 520 ? 4 : 3;
-        int rows = height > 260 ? 5 : 4;
+        g.fill(left - 4, top - 4, left + assemblyW + 4, top - 2, alpha(QUANTUM_FRAME, 44));
+        g.fill(left - 4, top + assemblyH + 2, left + assemblyW + 4, top + assemblyH + 4, alpha(QUANTUM_FRAME, 38));
+        g.fill(left - 4, top - 2, left - 2, top + assemblyH + 2, alpha(QUANTUM_FRAME, 40));
+        g.fill(left + assemblyW + 2, top - 2, left + assemblyW + 4, top + assemblyH + 2, alpha(QUANTUM_FRAME, 40));
+
         int gap = 3;
-        int cellW = Math.max(18, (towerW - gap * (cols - 1)) / cols);
-        int cellH = Math.max(18, (towerH - gap * (rows - 1)) / rows);
+        int cols = 3;
+        int rows = 3;
+        int cellW = Math.max(18, (assemblyW - gap * 2) / 3);
+        int cellH = Math.max(18, (assemblyH - gap * 2) / 3);
+        float pulse = phase(12600L, 0.23f);
 
-        float cycle = phase(26000L, 0.27f);
-
-        // Faint structural-glass silhouette behind the dark internal blocks.
-        g.fill(towerLeft - 5, towerTop - 5, towerLeft - 3, towerTop + towerH + 5, alpha(QUANTUM_FRAME, 24));
-        g.fill(towerLeft + towerW + 3, towerTop - 5, towerLeft + towerW + 5, towerTop + towerH + 5, alpha(QUANTUM_FRAME, 24));
-        g.fill(towerLeft - 5, towerTop - 5, towerLeft + towerW + 5, towerTop - 3, alpha(QUANTUM_FRAME, 20));
-
+        int coreX = left + cellW + gap;
+        int coreY = top + cellH + gap;
         for (int row = 0; row < rows; ++row) {
-            float rowWave = 0.5f + 0.5f * (float)Math.sin((cycle + row * 0.12f) * Math.PI * 2.0);
             for (int col = 0; col < cols; ++col) {
-                int mx = towerLeft + col * (cellW + gap);
-                int my = towerTop + row * (cellH + gap);
-                boolean special = (row == 0 && col == cols / 2)
-                        || (row == rows / 2 && col == Math.max(0, cols / 2 - 1));
-                int glow = special
-                        ? Math.round(62 + rowWave * 58.0f)
-                        : Math.round(22 + rowWave * 22.0f);
-                quantumCasingCell(g, mx, my, cellW, cellH, glow, special);
-            }
-
-            // Hazard seams between stacked tiers echo the real machine's industrial bands.
-            if (row < rows - 1) {
-                int seamY = towerTop + (row + 1) * cellH + row * gap + 1;
-                hazardStrip(g, towerLeft + 2, seamY, towerW - 4, 2, 48);
+                int x = left + col * (cellW + gap);
+                int y = top + row * (cellH + gap);
+                boolean core = row == 1 && col == 1;
+                float distance = Math.abs(row - 1) + Math.abs(col - 1);
+                float wave = 0.5f + 0.5f * (float)Math.sin((pulse - distance * 0.10f) * Math.PI * 2.0);
+                int glow = core ? Math.round(70 + wave * 60.0f) : Math.round(24 + wave * 30.0f);
+                quantumCasingCell(g, x, y, cellW, cellH, glow, core);
             }
         }
 
-        // Bright top core plate, inspired by the exposed glowing quantum core.
-        int coreX = towerLeft + towerW / 2;
-        int coreY = towerTop - 1;
-        float corePulse = 0.5f + 0.5f * (float)Math.sin(phase(9800L, 0.4f) * Math.PI * 2.0);
-        int coreW = Math.max(22, towerW / 4);
-        g.fill(coreX - coreW / 2 - 3, coreY - 5, coreX + coreW / 2 + 3, coreY + 4, alpha(QUANTUM_CASING_LIGHT, 72));
-        quantumInset(g, coreX - coreW / 2, coreY - 3, coreW, 6, Math.round(64 + corePulse * 64.0f));
+        // Energy lanes stay entirely inside the casing and converge on the centre.
+        int cx = coreX + cellW / 2;
+        int cy = coreY + cellH / 2;
+        int lane = alpha(QUANTUM_PURPLE, motionAlpha(20, 46));
+        g.fill(left + cellW / 2, cy, cx, cy + 1, lane);
+        g.fill(cx + 1, cy, left + assemblyW - cellW / 2, cy + 1, lane);
+        g.fill(cx, top + cellH / 2, cx + 1, cy, lane);
+        g.fill(cx, cy + 1, cx + 1, top + assemblyH - cellH / 2, lane);
 
-        // Central vertical energy shaft is contained inside the multiblock.
-        int shaftTop = towerTop + cellH;
-        int shaftBottom = towerTop + towerH - cellH / 2;
-        g.fill(coreX - 2, shaftTop, coreX + 3, shaftBottom, alpha(QUANTUM_PURPLE_DARK, 28));
-        g.fill(coreX, shaftTop, coreX + 1, shaftBottom, alpha(QUANTUM_PURPLE_BRIGHT, Math.round(20 + corePulse * 24.0f)));
-
-        // A small entangler-like cross inside the tower adds another AdvancedAE-specific cue.
-        if (towerW > 110 && towerH > 130) {
-            int ex = towerLeft + cellW / 2;
-            int ey = towerTop + towerH - cellH / 2;
-            int entangleAlpha = Math.round(28 + (1.0f - corePulse) * 34.0f);
-            diagonal(g, ex - 7, ey - 7, ex + 7, ey + 7, alpha(QUANTUM_PURPLE, entangleAlpha));
-            diagonal(g, ex - 7, ey + 7, ex + 7, ey - 7, alpha(QUANTUM_PURPLE_BRIGHT, entangleAlpha));
-            diamond(g, ex, ey, 2, alpha(QUANTUM_PURPLE_BRIGHT, 74));
+        // Gold service contacts are part of the bottom casing rather than free hazard strips.
+        int contactY = top + assemblyH - 2;
+        for (int i = 0; i < 4; ++i) {
+            int x = left + 8 + i * Math.max(10, (assemblyW - 16) / 4);
+            g.fill(x, contactY, Math.min(x + 6, left + assemblyW - 4), contactY + 2, alpha(0xFFD2A62B, 46));
         }
     }
 
