@@ -88,6 +88,21 @@ public final class ClientConfig {
         public final ModConfigSpec.DoubleValue interfaceCustomHeaderStrength;
         public final ModConfigSpec.DoubleValue interfaceCustomBorderStrength;
         public final ModConfigSpec.DoubleValue interfaceCustomAccentBrightness;
+        public final ModConfigSpec.EnumValue<CustomBackgroundStyle> interfaceCustomBackgroundStyle;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundDensity;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundSpeed;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundOpacity;
+        public final ModConfigSpec.DoubleValue interfaceCustomBackgroundScale;
+        public final ModConfigSpec.EnumValue<CustomParticleStyle> interfaceCustomParticleStyle;
+        public final ModConfigSpec.EnumValue<CustomParticleColorMode> interfaceCustomParticleColorMode;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleAmount;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleSpeed;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleSize;
+        public final ModConfigSpec.DoubleValue interfaceCustomParticleOpacity;
+        public final ModConfigSpec.EnumValue<CustomTabStyle> interfaceCustomTabStyle;
+        public final ModConfigSpec.EnumValue<CustomButtonStyle> interfaceCustomButtonStyle;
+        public final ModConfigSpec.DoubleValue interfaceCustomTabAccentStrength;
+        public final ModConfigSpec.DoubleValue interfaceCustomButtonHoverStrength;
         public final ModConfigSpec.DoubleValue interfaceOpacity;
         public final ModConfigSpec.BooleanValue guiAnimations;
         public final ModConfigSpec.BooleanValue updatePulseEnabled;
@@ -150,6 +165,21 @@ public final class ClientConfig {
             this.interfaceCustomHeaderStrength = builder.comment("Brightness strength of custom headers").defineInRange("customHeaderStrength", 1.0, 0.65, 1.45);
             this.interfaceCustomBorderStrength = builder.comment("Brightness strength of custom borders").defineInRange("customBorderStrength", 1.0, 0.5, 1.5);
             this.interfaceCustomAccentBrightness = builder.comment("Brightness multiplier for custom accent colours").defineInRange("customAccentBrightness", 1.0, 0.65, 1.25);
+            this.interfaceCustomBackgroundStyle = builder.comment("Background decoration used by the custom theme").defineEnum("customBackgroundStyle", (Enum)CustomBackgroundStyle.GRID);
+            this.interfaceCustomBackgroundDensity = builder.comment("Density of the selected custom background").defineInRange("customBackgroundDensity", 0.45, 0.1, 1.0);
+            this.interfaceCustomBackgroundSpeed = builder.comment("Motion speed of the selected custom background").defineInRange("customBackgroundSpeed", 0.35, 0.0, 1.0);
+            this.interfaceCustomBackgroundOpacity = builder.comment("Opacity of custom background decoration").defineInRange("customBackgroundOpacity", 0.28, 0.0, 1.0);
+            this.interfaceCustomBackgroundScale = builder.comment("Scale/spacing of the custom background pattern").defineInRange("customBackgroundScale", 1.0, 0.5, 2.0);
+            this.interfaceCustomParticleStyle = builder.comment("Particle layer used by the custom theme").defineEnum("customParticleStyle", (Enum)CustomParticleStyle.NONE);
+            this.interfaceCustomParticleColorMode = builder.comment("Colour source for custom theme particles").defineEnum("customParticleColorMode", (Enum)CustomParticleColorMode.MIXED);
+            this.interfaceCustomParticleAmount = builder.comment("Amount of custom theme particles").defineInRange("customParticleAmount", 0.35, 0.0, 1.0);
+            this.interfaceCustomParticleSpeed = builder.comment("Speed of custom theme particles").defineInRange("customParticleSpeed", 0.35, 0.0, 1.0);
+            this.interfaceCustomParticleSize = builder.comment("Size of custom theme particles").defineInRange("customParticleSize", 1.0, 0.5, 2.0);
+            this.interfaceCustomParticleOpacity = builder.comment("Opacity of custom theme particles").defineInRange("customParticleOpacity", 0.45, 0.0, 1.0);
+            this.interfaceCustomTabStyle = builder.comment("Visual shape used by custom-theme navigation tabs").defineEnum("customTabStyle", (Enum)CustomTabStyle.FRAMED);
+            this.interfaceCustomButtonStyle = builder.comment("Visual shape used by custom-theme action buttons").defineEnum("customButtonStyle", (Enum)CustomButtonStyle.FILLED);
+            this.interfaceCustomTabAccentStrength = builder.comment("Strength of the active-tab accent").defineInRange("customTabAccentStrength", 0.85, 0.0, 1.0);
+            this.interfaceCustomButtonHoverStrength = builder.comment("Strength of custom button hover effects").defineInRange("customButtonHoverStrength", 0.65, 0.0, 1.0);
             this.interfaceOpacity = builder.comment("Opacity of the full dashboard").defineInRange("opacity", 0.95, 0.55, 1.0);
             this.guiAnimations = builder.comment("Enable subtle client-side GUI animations").define("guiAnimations", true);
             this.updatePulseEnabled = builder.comment("Show a subtle outline pulse when monitor data is refreshed").define("updatePulseEnabled", true);
@@ -254,6 +284,46 @@ public final class ClientConfig {
                     DEEP_SPACE, COPPER, REDSTONE, FROST, NATURE, CAT, CUSTOM
             };
         }
+    }
+
+    public static enum CustomBackgroundStyle {
+        NONE,
+        GRID,
+        CIRCUIT,
+        STARFIELD,
+        SCAN_LINES,
+        ENERGY_WAVES;
+    }
+
+    public static enum CustomParticleStyle {
+        NONE,
+        PIXELS,
+        SPARKS,
+        DATA_PACKETS,
+        STARS;
+    }
+
+    public static enum CustomParticleColorMode {
+        PRIMARY,
+        SECONDARY,
+        MIXED,
+        WHITE;
+    }
+
+    public static enum CustomTabStyle {
+        FLAT,
+        FILLED,
+        UNDERLINE,
+        FRAMED,
+        SEGMENTED;
+    }
+
+    public static enum CustomButtonStyle {
+        FLAT,
+        FILLED,
+        OUTLINE,
+        UNDERLINE,
+        SEGMENTED;
     }
 
     public static enum RefreshInterval {
