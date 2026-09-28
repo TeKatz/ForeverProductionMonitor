@@ -98,7 +98,9 @@ final class ThemeInteractionState {
                 clickedStyle = current;
                 clickedId = HIT_ID[i];
                 clickedNanos = GuiMotion.now();
-                return true;
+                // Decorative interactions must never steal clicks from real controls
+                // that happen to overlap the animated background.
+                return false;
             }
         }
         return false;
