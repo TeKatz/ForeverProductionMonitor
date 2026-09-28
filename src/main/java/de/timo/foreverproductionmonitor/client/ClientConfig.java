@@ -88,6 +88,11 @@ public final class ClientConfig {
         public final ModConfigSpec.BooleanValue hudShowIcons;
         public final ModConfigSpec.BooleanValue hudShowNames;
         public final ModConfigSpec.BooleanValue hudShowValues;
+        public final ModConfigSpec.BooleanValue hudIncludeItems;
+        public final ModConfigSpec.BooleanValue hudIncludeFluids;
+        public final ModConfigSpec.BooleanValue hudIncludeEnergy;
+        public final ModConfigSpec.BooleanValue hudIncludeInfinite;
+        public final ModConfigSpec.EnumValue<HudStoredSort> hudStoredSort;
         public final ModConfigSpec.EnumValue<RateUnit> rateUnit;
         public final ModConfigSpec.EnumValue<RefreshInterval> refreshInterval;
         public final ModConfigSpec.EnumValue<InterfaceStyle> interfaceStyle;
@@ -174,6 +179,11 @@ public final class ClientConfig {
             this.hudShowIcons = builder.comment("Show resource icons in compact HUD rows").define("showIcons", true);
             this.hudShowNames = builder.comment("Show resource names in compact HUD rows").define("showNames", true);
             this.hudShowValues = builder.comment("Show amounts or rates in compact HUD rows").define("showValues", true);
+            this.hudIncludeItems = builder.comment("Allow item entries in the compact HUD").define("includeItems", true);
+            this.hudIncludeFluids = builder.comment("Allow fluid entries in the compact HUD").define("includeFluids", true);
+            this.hudIncludeEnergy = builder.comment("Allow FE energy entries in the compact HUD").define("includeEnergy", true);
+            this.hudIncludeInfinite = builder.comment("Allow infinite/creative storage entries in the compact HUD").define("includeInfinite", true);
+            this.hudStoredSort = builder.comment("Sort direction used by the compact HUD Stored mode").defineEnum("storedSort", (Enum)HudStoredSort.HIGHEST);
             this.rateUnit = builder.comment("Rate display unit used by the dashboard and compact HUD").defineEnum("rateUnit", (Enum)RateUnit.MINUTE);
             this.refreshInterval = builder.comment("How often the monitor samples and refreshes while actively viewed").defineEnum("refreshInterval", (Enum)RefreshInterval.FIVE_SECONDS);
             builder.pop();
@@ -237,6 +247,15 @@ public final class ClientConfig {
             this.mapCameraBookmarks = builder.comment("Persistent camera bookmark data for network map slots 1-3")
                     .define("cameraBookmarks", "");
             builder.pop();
+        }
+    }
+
+    public static enum HudStoredSort {
+        HIGHEST,
+        LOWEST;
+
+        public HudStoredSort next() {
+            return this == HIGHEST ? LOWEST : HIGHEST;
         }
     }
 
