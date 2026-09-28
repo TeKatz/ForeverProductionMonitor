@@ -172,7 +172,8 @@ extends Screen {
         boolean matched = (Boolean)ClientConfig.VALUES.matchHudTheme.get();
         ClientConfig.InterfaceStyle independentTheme = (ClientConfig.InterfaceStyle)ClientConfig.VALUES.hudThemeStyle.get();
         boolean customActive = ClientConfig.effectiveHudTheme() == ClientConfig.InterfaceStyle.CUSTOM;
-        int itemCount = customActive ? 17 : 16;
+        boolean storedMode = ClientConfig.VALUES.hudMode.get() == MonitorNetwork.HudMode.STORED;
+        int itemCount = 20 + (storedMode ? 1 : 0) + (customActive ? 1 : 0);
         int columns = this.gridColumns(4, itemCount, this.contentTop);
 
         this.addToggle(this.gridX(0, columns), this.gridY(0, columns), this.gridWidth(0, columns),
@@ -257,7 +258,30 @@ extends Screen {
                 "settings.hud.y", 0.0, 200.0, ((Integer)ClientConfig.VALUES.hudYOffset.get()).intValue(),
                 d -> ClientConfig.VALUES.hudYOffset.set(((int)Math.round(d))), false));
 
+        this.addToggle(this.gridX(16, columns), this.gridY(16, columns), this.gridWidth(16, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.hud.include_items", (Boolean)ClientConfig.VALUES.hudIncludeItems.get()),
+                () -> ClientConfig.VALUES.hudIncludeItems.set(!ClientConfig.VALUES.hudIncludeItems.get()));
+        this.addToggle(this.gridX(17, columns), this.gridY(17, columns), this.gridWidth(17, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.hud.include_fluids", (Boolean)ClientConfig.VALUES.hudIncludeFluids.get()),
+                () -> ClientConfig.VALUES.hudIncludeFluids.set(!ClientConfig.VALUES.hudIncludeFluids.get()));
+        this.addToggle(this.gridX(18, columns), this.gridY(18, columns), this.gridWidth(18, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.hud.include_energy", (Boolean)ClientConfig.VALUES.hudIncludeEnergy.get()),
+                () -> ClientConfig.VALUES.hudIncludeEnergy.set(!ClientConfig.VALUES.hudIncludeEnergy.get()));
+        this.addToggle(this.gridX(19, columns), this.gridY(19, columns), this.gridWidth(19, columns),
+                ProductionMonitorThemeScreen.booleanLabel("settings.hud.include_infinite", (Boolean)ClientConfig.VALUES.hudIncludeInfinite.get()),
+                () -> ClientConfig.VALUES.hudIncludeInfinite.set(!ClientConfig.VALUES.hudIncludeInfinite.get()));
+
+        int nextIndex = 20;
+        if (storedMode) {
+            int sortIndex = nextIndex++;
+            this.addToggle(this.gridX(sortIndex, columns), this.gridY(sortIndex, columns), this.gridWidth(sortIndex, columns),
+                    ProductionMonitorThemeScreen.storedSortLabel(),
+                    () -> ClientConfig.VALUES.hudStoredSort.set(
+                            ((ClientConfig.HudStoredSort)ClientConfig.VALUES.hudStoredSort.get()).next()));
+        }
+
         if (customActive) {
+            int customIndex = nextIndex;
             this.addRenderableWidget(ForeverButton.create(
                     ProductionMonitorThemeScreen.translated("settings.hud.open_custom_designer"),
                     button -> {
@@ -266,7 +290,7 @@ extends Screen {
                         }
                     },
                     ForeverButton.Style.THEMED_ACTIVE,
-                    this.gridX(16, columns), this.gridY(16, columns), this.gridWidth(16, columns), 20));
+                    this.gridX(customIndex, columns), this.gridY(customIndex, columns), this.gridWidth(customIndex, columns), 20));
         }
 
         this.previewTop = this.gridY(itemCount - 1, columns) + 28;
@@ -492,6 +516,11 @@ extends Screen {
                 ClientConfig.VALUES.hudShowIcons.set(((Boolean)ClientConfig.VALUES.hudShowIcons.getDefault()));
                 ClientConfig.VALUES.hudShowNames.set(((Boolean)ClientConfig.VALUES.hudShowNames.getDefault()));
                 ClientConfig.VALUES.hudShowValues.set(((Boolean)ClientConfig.VALUES.hudShowValues.getDefault()));
+                ClientConfig.VALUES.hudIncludeItems.set(((Boolean)ClientConfig.VALUES.hudIncludeItems.getDefault()));
+                ClientConfig.VALUES.hudIncludeFluids.set(((Boolean)ClientConfig.VALUES.hudIncludeFluids.getDefault()));
+                ClientConfig.VALUES.hudIncludeEnergy.set(((Boolean)ClientConfig.VALUES.hudIncludeEnergy.getDefault()));
+                ClientConfig.VALUES.hudIncludeInfinite.set(((Boolean)ClientConfig.VALUES.hudIncludeInfinite.getDefault()));
+                ClientConfig.VALUES.hudStoredSort.set((ClientConfig.HudStoredSort)ClientConfig.VALUES.hudStoredSort.getDefault());
                 ClientConfig.VALUES.hudScale.set(((Double)ClientConfig.VALUES.hudScale.getDefault()));
                 ClientConfig.VALUES.hudOpacity.set(((Double)ClientConfig.VALUES.hudOpacity.getDefault()));
                 ClientConfig.VALUES.hudXOffset.set(((Integer)ClientConfig.VALUES.hudXOffset.getDefault()));
@@ -557,6 +586,11 @@ extends Screen {
         ClientConfig.VALUES.hudShowIcons.save();
         ClientConfig.VALUES.hudShowNames.save();
         ClientConfig.VALUES.hudShowValues.save();
+        ClientConfig.VALUES.hudIncludeItems.save();
+        ClientConfig.VALUES.hudIncludeFluids.save();
+        ClientConfig.VALUES.hudIncludeEnergy.save();
+        ClientConfig.VALUES.hudIncludeInfinite.save();
+        ClientConfig.VALUES.hudStoredSort.save();
         ClientConfig.VALUES.rateUnit.save();
         ClientConfig.VALUES.refreshInterval.save();
         ClientConfig.VALUES.interfaceStyle.save();
@@ -658,6 +692,13 @@ extends Screen {
 
     private static Component modeLabel() {
         return ProductionMonitorThemeScreen.translated("settings.hud.mode", Component.translatable((String)("hud.forever_production_monitor.mode." + ProductionMonitorThemeScreen.lower((Enum)ClientConfig.VALUES.hudMode.get()))));
+    }
+
+    private static Component storedSortLabel() {
+        return ProductionMonitorThemeScreen.translated(
+                "settings.hud.stored_sort",
+                Component.translatable("settings.forever_production_monitor.hud.stored_sort."
+                        + ProductionMonitorThemeScreen.lower((Enum)ClientConfig.VALUES.hudStoredSort.get())));
     }
 
     private static Component frameLabel() {
