@@ -2,11 +2,18 @@ package de.timo.foreverproductionmonitor.client.screen;
 
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.ForeverProductionMonitorClient;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -17,6 +24,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  */
 public final class CustomThemeScreen extends Screen {
     private final Screen parent;
+    private final List<EnumDropdown<?>> dropdowns = new ArrayList<>();
+    private Category category = Category.COLORS;
     private int left;
     private int top;
     private int panelWidth;
@@ -36,8 +45,9 @@ public final class CustomThemeScreen extends Screen {
 
     @Override
     protected void init() {
-        this.panelWidth = Math.max(1, Math.min(840, this.width - 12));
-        this.panelHeight = Math.max(1, Math.min(540, this.height - 12));
+        this.dropdowns.clear();
+        this.panelWidth = Math.max(1, Math.min(940, this.width - 12));
+        this.panelHeight = Math.max(1, Math.min(560, this.height - 12));
         this.left = (this.width - this.panelWidth) / 2;
         this.top = (this.height - this.panelHeight) / 2;
         this.contentTop = this.top + 42;
@@ -47,48 +57,18 @@ public final class CustomThemeScreen extends Screen {
         int innerLeft = this.left + 18;
         int innerRight = this.left + this.panelWidth - 18;
         int innerWidth = Math.max(1, innerRight - innerLeft);
-        this.controlsWidth = Math.max(180, Math.min(330, innerWidth * 42 / 100));
+        this.controlsWidth = Math.max(230, Math.min(360, innerWidth * 42 / 100));
         this.controlsLeft = innerLeft;
         this.previewLeft = this.controlsLeft + this.controlsWidth + 12;
         this.previewWidth = Math.max(120, innerRight - this.previewLeft);
 
-        int sliderY = this.contentTop + 18;
-        int step = 24;
-        int sliderWidth = this.controlsWidth;
-
-        addSlider(0, sliderY, sliderWidth, "custom_theme.primary_hue",
-                0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomHue.get()).doubleValue(),
-                value -> ClientConfig.VALUES.interfaceCustomHue.set((int)Math.round(value)), false);
-        addSlider(1, sliderY + step, sliderWidth, "custom_theme.secondary_hue",
-                0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get()).doubleValue(),
-                value -> ClientConfig.VALUES.interfaceCustomSecondaryHue.set((int)Math.round(value)), false);
-        addSlider(2, sliderY + step * 2, sliderWidth, "custom_theme.primary_saturation",
-                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomPrimarySaturation.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomPrimarySaturation).set(value), true);
-        addSlider(3, sliderY + step * 3, sliderWidth, "custom_theme.secondary_saturation",
-                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomSecondarySaturation.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomSecondarySaturation).set(value), true);
-        addSlider(4, sliderY + step * 4, sliderWidth, "custom_theme.surface_saturation",
-                0.0, 0.75, (Double)ClientConfig.VALUES.interfaceCustomSurfaceSaturation.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomSurfaceSaturation).set(value), true);
-        addSlider(5, sliderY + step * 5, sliderWidth, "custom_theme.brightness",
-                0.2, 0.9, (Double)ClientConfig.VALUES.interfaceCustomBrightness.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBrightness).set(value), true);
-        addSlider(6, sliderY + step * 6, sliderWidth, "custom_theme.contrast",
-                0.65, 1.45, (Double)ClientConfig.VALUES.interfaceCustomContrast.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomContrast).set(value), true);
-        addSlider(7, sliderY + step * 7, sliderWidth, "custom_theme.header_strength",
-                0.65, 1.45, (Double)ClientConfig.VALUES.interfaceCustomHeaderStrength.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomHeaderStrength).set(value), true);
-        addSlider(8, sliderY + step * 8, sliderWidth, "custom_theme.border_strength",
-                0.5, 1.5, (Double)ClientConfig.VALUES.interfaceCustomBorderStrength.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBorderStrength).set(value), true);
-        addSlider(9, sliderY + step * 9, sliderWidth, "custom_theme.accent_brightness",
-                0.65, 1.25, (Double)ClientConfig.VALUES.interfaceCustomAccentBrightness.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomAccentBrightness).set(value), true);
-        addSlider(10, sliderY + step * 10, sliderWidth, "custom_theme.opacity",
-                0.55, 1.0, (Double)ClientConfig.VALUES.interfaceOpacity.get(),
-                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceOpacity).set(value), true);
+        buildCategoryTabs();
+        switch (this.category) {
+            case COLORS -> buildColors();
+            case BACKGROUND -> buildBackground();
+            case PARTICLES -> buildParticles();
+            case COMPONENTS -> buildComponents();
+        }
 
         int buttonGap = 8;
         int buttonWidth = Math.max(1, (innerWidth - buttonGap) / 2);
@@ -108,11 +88,187 @@ public final class CustomThemeScreen extends Screen {
                 Math.max(1, innerRight - (innerLeft + buttonWidth + buttonGap)), 20));
     }
 
-    private void addSlider(int index, int y, int width, String key,
+    private void buildCategoryTabs() {
+        int gap = 4;
+        int y = this.contentTop;
+        int count = Category.values().length;
+        int width = Math.max(1, (this.controlsWidth - gap * (count - 1)) / count);
+        for (int i = 0; i < count; ++i) {
+            Category value = Category.values()[i];
+            int x = this.controlsLeft + i * (width + gap);
+            int w = i == count - 1
+                    ? Math.max(1, this.controlsLeft + this.controlsWidth - x)
+                    : width;
+            this.addRenderableWidget(ForeverButton.create(
+                    categoryName(value),
+                    button -> {
+                        this.category = value;
+                        this.rebuildWidgets();
+                    },
+                    value == this.category ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED,
+                    x, y, w, 20).setRole(ForeverButton.Role.TAB));
+        }
+    }
+
+    private int controlsY() {
+        return this.contentTop + 30;
+    }
+
+    private void buildColors() {
+        int y = controlsY();
+        int step = 24;
+        int width = this.controlsWidth;
+        addSlider(y, width, "custom_theme.primary_hue",
+                0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomHue.get()).doubleValue(),
+                value -> ClientConfig.VALUES.interfaceCustomHue.set((int)Math.round(value)), false);
+        addSlider(y + step, width, "custom_theme.secondary_hue",
+                0.0, 359.0, ((Integer)ClientConfig.VALUES.interfaceCustomSecondaryHue.get()).doubleValue(),
+                value -> ClientConfig.VALUES.interfaceCustomSecondaryHue.set((int)Math.round(value)), false);
+        addSlider(y + step * 2, width, "custom_theme.primary_saturation",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomPrimarySaturation.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomPrimarySaturation).set(value), true);
+        addSlider(y + step * 3, width, "custom_theme.secondary_saturation",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomSecondarySaturation.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomSecondarySaturation).set(value), true);
+        addSlider(y + step * 4, width, "custom_theme.surface_saturation",
+                0.0, 0.75, (Double)ClientConfig.VALUES.interfaceCustomSurfaceSaturation.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomSurfaceSaturation).set(value), true);
+        addSlider(y + step * 5, width, "custom_theme.brightness",
+                0.2, 0.9, (Double)ClientConfig.VALUES.interfaceCustomBrightness.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBrightness).set(value), true);
+        addSlider(y + step * 6, width, "custom_theme.contrast",
+                0.65, 1.45, (Double)ClientConfig.VALUES.interfaceCustomContrast.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomContrast).set(value), true);
+        addSlider(y + step * 7, width, "custom_theme.header_strength",
+                0.65, 1.45, (Double)ClientConfig.VALUES.interfaceCustomHeaderStrength.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomHeaderStrength).set(value), true);
+        addSlider(y + step * 8, width, "custom_theme.border_strength",
+                0.5, 1.5, (Double)ClientConfig.VALUES.interfaceCustomBorderStrength.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBorderStrength).set(value), true);
+        addSlider(y + step * 9, width, "custom_theme.accent_brightness",
+                0.65, 1.25, (Double)ClientConfig.VALUES.interfaceCustomAccentBrightness.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomAccentBrightness).set(value), true);
+        addSlider(y + step * 10, width, "custom_theme.opacity",
+                0.55, 1.0, (Double)ClientConfig.VALUES.interfaceOpacity.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceOpacity).set(value), true);
+    }
+
+    private void buildBackground() {
+        int y = controlsY();
+        addEnumDropdown(y, "custom_theme.background_style",
+                ClientConfig.CustomBackgroundStyle.values(),
+                () -> (ClientConfig.CustomBackgroundStyle)ClientConfig.VALUES.interfaceCustomBackgroundStyle.get(),
+                value -> {
+                    ClientConfig.VALUES.interfaceCustomBackgroundStyle.set(value);
+                    this.rebuildWidgets();
+                },
+                value -> enumName("custom_theme.background", value));
+
+        ClientConfig.CustomBackgroundStyle style =
+                (ClientConfig.CustomBackgroundStyle)ClientConfig.VALUES.interfaceCustomBackgroundStyle.get();
+        if (style == ClientConfig.CustomBackgroundStyle.NONE) {
+            return;
+        }
+
+        int step = 24;
+        y += 28;
+        addSlider(y, this.controlsWidth, "custom_theme.background_density",
+                0.1, 1.0, (Double)ClientConfig.VALUES.interfaceCustomBackgroundDensity.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBackgroundDensity).set(value), true);
+        addSlider(y + step, this.controlsWidth, "custom_theme.background_speed",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomBackgroundSpeed.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBackgroundSpeed).set(value), true);
+        addSlider(y + step * 2, this.controlsWidth, "custom_theme.background_opacity",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomBackgroundOpacity.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBackgroundOpacity).set(value), true);
+        if (style == ClientConfig.CustomBackgroundStyle.GRID
+                || style == ClientConfig.CustomBackgroundStyle.SCAN_LINES
+                || style == ClientConfig.CustomBackgroundStyle.ENERGY_WAVES) {
+            addSlider(y + step * 3, this.controlsWidth, "custom_theme.background_scale",
+                    0.5, 2.0, (Double)ClientConfig.VALUES.interfaceCustomBackgroundScale.get(),
+                    value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomBackgroundScale).set(value), true);
+        }
+    }
+
+    private void buildParticles() {
+        int y = controlsY();
+        addEnumDropdown(y, "custom_theme.particle_style",
+                ClientConfig.CustomParticleStyle.values(),
+                () -> (ClientConfig.CustomParticleStyle)ClientConfig.VALUES.interfaceCustomParticleStyle.get(),
+                value -> {
+                    ClientConfig.VALUES.interfaceCustomParticleStyle.set(value);
+                    this.rebuildWidgets();
+                },
+                value -> enumName("custom_theme.particle", value));
+
+        ClientConfig.CustomParticleStyle style =
+                (ClientConfig.CustomParticleStyle)ClientConfig.VALUES.interfaceCustomParticleStyle.get();
+        if (style == ClientConfig.CustomParticleStyle.NONE) {
+            return;
+        }
+
+        y += 28;
+        addEnumDropdown(y, "custom_theme.particle_color",
+                ClientConfig.CustomParticleColorMode.values(),
+                () -> (ClientConfig.CustomParticleColorMode)ClientConfig.VALUES.interfaceCustomParticleColorMode.get(),
+                value -> ClientConfig.VALUES.interfaceCustomParticleColorMode.set(value),
+                value -> enumName("custom_theme.particle_color_mode", value));
+
+        int step = 24;
+        y += 28;
+        addSlider(y, this.controlsWidth, "custom_theme.particle_amount",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomParticleAmount.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomParticleAmount).set(value), true);
+        addSlider(y + step, this.controlsWidth, "custom_theme.particle_speed",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomParticleSpeed.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomParticleSpeed).set(value), true);
+        addSlider(y + step * 2, this.controlsWidth, "custom_theme.particle_size",
+                0.5, 2.0, (Double)ClientConfig.VALUES.interfaceCustomParticleSize.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomParticleSize).set(value), true);
+        addSlider(y + step * 3, this.controlsWidth, "custom_theme.particle_opacity",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomParticleOpacity.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomParticleOpacity).set(value), true);
+    }
+
+    private void buildComponents() {
+        int y = controlsY();
+        addEnumDropdown(y, "custom_theme.tab_style",
+                ClientConfig.CustomTabStyle.values(),
+                () -> (ClientConfig.CustomTabStyle)ClientConfig.VALUES.interfaceCustomTabStyle.get(),
+                value -> ClientConfig.VALUES.interfaceCustomTabStyle.set(value),
+                value -> enumName("custom_theme.tab", value));
+        y += 28;
+        addSlider(y, this.controlsWidth, "custom_theme.tab_accent_strength",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomTabAccentStrength.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomTabAccentStrength).set(value), true);
+
+        y += 32;
+        addEnumDropdown(y, "custom_theme.button_style",
+                ClientConfig.CustomButtonStyle.values(),
+                () -> (ClientConfig.CustomButtonStyle)ClientConfig.VALUES.interfaceCustomButtonStyle.get(),
+                value -> ClientConfig.VALUES.interfaceCustomButtonStyle.set(value),
+                value -> enumName("custom_theme.button", value));
+        y += 28;
+        addSlider(y, this.controlsWidth, "custom_theme.button_hover_strength",
+                0.0, 1.0, (Double)ClientConfig.VALUES.interfaceCustomButtonHoverStrength.get(),
+                value -> ((ModConfigSpec.DoubleValue)ClientConfig.VALUES.interfaceCustomButtonHoverStrength).set(value), true);
+    }
+
+    private void addSlider(int y, int width, String key,
                            double min, double max, double value,
                            DoubleConsumer setter, boolean decimal) {
         this.addRenderableWidget(new CustomSlider(
                 this.controlsLeft, y, width, key, min, max, value, setter, decimal));
+    }
+
+    private <T extends Enum<T>> void addEnumDropdown(int y, String key, T[] values,
+                                                     Supplier<T> current, Consumer<T> selection,
+                                                     Function<T, Component> label) {
+        EnumDropdown<T> dropdown = new EnumDropdown<>(
+                this.controlsLeft, y, this.controlsWidth, 20,
+                key, values, current, selection, label);
+        this.dropdowns.add(dropdown);
+        this.addRenderableWidget(dropdown);
     }
 
     @Override
@@ -125,9 +281,8 @@ public final class CustomThemeScreen extends Screen {
         graphics.drawCenteredString(this.font, this.title,
                 this.left + this.panelWidth / 2, this.top + 13, palette.text());
 
-        graphics.drawString(this.font,
-                Component.translatable("screen.forever_production_monitor.custom_theme.controls"),
-                this.controlsLeft, this.contentTop, palette.text(), false);
+        graphics.drawString(this.font, categoryName(this.category),
+                this.controlsLeft, this.contentTop + 23, palette.text(), false);
         graphics.drawString(this.font,
                 Component.translatable("screen.forever_production_monitor.custom_theme.preview"),
                 this.previewLeft, this.contentTop, palette.text(), false);
@@ -137,6 +292,11 @@ public final class CustomThemeScreen extends Screen {
         }
 
         drawPreview(graphics, palette);
+
+        // Dropdown lists are rendered last so their options remain above sliders and preview decoration.
+        for (EnumDropdown<?> dropdown : this.dropdowns) {
+            dropdown.renderOverlay(graphics, mouseX, mouseY);
+        }
     }
 
     private void drawPreview(GuiGraphics graphics, InterfaceTheme.Palette palette) {
@@ -163,16 +323,15 @@ public final class CustomThemeScreen extends Screen {
         for (int i = 0; i < 3; ++i) {
             int x = this.previewLeft + pad + i * (tabWidth + tabGap);
             int right = i == 2 ? this.previewLeft + this.previewWidth - pad : x + tabWidth;
-            graphics.fill(x, tabY, right, tabY + 20, palette.border());
-            graphics.fill(x + 1, tabY + 1, right - 1, tabY + 19,
-                    i == 0 ? palette.header() : palette.summary());
+            CustomThemeRenderer.drawTab(graphics, x, tabY, right - x, 20,
+                    true, i == 0, i == 1 ? 0.35f : 0.0f, palette);
             int textX = x + Math.max(3, (right - x - this.font.width(tabs[i])) / 2);
             graphics.drawString(this.font, tabs[i], textX, tabY + 6,
                     i == 0 ? palette.accentB() : palette.text(), false);
         }
 
         int tableTop = tabY + 31;
-        int tableBottom = Math.min(previewBottom - 48, tableTop + 112);
+        int tableBottom = Math.min(previewBottom - 82, tableTop + 112);
         if (tableBottom > tableTop + 54) {
             int tableLeft = this.previewLeft + pad;
             int tableRight = this.previewLeft + this.previewWidth - pad;
@@ -201,16 +360,45 @@ public final class CustomThemeScreen extends Screen {
             }
         }
 
-        int swatchY = previewBottom - 34;
+        int buttonY = previewBottom - 62;
+        int buttonGap = 6;
+        int buttonWidth = Math.max(30, (usable - buttonGap) / 2);
+        int buttonLeft = this.previewLeft + pad;
+        CustomThemeRenderer.drawButton(graphics, buttonLeft, buttonY,
+                buttonWidth, 20, true, false, 0.25f, palette);
+        CustomThemeRenderer.drawButton(graphics, buttonLeft + buttonWidth + buttonGap, buttonY,
+                usable - buttonWidth - buttonGap, 20, true, true, 0.0f, palette);
+        String action = "Action";
+        String active = "Active";
+        graphics.drawString(this.font, action,
+                buttonLeft + Math.max(3, (buttonWidth - this.font.width(action)) / 2),
+                buttonY + 6, palette.text(), false);
+        int activeX = buttonLeft + buttonWidth + buttonGap;
+        int activeW = usable - buttonWidth - buttonGap;
+        graphics.drawString(this.font, active,
+                activeX + Math.max(3, (activeW - this.font.width(active)) / 2),
+                buttonY + 6, palette.text(), false);
+
+        int swatchY = previewBottom - 31;
         int swatchLeft = this.previewLeft + pad;
         graphics.drawString(this.font,
                 Component.translatable("screen.forever_production_monitor.custom_theme.accents"),
-                swatchLeft, swatchY - 12, palette.muted(), false);
-        graphics.fill(swatchLeft, swatchY, swatchLeft + 42, swatchY + 14, palette.accentA());
-        graphics.fill(swatchLeft + 48, swatchY, swatchLeft + 90, swatchY + 14, palette.accentB());
-        graphics.fill(swatchLeft + 96, swatchY,
-                Math.min(this.previewLeft + this.previewWidth - pad, swatchLeft + 138),
-                swatchY + 14, palette.border());
+                swatchLeft, swatchY - 11, palette.muted(), false);
+        graphics.fill(swatchLeft, swatchY, swatchLeft + 38, swatchY + 12, palette.accentA());
+        graphics.fill(swatchLeft + 44, swatchY, swatchLeft + 82, swatchY + 12, palette.accentB());
+        graphics.fill(swatchLeft + 88, swatchY,
+                Math.min(this.previewLeft + this.previewWidth - pad, swatchLeft + 126),
+                swatchY + 12, palette.border());
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        for (EnumDropdown<?> dropdown : this.dropdowns) {
+            if (dropdown.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private static void resetCustomValues() {
@@ -224,6 +412,21 @@ public final class CustomThemeScreen extends Screen {
         ClientConfig.VALUES.interfaceCustomHeaderStrength.set((Double)ClientConfig.VALUES.interfaceCustomHeaderStrength.getDefault());
         ClientConfig.VALUES.interfaceCustomBorderStrength.set((Double)ClientConfig.VALUES.interfaceCustomBorderStrength.getDefault());
         ClientConfig.VALUES.interfaceCustomAccentBrightness.set((Double)ClientConfig.VALUES.interfaceCustomAccentBrightness.getDefault());
+        ClientConfig.VALUES.interfaceCustomBackgroundStyle.set((ClientConfig.CustomBackgroundStyle)ClientConfig.VALUES.interfaceCustomBackgroundStyle.getDefault());
+        ClientConfig.VALUES.interfaceCustomBackgroundDensity.set((Double)ClientConfig.VALUES.interfaceCustomBackgroundDensity.getDefault());
+        ClientConfig.VALUES.interfaceCustomBackgroundSpeed.set((Double)ClientConfig.VALUES.interfaceCustomBackgroundSpeed.getDefault());
+        ClientConfig.VALUES.interfaceCustomBackgroundOpacity.set((Double)ClientConfig.VALUES.interfaceCustomBackgroundOpacity.getDefault());
+        ClientConfig.VALUES.interfaceCustomBackgroundScale.set((Double)ClientConfig.VALUES.interfaceCustomBackgroundScale.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleStyle.set((ClientConfig.CustomParticleStyle)ClientConfig.VALUES.interfaceCustomParticleStyle.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleColorMode.set((ClientConfig.CustomParticleColorMode)ClientConfig.VALUES.interfaceCustomParticleColorMode.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleAmount.set((Double)ClientConfig.VALUES.interfaceCustomParticleAmount.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleSpeed.set((Double)ClientConfig.VALUES.interfaceCustomParticleSpeed.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleSize.set((Double)ClientConfig.VALUES.interfaceCustomParticleSize.getDefault());
+        ClientConfig.VALUES.interfaceCustomParticleOpacity.set((Double)ClientConfig.VALUES.interfaceCustomParticleOpacity.getDefault());
+        ClientConfig.VALUES.interfaceCustomTabStyle.set((ClientConfig.CustomTabStyle)ClientConfig.VALUES.interfaceCustomTabStyle.getDefault());
+        ClientConfig.VALUES.interfaceCustomButtonStyle.set((ClientConfig.CustomButtonStyle)ClientConfig.VALUES.interfaceCustomButtonStyle.getDefault());
+        ClientConfig.VALUES.interfaceCustomTabAccentStrength.set((Double)ClientConfig.VALUES.interfaceCustomTabAccentStrength.getDefault());
+        ClientConfig.VALUES.interfaceCustomButtonHoverStrength.set((Double)ClientConfig.VALUES.interfaceCustomButtonHoverStrength.getDefault());
         ClientConfig.VALUES.interfaceOpacity.set((Double)ClientConfig.VALUES.interfaceOpacity.getDefault());
         ForeverProductionMonitorClient.refreshHudNow();
     }
@@ -240,6 +443,21 @@ public final class CustomThemeScreen extends Screen {
         ClientConfig.VALUES.interfaceCustomHeaderStrength.save();
         ClientConfig.VALUES.interfaceCustomBorderStrength.save();
         ClientConfig.VALUES.interfaceCustomAccentBrightness.save();
+        ClientConfig.VALUES.interfaceCustomBackgroundStyle.save();
+        ClientConfig.VALUES.interfaceCustomBackgroundDensity.save();
+        ClientConfig.VALUES.interfaceCustomBackgroundSpeed.save();
+        ClientConfig.VALUES.interfaceCustomBackgroundOpacity.save();
+        ClientConfig.VALUES.interfaceCustomBackgroundScale.save();
+        ClientConfig.VALUES.interfaceCustomParticleStyle.save();
+        ClientConfig.VALUES.interfaceCustomParticleColorMode.save();
+        ClientConfig.VALUES.interfaceCustomParticleAmount.save();
+        ClientConfig.VALUES.interfaceCustomParticleSpeed.save();
+        ClientConfig.VALUES.interfaceCustomParticleSize.save();
+        ClientConfig.VALUES.interfaceCustomParticleOpacity.save();
+        ClientConfig.VALUES.interfaceCustomTabStyle.save();
+        ClientConfig.VALUES.interfaceCustomButtonStyle.save();
+        ClientConfig.VALUES.interfaceCustomTabAccentStrength.save();
+        ClientConfig.VALUES.interfaceCustomButtonHoverStrength.save();
         ClientConfig.VALUES.interfaceOpacity.save();
     }
 
@@ -255,6 +473,23 @@ public final class CustomThemeScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private static Component categoryName(Category category) {
+        return Component.translatable("screen.forever_production_monitor.custom_theme.category."
+                + category.name().toLowerCase(Locale.ROOT));
+    }
+
+    private static <T extends Enum<T>> Component enumName(String prefix, T value) {
+        return Component.translatable("screen.forever_production_monitor." + prefix + "."
+                + value.name().toLowerCase(Locale.ROOT));
+    }
+
+    private enum Category {
+        COLORS,
+        BACKGROUND,
+        PARTICLES,
+        COMPONENTS
     }
 
     private final class CustomSlider extends AbstractSliderButton {
@@ -294,6 +529,104 @@ public final class CustomThemeScreen extends Screen {
         protected void applyValue() {
             this.setter.accept(this.actual());
             ForeverProductionMonitorClient.refreshHudNow();
+        }
+    }
+
+    private final class EnumDropdown<T extends Enum<T>> extends AbstractWidget {
+        private static final int ROW_HEIGHT = 18;
+        private final String key;
+        private final T[] values;
+        private final Supplier<T> current;
+        private final Consumer<T> selection;
+        private final Function<T, Component> label;
+        private boolean open;
+
+        EnumDropdown(int x, int y, int width, int height, String key, T[] values,
+                     Supplier<T> current, Consumer<T> selection, Function<T, Component> label) {
+            super(x, y, width, height, Component.empty());
+            this.key = key;
+            this.values = values;
+            this.current = current;
+            this.selection = selection;
+            this.label = label;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            InterfaceTheme.Palette palette = InterfaceTheme.current();
+            graphics.fill(this.getX(), this.getY(),
+                    this.getX() + this.getWidth(), this.getY() + this.getHeight(), palette.border());
+            graphics.fill(this.getX() + 1, this.getY() + 1,
+                    this.getX() + this.getWidth() - 1, this.getY() + this.getHeight() - 1,
+                    palette.summary());
+
+            Component title = Component.translatable(
+                    "screen.forever_production_monitor." + this.key,
+                    this.label.apply(this.current.get()).getString());
+            String text = CustomThemeScreen.this.font.plainSubstrByWidth(
+                    title.getString(), Math.max(1, this.getWidth() - 20));
+            graphics.drawString(CustomThemeScreen.this.font, text,
+                    this.getX() + 6, this.getY() + 6, palette.text(), false);
+            String arrow = this.open ? "▲" : "▼";
+            graphics.drawString(CustomThemeScreen.this.font, arrow,
+                    this.getX() + this.getWidth() - 12, this.getY() + 6, palette.accentB(), false);
+        }
+
+        void renderOverlay(GuiGraphics graphics, int mouseX, int mouseY) {
+            if (!this.open) {
+                return;
+            }
+            InterfaceTheme.Palette palette = InterfaceTheme.current();
+            int listY = this.getY() + this.getHeight() + 1;
+            int totalHeight = this.values.length * ROW_HEIGHT + 2;
+            graphics.fill(this.getX(), listY,
+                    this.getX() + this.getWidth(), listY + totalHeight, palette.border());
+            for (int i = 0; i < this.values.length; ++i) {
+                int rowY = listY + 1 + i * ROW_HEIGHT;
+                boolean hover = mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                        && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
+                boolean selected = this.values[i] == this.current.get();
+                int fill = selected ? palette.header() : (hover ? palette.tableHeader() : palette.summary());
+                graphics.fill(this.getX() + 1, rowY,
+                        this.getX() + this.getWidth() - 1, rowY + ROW_HEIGHT, fill);
+                String text = CustomThemeScreen.this.font.plainSubstrByWidth(
+                        this.label.apply(this.values[i]).getString(), Math.max(1, this.getWidth() - 14));
+                graphics.drawString(CustomThemeScreen.this.font, text,
+                        this.getX() + 6, rowY + 5,
+                        selected ? palette.accentB() : palette.text(), false);
+            }
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button != 0) {
+                return false;
+            }
+            if (mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                    && mouseY >= this.getY() && mouseY < this.getY() + this.getHeight()) {
+                this.open = !this.open;
+                return true;
+            }
+            if (this.open) {
+                int listY = this.getY() + this.getHeight() + 1;
+                if (mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                        && mouseY >= listY && mouseY < listY + this.values.length * ROW_HEIGHT + 2) {
+                    int row = (int)((mouseY - listY - 1) / ROW_HEIGHT);
+                    if (row >= 0 && row < this.values.length) {
+                        this.selection.accept(this.values[row]);
+                        this.open = false;
+                        ForeverProductionMonitorClient.refreshHudNow();
+                        return true;
+                    }
+                }
+                this.open = false;
+            }
+            return false;
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput output) {
+            this.defaultButtonNarrationText(output);
         }
     }
 }
