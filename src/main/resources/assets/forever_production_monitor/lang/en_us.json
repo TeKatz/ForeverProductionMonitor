@@ -464,4 +464,11 @@
   ,"screen.forever_production_monitor.custom_hud.decoration.circuit": "Circuit"
   ,"screen.forever_production_monitor.custom_hud.opacity": "HUD opacity: %s"
   ,"screen.forever_production_monitor.custom_hud.animation_intensity": "Animation intensity: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_items": "Items: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_fluids": "Fluids: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_energy": "Energy: %s"
+  ,"screen.forever_production_monitor.settings.hud.include_infinite": "Infinite storage: %s"
+  ,"screen.forever_production_monitor.settings.hud.stored_sort": "Stored sort: %s"
+  ,"settings.forever_production_monitor.hud.stored_sort.highest": "Highest first"
+  ,"settings.forever_production_monitor.hud.stored_sort.lowest": "Lowest first"
 }
