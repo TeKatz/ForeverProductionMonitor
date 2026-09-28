@@ -220,8 +220,23 @@ public final class ClientConfig {
 
 
         public InterfaceStyle next() {
-            InterfaceStyle[] interfaceStyleArray = InterfaceStyle.values();
-            return interfaceStyleArray[(this.ordinal() + 1) % interfaceStyleArray.length];
+            InterfaceStyle[] styles = selectableValues();
+            for (int i = 0; i < styles.length; ++i) {
+                if (styles[i] == this) {
+                    return styles[(i + 1) % styles.length];
+                }
+            }
+            return STANDARD;
+        }
+
+        public static InterfaceStyle[] selectableValues() {
+            // AURORA remains serialized for backwards-compatible configs, but is
+            // intentionally retired from all user-facing theme selection.
+            return new InterfaceStyle[]{
+                    STANDARD, FOREVER, AE2, ORITECH, MEKANISM, QUANTUM,
+                    HOLOGRAPHIC, MONOCHROME, MINIMAL, CARBON, TERMINAL,
+                    DEEP_SPACE, COPPER, REDSTONE, FROST, NATURE, CAT, CUSTOM
+            };
         }
     }
 
