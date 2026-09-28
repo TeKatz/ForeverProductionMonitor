@@ -57,6 +57,8 @@ Version 4.0.0 includes a dedicated performance pass for large maps: filtered nod
 
 Curios is declared as a required dependency by the mod metadata.
 
+**Verified 5.0.0 test configuration:** Minecraft 1.21.1, Applied Energistics 2 **19.2.18**, NeoForge **21.1.252**, and Curios **9.5.1+1.21.1**. The minimum supported versions remain those listed in the table above.
+
 Forever Production Monitor is currently developed and tested for **NeoForge 1.21.1 only**. Fabric, Forge and other Minecraft versions are not supported by the current release.
 
 ## Installation
