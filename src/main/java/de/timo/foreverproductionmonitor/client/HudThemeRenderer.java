@@ -543,17 +543,10 @@ final class HudThemeRenderer {
     }
 
     private static void catFrame(GuiGraphics g, int x, int y, int h, Colors c) {
-        g.fill(x + 2, y + 1, x + WIDTH - 2, y + 3, withAlpha(c.accentB(), 190));
+        // Keep the header clean around the cat mark. The old top stripe/glint sat
+        // directly above its ears and visually boxed the face in.
         g.fill(x + 3, y + 17, x + WIDTH - 3, y + 18, withAlpha(c.accentA(), 130));
         g.fill(x + 3, y + h - 3, x + WIDTH - 3, y + h - 2, withAlpha(c.accentB(), 76));
-        // An edge-bound glint moves smoothly without passing through HUD labels.
-        if (motionEnabled()) {
-            float glide = (1.0f - (float)Math.cos(phase(10500L, 0.0f) * Math.PI * 2.0)) * 0.5f;
-            g.pose().pushPose();
-            g.pose().translate(x + 20 + glide * (WIDTH - 54), y + 2, 0.0f);
-            g.fill(0, 0, 16, 1, withAlpha(c.titleText(), motionAlpha(36, 88)));
-            g.pose().popPose();
-        }
         g.fill(x + WIDTH - 14, y + 7, x + WIDTH - 8, y + 8, withAlpha(c.accentB(), 130));
         g.fill(x + WIDTH - 12, y + 5, x + WIDTH - 11, y + 11, withAlpha(c.titleText(), 115));
     }
@@ -712,56 +705,50 @@ final class HudThemeRenderer {
     private static void drawCatFace(GuiGraphics g, int cx, int cy, Colors c, int alpha) {
         int outline = withAlpha(0xFF173238, alpha);
         int fur = withAlpha(c.titleText(), alpha);
-        int coral = withAlpha(c.accentA(), alpha);
-        int apricot = withAlpha(c.accentB(), Math.max(40, alpha - 16));
-        int eye = withAlpha(0xFF102329, alpha);
+        int coral = withAlpha(c.accentA(), Math.max(48, alpha - 8));
+        int apricot = withAlpha(c.accentB(), Math.max(42, alpha - 22));
+        int eye = withAlpha(0xFF547176, Math.max(38, alpha - 36));
+        int eyeGlint = withAlpha(c.accentB(), Math.max(34, alpha - 60));
 
         float cycle = phase(7600L, 0.24f);
         boolean blink = cycle > 0.91f && cycle < 0.955f;
         boolean twitch = motionEnabled() && cycle > 0.62f && cycle < 0.69f;
 
-        // Pointed feline ears. The previous rectangular ears plus the coloured
-        // face patch read like a cow at HUD scale, so the silhouette now does
-        // most of the work before any facial detail is added.
-        int leftTipY = cy - 9 + (twitch ? 1 : 0);
-        g.fill(cx - 6, leftTipY, cx - 4, cy - 7 + (twitch ? 1 : 0), outline);
-        g.fill(cx - 7, cy - 7 + (twitch ? 1 : 0), cx - 3, cy - 4, outline);
+        // Pointed ears and a simple rounded cat head.
+        int earOffset = twitch ? 1 : 0;
+        g.fill(cx - 6, cy - 9 + earOffset, cx - 4, cy - 7 + earOffset, outline);
+        g.fill(cx - 7, cy - 7 + earOffset, cx - 3, cy - 4, outline);
         g.fill(cx + 4, cy - 9, cx + 6, cy - 7, outline);
         g.fill(cx + 3, cy - 7, cx + 7, cy - 4, outline);
 
-        // Cat head: slightly wider at the cheeks, narrower at the forehead.
         g.fill(cx - 6, cy - 5, cx + 7, cy + 5, outline);
         g.fill(cx - 5, cy - 4, cx + 6, cy + 4, fur);
         g.fill(cx - 4, cy + 3, cx + 5, cy + 6, fur);
 
-        // Small triangular ear interiors, no large facial patch.
-        g.fill(cx - 5, cy - 7 + (twitch ? 1 : 0), cx - 4, cy - 5, coral);
+        // Tiny warm accents only; no large facial patch.
+        g.fill(cx - 5, cy - 7 + earOffset, cx - 4, cy - 5, coral);
         g.fill(cx + 4, cy - 7, cx + 5, cy - 5, coral);
+        g.fill(cx, cy - 4, cx + 2, cy - 3, apricot);
 
-        // A subtle warm forehead tuft ties the icon to the current cat palette
-        // without turning into a cow-like spot.
-        g.fill(cx, cy - 4, cx + 2, cy - 2, apricot);
-
-        // Feline eyes are narrow/slanted rather than square.
+        // Softer teal eyes. At HUD scale the old near-black blocks looked unsettling.
         if (blink) {
             g.fill(cx - 4, cy - 1, cx - 1, cy, eye);
             g.fill(cx + 2, cy - 1, cx + 5, cy, eye);
         } else {
-            g.fill(cx - 4, cy - 2, cx - 1, cy, eye);
-            g.fill(cx + 2, cy - 2, cx + 5, cy, eye);
-            g.fill(cx - 3, cy - 2, cx - 2, cy - 1, withAlpha(c.accentB(), alpha));
-            g.fill(cx + 3, cy - 2, cx + 4, cy - 1, withAlpha(c.accentB(), alpha));
+            g.fill(cx - 3, cy - 2, cx - 1, cy, eye);
+            g.fill(cx + 2, cy - 2, cx + 4, cy, eye);
+            g.fill(cx - 3, cy - 2, cx - 2, cy - 1, eyeGlint);
+            g.fill(cx + 2, cy - 2, cx + 3, cy - 1, eyeGlint);
         }
 
-        // Small cat muzzle, nose and mouth.
-        g.fill(cx - 2, cy + 1, cx + 4, cy + 4, withAlpha(c.titleText(), Math.max(40, alpha - 8)));
+        // Small muzzle and a simple W-shaped mouth.
+        g.fill(cx - 2, cy + 1, cx + 4, cy + 4, withAlpha(c.titleText(), Math.max(40, alpha - 10)));
         g.fill(cx, cy + 1, cx + 2, cy + 2, coral);
-        g.fill(cx, cy + 2, cx + 1, cy + 4, eye);
-        g.fill(cx - 1, cy + 4, cx, cy + 5, eye);
-        g.fill(cx + 1, cy + 4, cx + 2, cy + 5, eye);
+        g.fill(cx, cy + 2, cx + 1, cy + 4, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
+        g.fill(cx - 1, cy + 4, cx, cy + 5, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
+        g.fill(cx + 1, cy + 4, cx + 2, cy + 5, withAlpha(0xFF466166, Math.max(34, alpha - 52)));
 
-        // Long whiskers are the clearest cat cue at this tiny pixel size.
-        int whisker = withAlpha(c.titleText(), alpha / 2);
+        int whisker = withAlpha(c.titleText(), Math.max(26, alpha / 3));
         diagonal(g, cx - 3, cy + 1, cx - 9, cy, whisker);
         diagonal(g, cx - 3, cy + 3, cx - 9, cy + 4, whisker);
         diagonal(g, cx + 4, cy + 1, cx + 10, cy, whisker);
