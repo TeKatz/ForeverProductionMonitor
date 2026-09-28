@@ -48,7 +48,9 @@ public final class ClientConfig {
     }
 
     public static int effectiveHudCustomHue() {
-        return (Boolean)ClientConfig.VALUES.matchHudTheme.get() != false ? (Integer)ClientConfig.VALUES.interfaceCustomHue.get() : (Integer)ClientConfig.VALUES.hudCustomHue.get();
+        // Matching determines which theme family the HUD uses. CUSTOM deliberately
+        // keeps its own palette so the compact HUD can be tuned independently.
+        return (Integer)ClientConfig.VALUES.hudCustomHue.get();
     }
 
     static {
@@ -71,6 +73,17 @@ public final class ClientConfig {
         public final ModConfigSpec.BooleanValue hudAnimations;
         public final ModConfigSpec.DoubleValue hudAnimationIntensity;
         public final ModConfigSpec.IntValue hudCustomHue;
+        public final ModConfigSpec.IntValue hudCustomSecondaryHue;
+        public final ModConfigSpec.DoubleValue hudCustomPrimarySaturation;
+        public final ModConfigSpec.DoubleValue hudCustomSecondarySaturation;
+        public final ModConfigSpec.DoubleValue hudCustomSurfaceSaturation;
+        public final ModConfigSpec.DoubleValue hudCustomBrightness;
+        public final ModConfigSpec.DoubleValue hudCustomContrast;
+        public final ModConfigSpec.DoubleValue hudCustomHeaderStrength;
+        public final ModConfigSpec.DoubleValue hudCustomRowContrast;
+        public final ModConfigSpec.DoubleValue hudCustomBorderStrength;
+        public final ModConfigSpec.DoubleValue hudCustomAccentBrightness;
+        public final ModConfigSpec.EnumValue<CustomHudDecorationStyle> hudCustomDecorationStyle;
         public final ModConfigSpec.IntValue hudEntryCount;
         public final ModConfigSpec.BooleanValue hudShowIcons;
         public final ModConfigSpec.BooleanValue hudShowNames;
@@ -145,7 +158,18 @@ public final class ClientConfig {
             this.hudLayoutStyle = builder.comment("Compact HUD frame geometry").defineEnum("layout", (Enum)HudLayoutStyle.FULL);
             this.hudAnimations = builder.comment("Enable compact HUD theme animations").define("animations", true);
             this.hudAnimationIntensity = builder.comment("Strength of compact HUD theme animations").defineInRange("animationIntensity", 0.35, 0.0, 1.0);
-            this.hudCustomHue = builder.comment("Hue used by the custom HUD theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
+            this.hudCustomHue = builder.comment("Primary hue used by the custom HUD theme, from 0 to 359 degrees").defineInRange("customHue", 275, 0, 359);
+            this.hudCustomSecondaryHue = builder.comment("Secondary hue used by the custom HUD theme").defineInRange("customSecondaryHue", 315, 0, 359);
+            this.hudCustomPrimarySaturation = builder.comment("Saturation of the primary custom HUD accent").defineInRange("customPrimarySaturation", 0.62, 0.0, 1.0);
+            this.hudCustomSecondarySaturation = builder.comment("Saturation of the secondary custom HUD accent").defineInRange("customSecondarySaturation", 0.48, 0.0, 1.0);
+            this.hudCustomSurfaceSaturation = builder.comment("Amount of primary hue mixed into custom HUD surfaces").defineInRange("customSurfaceSaturation", 0.16, 0.0, 0.75);
+            this.hudCustomBrightness = builder.comment("Brightness of custom HUD surfaces").defineInRange("customBrightness", 0.36, 0.15, 0.85);
+            this.hudCustomContrast = builder.comment("Contrast between custom HUD surface layers").defineInRange("customContrast", 1.0, 0.65, 1.45);
+            this.hudCustomHeaderStrength = builder.comment("Brightness strength of the custom HUD header").defineInRange("customHeaderStrength", 1.0, 0.65, 1.45);
+            this.hudCustomRowContrast = builder.comment("Contrast between alternating custom HUD rows").defineInRange("customRowContrast", 1.0, 0.65, 1.45);
+            this.hudCustomBorderStrength = builder.comment("Brightness strength of custom HUD borders").defineInRange("customBorderStrength", 1.0, 0.5, 1.5);
+            this.hudCustomAccentBrightness = builder.comment("Brightness multiplier for custom HUD accents").defineInRange("customAccentBrightness", 1.0, 0.65, 1.25);
+            this.hudCustomDecorationStyle = builder.comment("Decorative language used by the custom HUD").defineEnum("customDecorationStyle", (Enum)CustomHudDecorationStyle.CLEAN);
             this.hudEntryCount = builder.comment("Number of rows shown by the compact HUD").defineInRange("entryCount", 5, 1, 10);
             this.hudShowIcons = builder.comment("Show resource icons in compact HUD rows").define("showIcons", true);
             this.hudShowNames = builder.comment("Show resource names in compact HUD rows").define("showNames", true);
@@ -229,6 +253,13 @@ public final class ClientConfig {
             HudFrameStyle[] hudFrameStyleArray = HudFrameStyle.values();
             return hudFrameStyleArray[(this.ordinal() + 1) % hudFrameStyleArray.length];
         }
+    }
+
+    public static enum CustomHudDecorationStyle {
+        CLEAN,
+        SPLIT,
+        CORNERS,
+        CIRCUIT;
     }
 
     public static enum HudLayoutStyle {
