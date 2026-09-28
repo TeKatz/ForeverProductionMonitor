@@ -2,7 +2,7 @@
 
 **An AE2 production, storage and network diagnostics companion for Minecraft 1.21.1 / NeoForge.**
 
-Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface. Version 4.2.0 gives the Production Monitor and Tablet a matching industrial look.
+Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface. Version 5.0.0 adds Crafting Diagnostics, a substantially expanded theme system, a full Custom Theme Designer and a more capable Mini HUD.
 
 > Forever Production Monitor is an unofficial third-party addon for Applied Energistics 2. It is not affiliated with or endorsed by the Applied Energistics 2 development team.
 
@@ -129,11 +129,13 @@ Explore a large AE2 network using the interactive 3D view, search, filters, came
 
 The interface screenshots are in-game captures from the development and test worlds.
 
-## What's new in 4.2.0
+## What's new in 5.0.0
 
-- Redesigned the Production Monitor block and Production Tablet with a matching industrial style.
-- Added functional monitor visuals: **OFFLINE** has dark, static displays; **ONLINE** lights and animates them when the AE2 network is active; **LINKED** also shows a tablet indicator when a tablet is connected.
-- Added subtle animation to the active monitor's displays and accent lights.
+- Added **Crafting Diagnostics** for jobs, patterns, providers, dependencies and direct crafting requests.
+- Expanded and polished the visual theme system with richer animations and selected interactive elements.
+- Added a full **Custom Theme Designer** and separate **Custom Mini HUD Designer** with live previews.
+- Reworked Mini HUD settings with permanent preview, content filters, stored-amount sorting and compact category tabs.
+- Preserved the existing Production, Storage, Channel Devices, Network Map, Quantum Bridge and ExtendedAE navigation workflows.
 
 ## Development and AI disclosure
 
