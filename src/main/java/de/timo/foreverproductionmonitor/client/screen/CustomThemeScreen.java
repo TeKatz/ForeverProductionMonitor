@@ -25,7 +25,12 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class CustomThemeScreen extends Screen {
     private final Screen parent;
     private final List<EnumDropdown<?>> dropdowns = new ArrayList<>();
+    private final List<Renderable> controlWidgets = new ArrayList<>();
     private Category category = Category.COLORS;
+    private int controlScroll;
+    private int maxControlScroll;
+    private int controlsViewportTop;
+    private int controlsViewportBottom;
     private int left;
     private int top;
     private int panelWidth;
@@ -46,6 +51,7 @@ public final class CustomThemeScreen extends Screen {
     @Override
     protected void init() {
         this.dropdowns.clear();
+        this.controlWidgets.clear();
         this.panelWidth = Math.max(1, Math.min(940, this.width - 12));
         this.panelHeight = Math.max(1, Math.min(560, this.height - 12));
         this.left = (this.width - this.panelWidth) / 2;
@@ -61,6 +67,10 @@ public final class CustomThemeScreen extends Screen {
         this.controlsLeft = innerLeft;
         this.previewLeft = this.controlsLeft + this.controlsWidth + 12;
         this.previewWidth = Math.max(120, innerRight - this.previewLeft);
+        this.controlsViewportTop = this.contentTop + 30;
+        this.controlsViewportBottom = this.contentBottom;
+        this.maxControlScroll = Math.max(0, controlContentHeight() - Math.max(1, this.controlsViewportBottom - this.controlsViewportTop));
+        this.controlScroll = Math.max(0, Math.min(this.controlScroll, this.maxControlScroll));
 
         buildCategoryTabs();
         switch (this.category) {
@@ -103,6 +113,7 @@ public final class CustomThemeScreen extends Screen {
                     categoryName(value),
                     button -> {
                         this.category = value;
+                        this.controlScroll = 0;
                         this.rebuildWidgets();
                     },
                     value == this.category ? ForeverButton.Style.THEMED_ACTIVE : ForeverButton.Style.THEMED,
@@ -111,7 +122,31 @@ public final class CustomThemeScreen extends Screen {
     }
 
     private int controlsY() {
-        return this.contentTop + 30;
+        return this.controlsViewportTop - this.controlScroll;
+    }
+
+    private int controlContentHeight() {
+        return switch (this.category) {
+            case COLORS -> 260;
+            case BACKGROUND -> {
+                ClientConfig.CustomBackgroundStyle style =
+                        (ClientConfig.CustomBackgroundStyle)ClientConfig.VALUES.interfaceCustomBackgroundStyle.get();
+                yield style == ClientConfig.CustomBackgroundStyle.NONE ? 20
+                        : (style == ClientConfig.CustomBackgroundStyle.GRID
+                        || style == ClientConfig.CustomBackgroundStyle.SCAN_LINES
+                        || style == ClientConfig.CustomBackgroundStyle.ENERGY_WAVES ? 120 : 96);
+            }
+            case PARTICLES -> (ClientConfig.CustomParticleStyle)ClientConfig.VALUES.interfaceCustomParticleStyle.get()
+                    == ClientConfig.CustomParticleStyle.NONE ? 20 : 148;
+            case COMPONENTS -> 108;
+        };
+    }
+
+    private void addControlWidget(AbstractWidget widget) {
+        widget.visible = widget.getY() + widget.getHeight() > this.controlsViewportTop
+                && widget.getY() < this.controlsViewportBottom;
+        this.addWidget(widget);
+        this.controlWidgets.add(widget);
     }
 
     private void buildColors() {
@@ -257,7 +292,7 @@ public final class CustomThemeScreen extends Screen {
     private void addSlider(int y, int width, String key,
                            double min, double max, double value,
                            DoubleConsumer setter, boolean decimal) {
-        this.addRenderableWidget(new CustomSlider(
+        this.addControlWidget(new CustomSlider(
                 this.controlsLeft, y, width, key, min, max, value, setter, decimal));
     }
 
@@ -268,7 +303,7 @@ public final class CustomThemeScreen extends Screen {
                 this.controlsLeft, y, this.controlsWidth, 20,
                 key, values, current, selection, label);
         this.dropdowns.add(dropdown);
-        this.addRenderableWidget(dropdown);
+        this.addControlWidget(dropdown);
     }
 
     @Override
@@ -293,10 +328,33 @@ public final class CustomThemeScreen extends Screen {
 
         drawPreview(graphics, palette);
 
-        // Dropdown lists are rendered last so their options remain above sliders and preview decoration.
+        graphics.enableScissor(this.controlsLeft, this.controlsViewportTop,
+                this.controlsLeft + this.controlsWidth, this.controlsViewportBottom);
+        for (Renderable renderable : this.controlWidgets) {
+            renderable.render(graphics, mouseX, mouseY, partialTick);
+        }
+        graphics.disableScissor();
+
+        if (this.maxControlScroll > 0) {
+            int trackX = this.controlsLeft + this.controlsWidth + 3;
+            int trackTop = this.controlsViewportTop;
+            int trackHeight = Math.max(12, this.controlsViewportBottom - this.controlsViewportTop);
+            int viewport = Math.max(1, this.controlsViewportBottom - this.controlsViewportTop);
+            int content = viewport + this.maxControlScroll;
+            int thumbHeight = Math.max(18, trackHeight * viewport / Math.max(viewport, content));
+            int thumbTravel = Math.max(1, trackHeight - thumbHeight);
+            int thumbY = trackTop + thumbTravel * this.controlScroll / Math.max(1, this.maxControlScroll);
+            graphics.fill(trackX, trackTop, trackX + 3, trackTop + trackHeight, opaque(palette.outer()));
+            graphics.fill(trackX, thumbY, trackX + 3, thumbY + thumbHeight, opaque(palette.accentB()));
+        }
+
+        // Dropdown lists are rendered last and fully opaque so controls underneath never bleed through.
+        graphics.enableScissor(this.controlsLeft, this.controlsViewportTop,
+                this.controlsLeft + this.controlsWidth, this.controlsViewportBottom);
         for (EnumDropdown<?> dropdown : this.dropdowns) {
             dropdown.renderOverlay(graphics, mouseX, mouseY);
         }
+        graphics.disableScissor();
     }
 
     private void drawPreview(GuiGraphics graphics, InterfaceTheme.Palette palette) {
@@ -399,6 +457,32 @@ public final class CustomThemeScreen extends Screen {
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        for (EnumDropdown<?> dropdown : this.dropdowns) {
+            if (dropdown.isOpen()) {
+                return true;
+            }
+        }
+        boolean overControls = mouseX >= this.controlsLeft
+                && mouseX < this.controlsLeft + this.controlsWidth + 6
+                && mouseY >= this.controlsViewportTop && mouseY < this.controlsViewportBottom;
+        if (overControls && this.maxControlScroll > 0 && scrollY != 0.0) {
+            int next = Math.max(0, Math.min(this.maxControlScroll,
+                    this.controlScroll + (scrollY < 0.0 ? 24 : -24)));
+            if (next != this.controlScroll) {
+                this.controlScroll = next;
+                this.rebuildWidgets();
+            }
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    private static int opaque(int color) {
+        return 0xFF000000 | color & 0xFFFFFF;
     }
 
     private static void resetCustomValues() {
@@ -580,13 +664,13 @@ public final class CustomThemeScreen extends Screen {
             int listY = this.getY() + this.getHeight() + 1;
             int totalHeight = this.values.length * ROW_HEIGHT + 2;
             graphics.fill(this.getX(), listY,
-                    this.getX() + this.getWidth(), listY + totalHeight, palette.border());
+                    this.getX() + this.getWidth(), listY + totalHeight, opaque(palette.border()));
             for (int i = 0; i < this.values.length; ++i) {
                 int rowY = listY + 1 + i * ROW_HEIGHT;
                 boolean hover = mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
                         && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
                 boolean selected = this.values[i] == this.current.get();
-                int fill = selected ? palette.header() : (hover ? palette.tableHeader() : palette.summary());
+                int fill = opaque(selected ? palette.header() : (hover ? palette.tableHeader() : palette.summary()));
                 graphics.fill(this.getX() + 1, rowY,
                         this.getX() + this.getWidth() - 1, rowY + ROW_HEIGHT, fill);
                 String text = CustomThemeScreen.this.font.plainSubstrByWidth(
@@ -622,6 +706,10 @@ public final class CustomThemeScreen extends Screen {
                 this.open = false;
             }
             return false;
+        }
+
+        boolean isOpen() {
+            return this.open;
         }
 
         @Override
