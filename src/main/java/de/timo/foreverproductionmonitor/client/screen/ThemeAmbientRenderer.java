@@ -127,12 +127,19 @@ final class ThemeAmbientRenderer {
                 }
             }
             case ORITECH -> {
-                graphics.fill(x + 3, y + 3, x + width - 13, y + 4, alpha(palette.border(), 64));
-                graphics.fill(x + 3, bottom, x + width - 13, bottom + 1, alpha(palette.border(), 58));
-                for (int px = x + 8; px < x + width - 18; px += 16) {
-                    rivet(graphics, px, y + height / 2 - 1, alpha(palette.accentA(), 62));
+                // Compact machine module: solid orange rail + cyan status glass.
+                graphics.fill(x + 3, y + 3, x + 5, y + height - 3, alpha(palette.accentA(), 82));
+                graphics.fill(x + 5, y + 3, x + width - 15, y + 4, alpha(palette.border(), 58));
+                int statusAlpha = active ? 128 : Math.round(54 + hoverProgress * 62.0f);
+                graphics.fill(x + width - 13, y + 4, x + width - 5, y + height - 4, alpha(0xFF111A1D, 120));
+                graphics.fill(x + width - 11, y + 6, x + width - 7, y + height - 6,
+                        alpha(palette.accentB(), statusAlpha));
+                if (hoverProgress > 0.08f) {
+                    int travel = Math.max(4, width / 5);
+                    piston(graphics, x + 9, y + height - 5, travel, true,
+                            alpha(palette.border(), 54), alpha(palette.accentA(), 76),
+                            0.14f + hoverProgress * 0.22f);
                 }
-                rotor(graphics, x + width - 8, y + height / 2, 4, alpha(palette.border(), 84), bright, phase(7600L, 0.18f));
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
@@ -276,16 +283,17 @@ final class ThemeAmbientRenderer {
                 controllerTrace(graphics, right - 8, bottom - 6, -Math.max(16, width / 4), -Math.max(5, height / 4), traceB, true);
             }
             case ORITECH -> {
-                rivet(graphics, x + 4, y + 4, a);
-                rivet(graphics, right - 6, bottom - 6, b);
-                int seam = x + width * 2 / 3;
-                graphics.fill(seam, y + 2, seam + 1, bottom - 2, alpha(palette.border(), 42));
-                for (int px = x + 12; px < seam - 5; px += 18) {
-                    graphics.fill(px, bottom - 4, Math.min(px + 10, seam - 4), bottom - 3, alpha(palette.border(), 44));
-                }
-                rotor(graphics, right - 12, y + Math.min(10, height / 2), 4, alpha(palette.border(), 76), b, phase(8800L, 0.21f));
-                piston(graphics, seam + 8, bottom - 5, Math.max(8, right - seam - 24), true,
-                        alpha(palette.border(), 68), alpha(palette.accentA(), 72), phase(7200L, 0.4f));
+                // Tables stay readable: one structural rail and one powered machine module.
+                graphics.fill(x + 2, y + 2, x + 4, bottom - 2, alpha(palette.accentA(), 58));
+                graphics.fill(x + 4, y + 2, right - 16, y + 3, alpha(palette.border(), 38));
+                rivet(graphics, x + 6, y + 5, alpha(palette.accentA(), 64));
+                rivet(graphics, right - 7, bottom - 7, alpha(palette.border(), 62));
+                int moduleX = right - 15;
+                int moduleY = y + Math.max(4, height / 2 - 5);
+                graphics.fill(moduleX, moduleY, right - 4, Math.min(bottom - 3, moduleY + 10),
+                        alpha(0xFF111A1D, 110));
+                graphics.fill(moduleX + 3, moduleY + 2, right - 7, Math.min(bottom - 5, moduleY + 8),
+                        alpha(palette.accentB(), motionAlpha(42, 78)));
             }
             case MEKANISM -> {
                 int cy = y + height / 2;
@@ -508,44 +516,83 @@ final class ThemeAmbientRenderer {
     private static void oritechPanel(GuiGraphics g, int l, int t, int r, int b, InterfaceTheme.Palette p) {
         int width = r - l;
         int height = b - t;
-        int seamA = l + width / 3;
-        int seamB = l + width * 2 / 3;
+        int railTop = t + Math.max(18, height / 5);
+        int railLeft = l + Math.max(18, width / 10);
+        int railRight = r - Math.max(24, width / 7);
 
-        // Heavy plate construction: seams, bolts and machine housings.
-        g.fill(seamA, t + 4, seamA + 1, b - 4, alpha(p.border(), 48));
-        g.fill(seamB, t + 4, seamB + 1, b - 4, alpha(p.border(), 48));
-        g.fill(l + 4, t + height / 2, r - 4, t + height / 2 + 1, alpha(p.border(), 38));
-        rivet(g, l + 6, t + 6, alpha(p.accentB(), 68));
-        rivet(g, r - 8, t + 6, alpha(p.accentA(), 64));
-        rivet(g, l + 6, b - 8, alpha(p.accentA(), 64));
-        rivet(g, r - 8, b - 8, alpha(p.accentB(), 68));
+        // Clean modular frame: Oritech's orange machine structure, graphite casing,
+        // and cyan powered-glass accents instead of repeated industrial dash patterns.
+        g.fill(railLeft, railTop, railRight, railTop + 3, alpha(p.border(), 78));
+        g.fill(railLeft, railTop - 3, railRight, railTop - 1, alpha(p.accentA(), 66));
+        g.fill(railLeft, railTop - 2, railLeft + 3, b - 14, alpha(p.accentA(), 58));
+        g.fill(railRight - 3, railTop - 2, railRight, b - 14, alpha(p.border(), 58));
+        g.fill(railLeft - 5, b - 15, railRight + 5, b - 11, alpha(0xFF11171A, 94));
+        g.fill(railLeft, b - 15, railRight, b - 13, alpha(p.accentA(), 40));
 
-        // Slow mechanical drive: gears connected by a physical belt and shaft.
-        float turnA = phase(15000L, 0.14f);
-        float turnB = 1.0f - phase(19000L, 0.67f);
-        int gearAX = l + width / 4;
-        int gearAY = t + height / 3;
-        int gearBX = l + width / 2;
-        int gearBY = t + height * 2 / 3;
-        rotor(g, gearAX, gearAY, 9, alpha(p.border(), 92), alpha(p.accentB(), 74), turnA);
-        rotor(g, gearBX, gearBY, 7, alpha(p.border(), 88), alpha(p.accentA(), 70), turnB);
-        belt(g, gearAX + 9, gearAY, gearBX - 7, gearBY, alpha(p.border(), 62));
+        rivet(g, railLeft + 4, railTop + 5, alpha(p.accentA(), 72));
+        rivet(g, railRight - 7, railTop + 5, alpha(p.accentB(), 72));
+        rivet(g, railLeft + 4, b - 20, alpha(p.border(), 66));
+        rivet(g, railRight - 7, b - 20, alpha(p.border(), 66));
 
-        int shaftY = t + height / 3;
-        g.fill(gearAX + 10, shaftY - 1, seamB - 4, shaftY + 2, alpha(p.border(), 58));
-        for (int x = gearAX + 16; x < seamB - 6; x += 13) {
-            g.fill(x, shaftY - 2, x + 2, shaftY + 3, alpha(p.accentA(), 32));
+        // Gantry carriage moves smoothly along the upper rail.
+        float gantry = phase(18000L, 0.24f);
+        float travel = 0.5f - 0.5f * (float)Math.cos(gantry * Math.PI * 2.0);
+        int carriageX = railLeft + 18 + Math.round(travel * Math.max(1, railRight - railLeft - 48));
+        int carriageY = railTop + 7;
+        g.fill(carriageX - 9, carriageY - 5, carriageX + 10, carriageY + 8, alpha(0xFF151C20, 118));
+        g.fill(carriageX - 7, carriageY - 3, carriageX + 8, carriageY + 5, alpha(p.border(), 78));
+        g.fill(carriageX - 4, carriageY - 1, carriageX + 5, carriageY + 3,
+                alpha(p.accentB(), motionAlpha(62, 105)));
+        g.fill(carriageX - 2, carriageY + 7, carriageX + 3, carriageY + 20, alpha(p.border(), 70));
+
+        // Processing head cycles vertically over a small work platform.
+        float pressPhase = phase(9200L, 0.34f);
+        float press = 0.5f - 0.5f * (float)Math.cos(pressPhase * Math.PI * 2.0);
+        int headY = carriageY + 17 + Math.round(press * Math.min(28, Math.max(8, height / 7)));
+        g.fill(carriageX - 7, headY, carriageX + 8, headY + 7, alpha(0xFF10171A, 132));
+        g.fill(carriageX - 4, headY + 2, carriageX + 5, headY + 5,
+                alpha(p.accentA(), 82));
+        g.fill(carriageX - 2, headY + 6, carriageX + 3, headY + 10,
+                alpha(p.accentB(), motionAlpha(52, 94)));
+
+        int platformY = Math.min(b - 22, carriageY + Math.max(44, height / 2));
+        g.fill(carriageX - 18, platformY, carriageX + 19, platformY + 4, alpha(p.border(), 72));
+        g.fill(carriageX - 13, platformY - 3, carriageX + 14, platformY, alpha(p.accentA(), 44));
+
+        // Right-side Oritech energy/laser module. The beam fires only during a
+        // short portion of the cycle so the panel reads as a machine, not a light show.
+        if (width > 190 && height > 92) {
+            int emitterX = r - Math.max(34, width / 9);
+            int emitterY = t + height * 2 / 3;
+            g.fill(emitterX - 9, emitterY - 10, emitterX + 10, emitterY + 11, alpha(0xFF121A1E, 126));
+            g.fill(emitterX - 6, emitterY - 7, emitterX + 7, emitterY + 8, alpha(p.border(), 82));
+            g.fill(emitterX - 3, emitterY - 4, emitterX + 4, emitterY + 5,
+                    alpha(p.accentB(), motionAlpha(58, 112)));
+
+            float laserCycle = phase(12800L, 0.12f);
+            float beam = laserCycle > 0.57f && laserCycle < 0.78f
+                    ? (float)Math.sin((laserCycle - 0.57f) / 0.21f * Math.PI)
+                    : 0.0f;
+            if (beam > 0.01f) {
+                int beamLength = Math.max(18, Math.min(width / 5, emitterX - carriageX - 24));
+                g.fill(emitterX - beamLength, emitterY, emitterX - 8, emitterY + 2,
+                        alpha(p.accentB(), Math.round(28 + beam * 76.0f)));
+                g.fill(emitterX - beamLength + 4, emitterY - 1, emitterX - 8, emitterY,
+                        alpha(p.text(), Math.round(8 + beam * 28.0f)));
+            }
         }
 
-        // Hydraulic-looking actuator. Motion is deliberately slow and physical.
-        int pistonY = t + height / 2 + 11;
-        piston(g, seamB + 7, pistonY, Math.max(12, r - seamB - 18), true,
-               alpha(p.border(), 74), alpha(p.accentB(), 82), phase(12000L, 0.42f));
-
-        // Machine feet / lower rail.
-        for (int x = l + 10; x < r - 10; x += 18) {
-            g.fill(x, b - 6, Math.min(x + 11, r - 8), b - 4,
-                    alpha((x / 18 & 1) == 0 ? p.accentA() : p.border(), 40));
+        // A compact power column adds a second cyan identity cue without filling
+        // the whole background with lines.
+        int powerX = l + 13;
+        int powerTop = t + height / 2;
+        int powerBottom = b - 20;
+        if (powerBottom - powerTop > 18) {
+            g.fill(powerX - 4, powerTop, powerX + 5, powerBottom, alpha(0xFF10171A, 100));
+            g.fill(powerX - 2, powerTop + 2, powerX + 3, powerBottom - 2, alpha(p.border(), 62));
+            float charge = 0.28f + 0.58f * (0.5f + 0.5f * (float)Math.sin(phase(15000L, 0.26f) * Math.PI * 2.0));
+            tankFill(g, powerX - 1, powerTop + 3, powerX + 2, powerBottom - 3,
+                    charge, alpha(p.accentB(), motionAlpha(40, 78)));
         }
     }
 
