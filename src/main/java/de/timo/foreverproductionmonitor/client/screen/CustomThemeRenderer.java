@@ -328,7 +328,7 @@ final class CustomThemeRenderer {
     }
 
     private static float phase(double durationMillis, float offset) {
-        if (!GuiMotion.enabled() || durationMillis <= 0.0) {
+        if (!GuiMotion.ambientMotionEnabled() || durationMillis <= 0.0) {
             return offset - (float)Math.floor(offset);
         }
         long durationNanos = Math.max(1L, Math.round(durationMillis * 1_000_000.0));
