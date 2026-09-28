@@ -277,6 +277,9 @@ final class CatThemeRenderer {
     }
 
     private static void drawHeartReaction(GuiGraphics g, int catX, int catY) {
+        if (!(Boolean)ClientConfig.VALUES.themeInteractionsEnabled.get()) {
+            return;
+        }
         if (heartStartedNanos == 0L || heartCatX != catX || heartCatY != catY) {
             return;
         }
