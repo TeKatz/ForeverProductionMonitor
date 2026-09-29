@@ -945,6 +945,19 @@ extends AENetworkedBlockEntity {
         if (resource instanceof ResourceLocation resourceId && reserve instanceof Long remaining) {
             name += " · " + resourceId.getPath() + " · " + remaining;
         }
+        // Optional 0.3+ read-only metrics; older Deep Core versions still use the snapshot above.
+        Object telemetry = ProductionMonitorBlockEntity.invokeNoArg(level.getBlockEntity(portPos), "telemetry");
+        Object activeBores = ProductionMonitorBlockEntity.invokeNoArg(telemetry, "activeBores");
+        Object installedBores = ProductionMonitorBlockEntity.invokeNoArg(telemetry, "installedBores");
+        Object rate = ProductionMonitorBlockEntity.invokeNoArg(telemetry, "itemsLastMinute");
+        Object depletion = ProductionMonitorBlockEntity.invokeNoArg(telemetry, "estimatedDepletionMinutes");
+        if (activeBores instanceof Integer active && installedBores instanceof Integer installed
+                && rate instanceof Integer items) {
+            name += " · " + active + "/" + installed + " bores · " + items + "/min";
+        }
+        if (depletion instanceof Long minutes && minutes > 0) {
+            name += " · ~" + minutes + " min";
+        }
         MapNodeState state = Boolean.TRUE.equals(
                 ProductionMonitorBlockEntity.invokeNoArg(snapshot, "subnetOnline"))
                 ? MapNodeState.CONNECTED : MapNodeState.UNPOWERED;
