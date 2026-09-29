@@ -966,6 +966,32 @@ extends AENetworkedBlockEntity {
         map.computeIfAbsent(key, ignored -> new MutableMapNode(
                 corePos, Block.getId(coreState), visualId, MapRenderKind.BLOCK, -1))
                 .merge(visualId, name, state, 0, 0.0, false);
+
+        // Deep Core exposes only positions that still match its structure. Keep
+        // its separate AE2 subnet out of this grid while drawing its physical shape.
+        Object positions = ProductionMonitorBlockEntity.invokeNoArg(level.getBlockEntity(portPos), "structurePositions");
+        if (positions instanceof List<?> parts) {
+            for (Object entry : parts) {
+                if (!(entry instanceof BlockPos partPos) || partPos.equals(corePos)
+                        || !level.hasChunkAt(partPos)) continue;
+                BlockState partState = level.getBlockState(partPos);
+                ResourceLocation partId = BuiltInRegistries.BLOCK.getKey(partState.getBlock());
+                boolean deepCorePart = "forever_deep_core".equals(partId.getNamespace());
+                boolean aeStructurePart = "ae2".equals(partId.getNamespace())
+                        && ("drive".equals(partId.getPath()) || "energy_acceptor".equals(partId.getPath()));
+                if (!deepCorePart && !aeStructurePart) continue;
+                MapElementKey partKey = new MapElementKey(partPos.immutable(), MapRenderKind.BLOCK, -1, null);
+                if (map.containsKey(partKey)) continue;
+                ResourceLocation partVisual = BuiltInRegistries.ITEM.getKey(partState.getBlock().asItem());
+                if (partVisual == null || partVisual.equals(BuiltInRegistries.ITEM.getKey(Items.AIR)))
+                    partVisual = partId;
+                ResourceLocation icon = partVisual;
+                map.computeIfAbsent(partKey, ignored -> new MutableMapNode(
+                        partPos, Block.getId(partState), icon, MapRenderKind.BLOCK, -1))
+                        .merge(icon, partState.getBlock().getName().getString(), MapNodeState.CONNECTED,
+                                0, 0.0, false);
+            }
+        }
     }
 
     private static boolean isRelevantExternalMachine(ResourceLocation resourceLocation) {
