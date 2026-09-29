@@ -853,6 +853,7 @@ extends AENetworkedBlockEntity {
                 ProductionMonitorBlockEntity.addKnownMultiblock(
                         level, adjacentPos, blockId, map, knownBlocks);
                 ProductionMonitorBlockEntity.addExternalMachine(level, adjacentPos, map);
+                ProductionMonitorBlockEntity.addDeepCoreFacility(level, adjacentPos, map);
             }
         }
 
@@ -913,6 +914,45 @@ extends AENetworkedBlockEntity {
         MapElementKey mapElementKey2 = new MapElementKey(blockPos.immutable(), MapRenderKind.BLOCK, -1, null);
         ResourceLocation resourceLocation3 = resourceLocation2;
         map.computeIfAbsent(mapElementKey2, mapElementKey -> new MutableMapNode(blockPos, Block.getId((BlockState)blockState), resourceLocation3, MapRenderKind.BLOCK, -1)).merge(resourceLocation3, blockState.getBlock().getName().getString(), MapNodeState.CONNECTED, 0, 0.0, false);
+    }
+
+    /** A Storage Bus sees the output port, but the separate extractor subnet is not on this grid. */
+    private static void addDeepCoreFacility(Level level, BlockPos portPos, Map<MapElementKey, MutableMapNode> map) {
+        BlockState portState = level.getBlockState(portPos);
+        ResourceLocation portId = BuiltInRegistries.BLOCK.getKey(portState.getBlock());
+        if (!"forever_deep_core".equals(portId.getNamespace()) || !"output_port".equals(portId.getPath())) {
+            return;
+        }
+
+        // The port owns the public snapshot method. Reflection keeps Deep Core optional for FPM.
+        Object snapshot = ProductionMonitorBlockEntity.invokeNoArg(level.getBlockEntity(portPos), "snapshot");
+        Object pos = ProductionMonitorBlockEntity.invokeNoArg(snapshot, "controllerPos");
+        Object dimension = ProductionMonitorBlockEntity.invokeNoArg(snapshot, "dimension");
+        if (!(pos instanceof BlockPos corePos)
+                || !level.dimension().location().equals(dimension)
+                || !level.hasChunkAt(corePos)) {
+            return;
+        }
+        BlockState coreState = level.getBlockState(corePos);
+        ResourceLocation coreId = BuiltInRegistries.BLOCK.getKey(coreState.getBlock());
+        if (!"forever_deep_core".equals(coreId.getNamespace()) || !"control_core".equals(coreId.getPath())) {
+            return;
+        }
+
+        String name = coreState.getBlock().getName().getString();
+        Object resource = ProductionMonitorBlockEntity.invokeNoArg(snapshot, "resource");
+        Object reserve = ProductionMonitorBlockEntity.invokeNoArg(snapshot, "remainingReserve");
+        if (resource instanceof ResourceLocation resourceId && reserve instanceof Long remaining) {
+            name += " · " + resourceId.getPath() + " · " + remaining;
+        }
+        MapNodeState state = Boolean.TRUE.equals(
+                ProductionMonitorBlockEntity.invokeNoArg(snapshot, "subnetOnline"))
+                ? MapNodeState.CONNECTED : MapNodeState.UNPOWERED;
+        ResourceLocation visualId = BuiltInRegistries.ITEM.getKey(coreState.getBlock().asItem());
+        MapElementKey key = new MapElementKey(corePos.immutable(), MapRenderKind.BLOCK, -1, null);
+        map.computeIfAbsent(key, ignored -> new MutableMapNode(
+                corePos, Block.getId(coreState), visualId, MapRenderKind.BLOCK, -1))
+                .merge(visualId, name, state, 0, 0.0, false);
     }
 
     private static boolean isRelevantExternalMachine(ResourceLocation resourceLocation) {
