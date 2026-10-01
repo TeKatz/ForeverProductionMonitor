@@ -37,6 +37,7 @@ import appeng.core.definitions.AEBlocks;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.client.ClientMonitorState;
 import de.timo.foreverproductionmonitor.client.DeviceLocator;
+import de.timo.foreverproductionmonitor.integration.DeepCoreDiagnosticsBridge;
 import de.timo.foreverproductionmonitor.integration.TabletCurios;
 import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import java.util.ArrayList;
@@ -94,6 +95,8 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(RequestOpenDeepCore.TYPE, RequestOpenDeepCore.STREAM_CODEC, MonitorNetwork::handleOpenDeepCoreRequest);
         payloadRegistrar.playToServer(RequestDeepCoreFacilities.TYPE, RequestDeepCoreFacilities.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesRequest);
         payloadRegistrar.playToClient(DeepCoreFacilitiesPayload.TYPE, DeepCoreFacilitiesPayload.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesSnapshot);
+        payloadRegistrar.playToServer(RequestDeepCoreDiagnostics.TYPE, RequestDeepCoreDiagnostics.STREAM_CODEC, MonitorNetwork::handleDeepCoreDiagnosticsRequest);
+        payloadRegistrar.playToClient(DeepCoreDiagnosticsPayload.TYPE, DeepCoreDiagnosticsPayload.STREAM_CODEC, MonitorNetwork::handleDeepCoreDiagnosticsSnapshot);
         CraftingDiagnosticsNetwork.register(payloadRegistrar);
     }
 
@@ -145,6 +148,12 @@ public final class MonitorNetwork {
 
     public static void requestDeepCoreFacilities(ProductionTabletItem.MonitorLink monitorLink) {
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestDeepCoreFacilities(
+                monitorLink.dimension(), monitorLink.pos()),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    public static void requestDeepCoreDiagnostics(ProductionTabletItem.MonitorLink monitorLink) {
+        PacketDistributor.sendToServer((CustomPacketPayload)new RequestDeepCoreDiagnostics(
                 monitorLink.dimension(), monitorLink.pos()),
                 (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
@@ -313,6 +322,59 @@ public final class MonitorNetwork {
         return id != null
                 && "forever_deep_core".equals(id.getNamespace())
                 && "control_core".equals(id.getPath());
+    }
+
+    private static void handleDeepCoreDiagnosticsRequest(RequestDeepCoreDiagnostics request, IPayloadContext context) {
+        Object player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+
+        ProductionMonitorBlockEntity monitor = MonitorNetwork.linkedMonitor(
+                serverPlayer, request.monitorDimension(), request.monitorPos());
+        if (monitor == null || !monitor.isMonitorOnline()) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new DeepCoreDiagnosticsPayload(
+                            request.monitorDimension(), request.monitorPos(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+
+        ProductionMonitorBlockEntity.NetworkMapSnapshot root =
+                monitor.networkMapSnapshot(request.monitorDimension());
+        List<ResourceLocation> dimensions = root.dimensions().isEmpty()
+                ? List.of(request.monitorDimension()) : root.dimensions();
+
+        ArrayList<DeepCoreDiagnostic> diagnostics = new ArrayList<>();
+        HashSet<String> seen = new HashSet<>();
+        for (ResourceLocation dimension : dimensions) {
+            ProductionMonitorBlockEntity.NetworkMapSnapshot snapshot =
+                    monitor.networkMapSnapshot(dimension);
+            for (ProductionMonitorBlockEntity.NetworkMapNode node : snapshot.nodes()) {
+                if (!isDeepCoreControlCore(node.visualId())) continue;
+                String key = dimension + ":" + node.pos().asLong();
+                if (!seen.add(key)) continue;
+
+                DeepCoreFacility facility = inspectDeepCoreFacility(serverPlayer, dimension, node.pos());
+                ServerLevel targetLevel = serverPlayer.server.getLevel(
+                        ResourceKey.create(Registries.DIMENSION, dimension));
+                BlockEntity target = targetLevel != null && targetLevel.hasChunkAt(node.pos())
+                        ? targetLevel.getBlockEntity(node.pos()) : null;
+                diagnostics.add(DeepCoreDiagnosticsBridge.inspect(
+                        dimension, node.pos(), target, facility.name(), facility.status()));
+                if (diagnostics.size() >= 32) break;
+            }
+            if (diagnostics.size() >= 32) break;
+        }
+
+        diagnostics.sort(Comparator
+                .comparing((DeepCoreDiagnostic facility) ->
+                        facility.name().isBlank() ? "~" : facility.name().toLowerCase(Locale.ROOT))
+                .thenComparing(facility -> facility.dimension().toString())
+                .thenComparingLong(facility -> facility.pos().asLong()));
+
+        PacketDistributor.sendToPlayer(serverPlayer,
+                (CustomPacketPayload)new DeepCoreDiagnosticsPayload(
+                        request.monitorDimension(), request.monitorPos(), diagnostics),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     private static void handleOpenDeepCoreRequest(RequestOpenDeepCore request, IPayloadContext context) {
@@ -946,6 +1008,10 @@ public final class MonitorNetwork {
         ClientMonitorState.acceptDeepCoreFacilities(payload);
     }
 
+    private static void handleDeepCoreDiagnosticsSnapshot(DeepCoreDiagnosticsPayload payload, IPayloadContext context) {
+        ClientMonitorState.acceptDeepCoreDiagnostics(payload);
+    }
+
     private static int clampSampleInterval(int n) {
         return Math.max(20, Math.min(100, n));
     }
@@ -1389,6 +1455,285 @@ public final class MonitorNetwork {
         ONLINE,
         UNLOADED,
         INVALID
+    }
+
+    public record RequestDeepCoreDiagnostics(ResourceLocation monitorDimension,
+                                              BlockPos monitorPos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<RequestDeepCoreDiagnostics> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("request_deep_core_diagnostics"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RequestDeepCoreDiagnostics> STREAM_CODEC =
+                StreamCodec.of((buf, request) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.monitorDimension);
+                    buf.writeBlockPos(request.monitorPos);
+                }, buf -> new RequestDeepCoreDiagnostics(
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos()));
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record DeepCoreDiagnosticsPayload(ResourceLocation monitorDimension,
+                                             BlockPos monitorPos,
+                                             List<DeepCoreDiagnostic> facilities) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<DeepCoreDiagnosticsPayload> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("deep_core_diagnostics"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, DeepCoreDiagnosticsPayload> STREAM_CODEC =
+                StreamCodec.of((buf, payload) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, payload.monitorDimension);
+                    buf.writeBlockPos(payload.monitorPos);
+                    buf.writeVarInt(Math.min(32, payload.facilities.size()));
+                    payload.facilities.stream().limit(32L).forEach(facility -> facility.write(buf));
+                }, buf -> {
+                    ResourceLocation dimension =
+                            (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf);
+                    BlockPos pos = buf.readBlockPos();
+                    int count = Math.min(32, buf.readVarInt());
+                    ArrayList<DeepCoreDiagnostic> facilities = new ArrayList<>(count);
+                    for (int i = 0; i < count; i++) facilities.add(DeepCoreDiagnostic.read(buf));
+                    return new DeepCoreDiagnosticsPayload(dimension, pos, facilities);
+                });
+
+        public DeepCoreDiagnosticsPayload {
+            facilities = List.copyOf(facilities.subList(0, Math.min(32, facilities.size())));
+        }
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record DeepCoreDiagnostic(ResourceLocation dimension,
+                                     BlockPos pos,
+                                     String name,
+                                     DeepCoreFacilityStatus availability,
+                                     boolean diagnosticsAvailable,
+                                     String facilityState,
+                                     boolean structureValid,
+                                     boolean subnetOnline,
+                                     int physicalTier,
+                                     int surveyTier,
+                                     int installedBores,
+                                     int runningBores,
+                                     int itemsLastMinute,
+                                     long totalProduced,
+                                     double estimatedAePerMinute,
+                                     DeepCoreStorageDiagnostic storage,
+                                     List<DeepCoreBoreDiagnostic> bores) {
+        public DeepCoreDiagnostic {
+            name = name == null ? "" : name.substring(0, Math.min(32, name.length()));
+            facilityState = facilityState == null ? "UNKNOWN" : facilityState;
+            storage = storage == null ? DeepCoreStorageDiagnostic.unknown() : storage;
+            bores = List.copyOf(bores.subList(0, Math.min(3, bores.size())));
+        }
+
+        public static DeepCoreDiagnostic unavailable(ResourceLocation dimension, BlockPos pos,
+                                                     String name, DeepCoreFacilityStatus availability) {
+            return new DeepCoreDiagnostic(
+                    dimension, pos, name, availability, false,
+                    "UNAVAILABLE", false, false, 0, 0, 0, 0, 0, 0L, 0.0,
+                    DeepCoreStorageDiagnostic.unknown(), List.of());
+        }
+
+        private void write(RegistryFriendlyByteBuf buf) {
+            ResourceLocation.STREAM_CODEC.encode(buf, dimension);
+            buf.writeBlockPos(pos);
+            buf.writeUtf(name, 32);
+            buf.writeEnum(availability);
+            buf.writeBoolean(diagnosticsAvailable);
+            buf.writeUtf(facilityState, 32);
+            buf.writeBoolean(structureValid);
+            buf.writeBoolean(subnetOnline);
+            buf.writeVarInt(Math.max(0, physicalTier));
+            buf.writeVarInt(Math.max(0, surveyTier));
+            buf.writeVarInt(Math.max(0, installedBores));
+            buf.writeVarInt(Math.max(0, runningBores));
+            buf.writeVarInt(Math.max(0, itemsLastMinute));
+            buf.writeVarLong(Math.max(0L, totalProduced));
+            buf.writeDouble(Math.max(0.0, estimatedAePerMinute));
+            storage.write(buf);
+            buf.writeVarInt(Math.min(3, bores.size()));
+            bores.stream().limit(3L).forEach(bore -> bore.write(buf));
+        }
+
+        private static DeepCoreDiagnostic read(RegistryFriendlyByteBuf buf) {
+            ResourceLocation dimension = (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf);
+            BlockPos pos = buf.readBlockPos();
+            String name = buf.readUtf(32);
+            DeepCoreFacilityStatus availability = (DeepCoreFacilityStatus)buf.readEnum(DeepCoreFacilityStatus.class);
+            boolean diagnosticsAvailable = buf.readBoolean();
+            String facilityState = buf.readUtf(32);
+            boolean structureValid = buf.readBoolean();
+            boolean subnetOnline = buf.readBoolean();
+            int physicalTier = buf.readVarInt();
+            int surveyTier = buf.readVarInt();
+            int installedBores = buf.readVarInt();
+            int runningBores = buf.readVarInt();
+            int itemsLastMinute = buf.readVarInt();
+            long totalProduced = buf.readVarLong();
+            double estimatedAePerMinute = buf.readDouble();
+            DeepCoreStorageDiagnostic storage = DeepCoreStorageDiagnostic.read(buf);
+            int boreCount = Math.min(3, buf.readVarInt());
+            ArrayList<DeepCoreBoreDiagnostic> bores = new ArrayList<>(boreCount);
+            for (int i = 0; i < boreCount; i++) bores.add(DeepCoreBoreDiagnostic.read(buf));
+            return new DeepCoreDiagnostic(
+                    dimension, pos, name, availability, diagnosticsAvailable,
+                    facilityState, structureValid, subnetOnline,
+                    physicalTier, surveyTier, installedBores, runningBores,
+                    itemsLastMinute, totalProduced, estimatedAePerMinute,
+                    storage, bores);
+        }
+    }
+
+    public record DeepCoreStorageDiagnostic(String state,
+                                            long usedBytes,
+                                            long totalBytes,
+                                            long storedItems,
+                                            long usedTypes,
+                                            long totalTypes,
+                                            int finiteCells,
+                                            int infiniteCells,
+                                            int unknownCells) {
+        public DeepCoreStorageDiagnostic {
+            state = state == null ? "UNKNOWN" : state;
+        }
+
+        public static DeepCoreStorageDiagnostic unknown() {
+            return new DeepCoreStorageDiagnostic("UNKNOWN", 0L, 0L, 0L, 0L, 0L, 0, 0, 0);
+        }
+
+        public double usagePercent() {
+            return totalBytes <= 0L ? -1.0 : Math.min(100.0, usedBytes * 100.0 / totalBytes);
+        }
+
+        private void write(RegistryFriendlyByteBuf buf) {
+            buf.writeUtf(state, 32);
+            buf.writeVarLong(Math.max(0L, usedBytes));
+            buf.writeVarLong(Math.max(0L, totalBytes));
+            buf.writeVarLong(Math.max(0L, storedItems));
+            buf.writeVarLong(Math.max(0L, usedTypes));
+            buf.writeVarLong(Math.max(0L, totalTypes));
+            buf.writeVarInt(Math.max(0, finiteCells));
+            buf.writeVarInt(Math.max(0, infiniteCells));
+            buf.writeVarInt(Math.max(0, unknownCells));
+        }
+
+        private static DeepCoreStorageDiagnostic read(RegistryFriendlyByteBuf buf) {
+            return new DeepCoreStorageDiagnostic(
+                    buf.readUtf(32),
+                    buf.readVarLong(),
+                    buf.readVarLong(),
+                    buf.readVarLong(),
+                    buf.readVarLong(),
+                    buf.readVarLong(),
+                    buf.readVarInt(),
+                    buf.readVarInt(),
+                    buf.readVarInt());
+        }
+    }
+
+    public record DeepCoreBoreDiagnostic(int number,
+                                         boolean installed,
+                                         String state,
+                                         String stallReason,
+                                         ResourceLocation resource,
+                                         long remaining,
+                                         long initialReserve,
+                                         int depth,
+                                         int purity,
+                                         int requiredTier,
+                                         int effectiveTier,
+                                         int progressPermille,
+                                         int effectiveIntervalTicks,
+                                         double aePerItem,
+                                         int itemsLastMinute,
+                                         double theoreticalItemsPerMinute,
+                                         long totalProduced,
+                                         long estimatedDepletionMinutes,
+                                         double precisionChance,
+                                         List<DeepCoreUpgradeDiagnostic> upgrades) {
+        public DeepCoreBoreDiagnostic {
+            state = state == null ? "UNKNOWN" : state;
+            stallReason = stallReason == null ? "NONE" : stallReason;
+            upgrades = List.copyOf(upgrades.subList(0, Math.min(3, upgrades.size())));
+        }
+
+        private void write(RegistryFriendlyByteBuf buf) {
+            buf.writeVarInt(Math.max(0, number));
+            buf.writeBoolean(installed);
+            buf.writeUtf(state, 32);
+            buf.writeUtf(stallReason, 40);
+            buf.writeBoolean(resource != null);
+            if (resource != null) ResourceLocation.STREAM_CODEC.encode(buf, resource);
+            buf.writeVarLong(Math.max(0L, remaining));
+            buf.writeVarLong(Math.max(0L, initialReserve));
+            buf.writeVarInt(Math.max(0, depth));
+            buf.writeVarInt(Math.max(0, purity));
+            buf.writeVarInt(Math.max(0, requiredTier));
+            buf.writeVarInt(Math.max(0, effectiveTier));
+            buf.writeVarInt(Math.max(0, progressPermille));
+            buf.writeVarInt(Math.max(0, effectiveIntervalTicks));
+            buf.writeDouble(Math.max(0.0, aePerItem));
+            buf.writeVarInt(Math.max(0, itemsLastMinute));
+            buf.writeDouble(Math.max(0.0, theoreticalItemsPerMinute));
+            buf.writeVarLong(Math.max(0L, totalProduced));
+            buf.writeLong(estimatedDepletionMinutes);
+            buf.writeDouble(Math.max(0.0, precisionChance));
+            buf.writeVarInt(Math.min(3, upgrades.size()));
+            upgrades.stream().limit(3L).forEach(upgrade -> upgrade.write(buf));
+        }
+
+        private static DeepCoreBoreDiagnostic read(RegistryFriendlyByteBuf buf) {
+            int number = buf.readVarInt();
+            boolean installed = buf.readBoolean();
+            String state = buf.readUtf(32);
+            String stallReason = buf.readUtf(40);
+            ResourceLocation resource = buf.readBoolean()
+                    ? (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf) : null;
+            long remaining = buf.readVarLong();
+            long initialReserve = buf.readVarLong();
+            int depth = buf.readVarInt();
+            int purity = buf.readVarInt();
+            int requiredTier = buf.readVarInt();
+            int effectiveTier = buf.readVarInt();
+            int progressPermille = buf.readVarInt();
+            int effectiveIntervalTicks = buf.readVarInt();
+            double aePerItem = buf.readDouble();
+            int itemsLastMinute = buf.readVarInt();
+            double theoreticalItemsPerMinute = buf.readDouble();
+            long totalProduced = buf.readVarLong();
+            long estimatedDepletionMinutes = buf.readLong();
+            double precisionChance = buf.readDouble();
+            int upgradeCount = Math.min(3, buf.readVarInt());
+            ArrayList<DeepCoreUpgradeDiagnostic> upgrades = new ArrayList<>(upgradeCount);
+            for (int i = 0; i < upgradeCount; i++) upgrades.add(DeepCoreUpgradeDiagnostic.read(buf));
+            return new DeepCoreBoreDiagnostic(
+                    number, installed, state, stallReason, resource,
+                    remaining, initialReserve, depth, purity, requiredTier, effectiveTier,
+                    progressPermille, effectiveIntervalTicks, aePerItem,
+                    itemsLastMinute, theoreticalItemsPerMinute, totalProduced,
+                    estimatedDepletionMinutes, precisionChance, upgrades);
+        }
+    }
+
+    public record DeepCoreUpgradeDiagnostic(ResourceLocation itemId, String family, int tier) {
+        public DeepCoreUpgradeDiagnostic {
+            family = family == null ? "" : family.substring(0, Math.min(32, family.length()));
+        }
+
+        private void write(RegistryFriendlyByteBuf buf) {
+            ResourceLocation.STREAM_CODEC.encode(buf, itemId);
+            buf.writeUtf(family, 32);
+            buf.writeVarInt(Math.max(0, tier));
+        }
+
+        private static DeepCoreUpgradeDiagnostic read(RegistryFriendlyByteBuf buf) {
+            return new DeepCoreUpgradeDiagnostic(
+                    (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                    buf.readUtf(32),
+                    buf.readVarInt());
+        }
     }
 
     public record RequestOpenDeepCore(ResourceLocation monitorDimension,
