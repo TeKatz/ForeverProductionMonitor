@@ -58,6 +58,9 @@ extends Screen {
     private static final int DIMENSION_DROPDOWN_MAX_ROWS = 8;
     private static final int MAP_VIEW_TOOLBAR_HEIGHT = 24;
     private static final int MAP_CONTROL_BAR_HEIGHT = 28;
+    private static final int DEEP_CORE_HEADER_BUTTON_HEIGHT = 18;
+    private static final int DEEP_CORE_MENU_ROW_HEIGHT = 24;
+    private static final int DEEP_CORE_MENU_MAX_ROWS = 6;
     private static ViewMode lastViewMode;
     private final ProductionTabletItem.MonitorLink link;
     private EditBox search;
@@ -93,6 +96,17 @@ extends Screen {
     private int dimensionMenuY;
     private int dimensionMenuWidth;
     private int dimensionMenuRows;
+    private List<MonitorNetwork.DeepCoreFacility> deepCoreFacilities = List.of();
+    private boolean deepCoreDropdownOpen;
+    private int deepCoreDropdownScroll;
+    private int deepCoreRefreshTicks;
+    private int deepCoreButtonX;
+    private int deepCoreButtonY;
+    private int deepCoreButtonWidth;
+    private int deepCoreMenuX;
+    private int deepCoreMenuY;
+    private int deepCoreMenuWidth;
+    private int deepCoreMenuRows;
     private MonitorNetwork.SortMode sort = MonitorNetwork.SortMode.ACTIVITY;
     private MonitorNetwork.DeviceSort deviceSort = MonitorNetwork.DeviceSort.POWER;
     private MonitorNetwork.DeviceFilter deviceFilter = MonitorNetwork.DeviceFilter.ALL;
@@ -210,6 +224,10 @@ extends Screen {
         }, ForeverButton.Style.SECONDARY, n7, this.top + 62, 34, 20));
         this.updateViewWidgets();
         this.requestNow();
+        this.deepCoreDropdownOpen = false;
+        this.deepCoreDropdownScroll = 0;
+        this.deepCoreRefreshTicks = 100;
+        MonitorNetwork.requestDeepCoreFacilities(this.link);
     }
 
     private void switchView(ViewMode viewMode) {
@@ -378,6 +396,18 @@ extends Screen {
         if (--this.refreshTicks <= 0) {
             this.requestNow();
         }
+        if (--this.deepCoreRefreshTicks <= 0) {
+            this.deepCoreRefreshTicks = 100;
+            MonitorNetwork.requestDeepCoreFacilities(this.link);
+        }
+    }
+
+    public void acceptDeepCoreFacilities(MonitorNetwork.DeepCoreFacilitiesPayload payload) {
+        if (!payload.monitorDimension().equals(this.link.dimension())
+                || !payload.monitorPos().equals(this.link.pos())) return;
+        this.deepCoreFacilities = payload.facilities();
+        this.clampDeepCoreDropdownScroll();
+        if (this.deepCoreFacilities.isEmpty()) this.deepCoreDropdownOpen = false;
     }
 
     public void accept(MonitorNetwork.MonitorSnapshot monitorSnapshot) {
@@ -740,6 +770,7 @@ extends Screen {
             this.drawDimensionDropdownOverlay(guiGraphics, n, n2);
         }
         this.drawTitle(guiGraphics);
+        this.drawDeepCoreAccess(guiGraphics, n, n2);
         if (this.settingsButton != null && this.settingsButton.isHoveredOrFocused()) {
             guiGraphics.renderTooltip(this.font, (Component)Component.translatable((String)"screen.forever_production_monitor.theme.open"), n, n2);
         }
@@ -767,6 +798,160 @@ extends Screen {
 
     private void drawTitle(GuiGraphics guiGraphics) {
         guiGraphics.drawString(this.font, this.title, this.left + (this.panelWidth - this.font.width((FormattedText)this.title)) / 2, this.top + 12, InterfaceTheme.current().text(), false);
+    }
+
+    private void drawDeepCoreAccess(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        if (this.deepCoreFacilities.isEmpty()) return;
+
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        String label = this.deepCoreFacilities.size() == 1 ? "Deep Core" : "Deep Core ▾";
+        this.deepCoreButtonWidth = Math.min(132, Math.max(84, this.font.width(label) + 20));
+        this.deepCoreButtonX = this.left + this.panelWidth - 31 - this.deepCoreButtonWidth;
+        this.deepCoreButtonY = this.top + 7;
+
+        boolean hover = mouseX >= this.deepCoreButtonX
+                && mouseX < this.deepCoreButtonX + this.deepCoreButtonWidth
+                && mouseY >= this.deepCoreButtonY
+                && mouseY < this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT;
+        MonitorNetwork.DeepCoreFacility only = this.deepCoreFacilities.size() == 1
+                ? this.deepCoreFacilities.get(0) : null;
+        boolean enabled = only == null || only.status() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE;
+        int border = hover && enabled ? palette.accentB() : palette.border();
+        int inner = hover && enabled ? palette.hover() : palette.summary();
+        guiGraphics.fill(this.deepCoreButtonX, this.deepCoreButtonY,
+                this.deepCoreButtonX + this.deepCoreButtonWidth,
+                this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT, border);
+        guiGraphics.fill(this.deepCoreButtonX + 1, this.deepCoreButtonY + 1,
+                this.deepCoreButtonX + this.deepCoreButtonWidth - 1,
+                this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT - 1, inner);
+        int textColor = enabled ? palette.text() : palette.muted();
+        guiGraphics.drawCenteredString(this.font, Component.literal(label),
+                this.deepCoreButtonX + this.deepCoreButtonWidth / 2,
+                this.deepCoreButtonY + 5, textColor);
+
+        int statusColor = only == null ? palette.accentA() : this.deepCoreStatusColor(only.status(), palette);
+        guiGraphics.fill(this.deepCoreButtonX + 5, this.deepCoreButtonY + 7,
+                this.deepCoreButtonX + 8, this.deepCoreButtonY + 10, statusColor);
+
+        if (!this.deepCoreDropdownOpen || this.deepCoreFacilities.size() <= 1) return;
+
+        this.deepCoreMenuWidth = Math.min(250, Math.max(190, this.deepCoreButtonWidth + 70));
+        this.deepCoreMenuRows = Math.min(DEEP_CORE_MENU_MAX_ROWS, this.deepCoreFacilities.size());
+        this.deepCoreMenuX = Math.max(this.left + 6,
+                this.deepCoreButtonX + this.deepCoreButtonWidth - this.deepCoreMenuWidth);
+        this.deepCoreMenuY = this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT + 3;
+        int menuHeight = this.deepCoreMenuRows * DEEP_CORE_MENU_ROW_HEIGHT + 2;
+
+        guiGraphics.fill(this.deepCoreMenuX - 1, this.deepCoreMenuY - 1,
+                this.deepCoreMenuX + this.deepCoreMenuWidth + 1,
+                this.deepCoreMenuY + menuHeight + 1, palette.border());
+        guiGraphics.fill(this.deepCoreMenuX, this.deepCoreMenuY,
+                this.deepCoreMenuX + this.deepCoreMenuWidth,
+                this.deepCoreMenuY + menuHeight, palette.tableOuter());
+
+        this.clampDeepCoreDropdownScroll();
+        for (int row = 0; row < this.deepCoreMenuRows; row++) {
+            int index = this.deepCoreDropdownScroll + row;
+            if (index >= this.deepCoreFacilities.size()) break;
+            MonitorNetwork.DeepCoreFacility facility = this.deepCoreFacilities.get(index);
+            int y = this.deepCoreMenuY + 1 + row * DEEP_CORE_MENU_ROW_HEIGHT;
+            boolean rowHover = mouseX >= this.deepCoreMenuX
+                    && mouseX < this.deepCoreMenuX + this.deepCoreMenuWidth
+                    && mouseY >= y && mouseY < y + DEEP_CORE_MENU_ROW_HEIGHT;
+            guiGraphics.fill(this.deepCoreMenuX + 1, y,
+                    this.deepCoreMenuX + this.deepCoreMenuWidth - 1,
+                    y + DEEP_CORE_MENU_ROW_HEIGHT - 1,
+                    rowHover ? palette.hover() : (row % 2 == 0 ? palette.rowEven() : palette.rowOdd()));
+
+            String facilityName = facility.name().isBlank()
+                    ? Component.translatable("screen.forever_production_monitor.deep_core.unnamed").getString()
+                    : facility.name();
+            String status = Component.translatable(
+                    "screen.forever_production_monitor.deep_core.status."
+                            + facility.status().name().toLowerCase(Locale.ROOT)).getString();
+            String detail = NetworkMapView.dimensionName(facility.dimension())
+                    + " · " + facility.pos().toShortString() + " · " + status;
+            guiGraphics.fill(this.deepCoreMenuX + 5, y + 6,
+                    this.deepCoreMenuX + 8, y + 9,
+                    this.deepCoreStatusColor(facility.status(), palette));
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(facilityName, this.deepCoreMenuWidth - 18),
+                    this.deepCoreMenuX + 12, y + 3,
+                    facility.status() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE
+                            ? palette.text() : palette.muted(), false);
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(detail, this.deepCoreMenuWidth - 14),
+                    this.deepCoreMenuX + 6, y + 13, palette.muted(), false);
+        }
+    }
+
+    private int deepCoreStatusColor(MonitorNetwork.DeepCoreFacilityStatus status,
+                                    InterfaceTheme.Palette palette) {
+        return switch (status) {
+            case ONLINE -> 0xFF62CF99;
+            case UNLOADED -> 0xFFD5A45B;
+            case INVALID -> 0xFFE06B6B;
+        };
+    }
+
+    private void clampDeepCoreDropdownScroll() {
+        int visible = Math.min(DEEP_CORE_MENU_MAX_ROWS, this.deepCoreFacilities.size());
+        this.deepCoreDropdownScroll = Math.max(0, Math.min(this.deepCoreDropdownScroll,
+                Math.max(0, this.deepCoreFacilities.size() - visible)));
+    }
+
+    private void openDeepCore(MonitorNetwork.DeepCoreFacility facility) {
+        if (facility.status() != MonitorNetwork.DeepCoreFacilityStatus.ONLINE) return;
+        this.deepCoreDropdownOpen = false;
+        MonitorNetwork.requestOpenDeepCore(this.link.dimension(), this.link.pos(),
+                facility.dimension(), facility.pos());
+    }
+
+    private boolean handleDeepCoreAccessClick(double mouseX, double mouseY, int button) {
+        if (button != 0 || this.deepCoreFacilities.isEmpty()) return false;
+
+        if (this.deepCoreDropdownOpen && this.deepCoreFacilities.size() > 1
+                && mouseX >= this.deepCoreMenuX
+                && mouseX < this.deepCoreMenuX + this.deepCoreMenuWidth
+                && mouseY >= this.deepCoreMenuY
+                && mouseY < this.deepCoreMenuY + this.deepCoreMenuRows * DEEP_CORE_MENU_ROW_HEIGHT + 2) {
+            int row = (int)((mouseY - this.deepCoreMenuY - 1) / DEEP_CORE_MENU_ROW_HEIGHT);
+            int index = this.deepCoreDropdownScroll + Math.max(0, row);
+            if (index >= 0 && index < this.deepCoreFacilities.size()) {
+                this.openDeepCore(this.deepCoreFacilities.get(index));
+            }
+            return true;
+        }
+
+        if (mouseX >= this.deepCoreButtonX
+                && mouseX < this.deepCoreButtonX + this.deepCoreButtonWidth
+                && mouseY >= this.deepCoreButtonY
+                && mouseY < this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT) {
+            if (this.deepCoreFacilities.size() == 1) {
+                this.openDeepCore(this.deepCoreFacilities.get(0));
+            } else {
+                this.deepCoreDropdownOpen = !this.deepCoreDropdownOpen;
+                this.clampDeepCoreDropdownScroll();
+            }
+            return true;
+        }
+
+        if (this.deepCoreDropdownOpen) this.deepCoreDropdownOpen = false;
+        return false;
+    }
+
+    private boolean handleDeepCoreDropdownScroll(double mouseX, double mouseY, double scrollY) {
+        if (!this.deepCoreDropdownOpen || this.deepCoreFacilities.size() <= DEEP_CORE_MENU_MAX_ROWS
+                || scrollY == 0.0
+                || mouseX < this.deepCoreMenuX
+                || mouseX >= this.deepCoreMenuX + this.deepCoreMenuWidth
+                || mouseY < this.deepCoreMenuY
+                || mouseY >= this.deepCoreMenuY + this.deepCoreMenuRows * DEEP_CORE_MENU_ROW_HEIGHT + 2) {
+            return false;
+        }
+        this.deepCoreDropdownScroll += scrollY < 0.0 ? 1 : -1;
+        this.clampDeepCoreDropdownScroll();
+        return true;
     }
 
     private void drawContent(GuiGraphics guiGraphics, int n, int n2, float f) {
@@ -1248,6 +1433,9 @@ extends Screen {
         if (this.contentTransitionRunning()) {
             return false;
         }
+        if (this.handleDeepCoreDropdownScroll(d, d2, d4)) {
+            return true;
+        }
         if (this.viewMode == ViewMode.MAP && this.handleDimensionDropdownScroll(d, d2, d4)) {
             return true;
         }
@@ -1273,6 +1461,9 @@ extends Screen {
 
     public boolean mouseClicked(double d, double d2, int n) {
         if (ThemeInteractionState.mouseClicked(d, d2, n)) {
+            return true;
+        }
+        if (this.handleDeepCoreAccessClick(d, d2, n)) {
             return true;
         }
         Object object;

@@ -86,6 +86,15 @@ public final class ClientMonitorState {
         });
     }
 
+    public static void acceptDeepCoreFacilities(MonitorNetwork.DeepCoreFacilitiesPayload payload) {
+        Minecraft.getInstance().execute(() -> {
+            Screen screen = Minecraft.getInstance().screen;
+            if (screen instanceof ProductionMonitorScreen productionMonitorScreen) {
+                productionMonitorScreen.acceptDeepCoreFacilities(payload);
+            }
+        });
+    }
+
     public static MonitorNetwork.DashboardSnapshot dashboardSnapshot() {
         return dashboardSnapshot;
     }
