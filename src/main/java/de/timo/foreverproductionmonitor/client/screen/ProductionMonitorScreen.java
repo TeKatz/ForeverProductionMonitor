@@ -806,7 +806,11 @@ extends Screen {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         String label = this.deepCoreFacilities.size() == 1 ? "Deep Core" : "Deep Core ▾";
         this.deepCoreButtonWidth = Math.min(132, Math.max(84, this.font.width(label) + 20));
-        this.deepCoreButtonX = this.left + this.panelWidth - 31 - this.deepCoreButtonWidth;
+        ClientConfig.InterfaceStyle interfaceStyle =
+                (ClientConfig.InterfaceStyle)ClientConfig.VALUES.interfaceStyle.get();
+        int rightInset = interfaceStyle == ClientConfig.InterfaceStyle.CAT && this.panelWidth >= 560
+                ? 139 : 31;
+        this.deepCoreButtonX = this.left + this.panelWidth - rightInset - this.deepCoreButtonWidth;
         this.deepCoreButtonY = this.top + 7;
 
         boolean hover = mouseX >= this.deepCoreButtonX
