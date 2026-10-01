@@ -11,7 +11,7 @@ Forever Production Monitor turns a large AE2 network into something you can insp
 Official release files will be published through:
 
 - [GitHub Releases](https://github.com/TeKatz/ForeverProductionMonitor/releases)
-- CurseForge (project link will be added when the public listing is approved)
+- CurseForge (https://www.curseforge.com/minecraft/mc-mods/forever-production-monitor)
 
 Release changes are documented in [CHANGELOG.md](CHANGELOG.md). For safety and reproducibility, use the official project pages rather than third-party mirrors.
 
