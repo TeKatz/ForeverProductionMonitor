@@ -2,6 +2,20 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## 5.3.0 — development
+
+### Deep Core Fleet Diagnostics
+- Added a global Fleet Overview for all ForeverDeepCore facilities recognized by the linked monitor across detected network dimensions.
+- Added live facility summaries for state, installed/running Bores, one-minute output, cumulative production, estimated AE/min and internal storage usage.
+- Added detailed per-Bore diagnostics including resource, reserve, purity, depth, required/effective tier, actual/theoretical rate, AE/item, ETA, total production, stall reason and installed upgrades.
+- Added compact Deep Core internal-ME-storage diagnostics for bytes, type slots, stored items and finite/infinite/unknown cell states.
+- Preserved direct single-facility remote open while adding a dropdown entry for Fleet Overview.
+- ForeverDeepCore remains fully optional. 0.7.0+ diagnostics are consumed through a reflection-only adapter with no compile/runtime dependency.
+- No automatic chunk loading is introduced; unavailable remote facilities remain visible only through the information already known to the monitor.
+
+### Integration baseline
+- Includes the tested 5.2.0 Deep Core Network Map recognition, remote open, persistent facility dropdown, multi-facility/cross-dimension discovery and Cats-theme/dropdown rendering fixes.
+
 ## 5.0.0
 
 ### Crafting Diagnostics

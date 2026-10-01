@@ -2,7 +2,7 @@
 
 **An AE2 production, storage and network diagnostics companion for Minecraft 1.21.1 / NeoForge.**
 
-Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface. Version 5.0.0 adds Crafting Diagnostics, a substantially expanded theme system, a full Custom Theme Designer and a more capable Mini HUD.
+Forever Production Monitor turns a large AE2 network into something you can inspect instead of guess at. It combines live production statistics, storage and channel diagnostics, alarms, a configurable Mini HUD and an interactive 3D Network Map in a single tablet-style interface. The current 5.3.0 development line adds optional ForeverDeepCore fleet diagnostics while preserving the existing standalone AE2 monitoring workflows.
 
 > Forever Production Monitor is an unofficial third-party addon for Applied Energistics 2. It is not affiliated with or endorsed by the Applied Energistics 2 development team.
 
@@ -54,6 +54,7 @@ Version 4.0.0 includes a dedicated performance pass for large maps: filtered nod
 | Curios | **9.5.1+1.21.1 or newer** |
 | Java | **21** |
 | ExtendedAE | Optional; enables Wireless Connector path navigation |
+| ForeverDeepCore | Optional; 0.7.0+ enables Fleet Diagnostics and live Bore/storage details |
 
 Curios is declared as a required dependency by the mod metadata.
 
@@ -130,6 +131,17 @@ Select a device to inspect its position, network state, channels and idle power.
 Explore a large AE2 network using the interactive 3D view, search, filters, camera presets and dimension selection.
 
 The interface screenshots are in-game captures from the development and test worlds.
+
+## What's new in 5.3.0 (development)
+
+- Added an optional **Deep Core Fleet Diagnostics** workspace reachable from the persistent Deep Core header control.
+- Preserved the 5.2.0 remote-open workflow: with one facility, the main Deep Core button still opens it directly; the new arrow segment opens the facility menu and Fleet Overview.
+- Added a multi-facility overview across recognized AE2 network dimensions with facility name, dimension, position, state, running Bore count, production rate and internal storage usage.
+- Added a detailed selected-facility view with facility state, Bore count, production, estimated AE/min, compact internal ME storage capacity, three Bore cards and selected-Bore deposit/performance/upgrade details.
+- Reads ForeverDeepCore 0.7.0 `FacilityDiagnostics` **optionally through reflection**. ForeverProductionMonitor has no hard dependency on ForeverDeepCore.
+- Loaded invalid Deep Core structures can still expose diagnostics so structure problems remain inspectable; remote opening itself remains restricted to valid/online facilities.
+- Older or incompatible Deep Core builds degrade to an explicit “Diagnostics unavailable” state instead of breaking the monitor.
+- Fleet Diagnostics never force-loads remote chunks and reuses the monitor's already-authorized Deep Core discovery path.
 
 ## What's new in 5.0.0
 
