@@ -97,9 +97,15 @@ extends Screen {
     private int dimensionMenuWidth;
     private int dimensionMenuRows;
     private List<MonitorNetwork.DeepCoreFacility> deepCoreFacilities = List.of();
+    private List<MonitorNetwork.DeepCoreDiagnostic> deepCoreDiagnostics = List.of();
     private boolean deepCoreDropdownOpen;
     private int deepCoreDropdownScroll;
     private int deepCoreRefreshTicks;
+    private boolean deepCoreFleetOpen;
+    private int deepCoreDiagnosticsRefreshTicks;
+    private int deepCoreFleetScroll;
+    private int selectedDeepCoreIndex;
+    private int selectedDeepCoreBore;
     private int deepCoreButtonX;
     private int deepCoreButtonY;
     private int deepCoreButtonWidth;
@@ -227,7 +233,12 @@ extends Screen {
         this.deepCoreDropdownOpen = false;
         this.deepCoreDropdownScroll = 0;
         this.deepCoreRefreshTicks = 100;
+        this.deepCoreDiagnosticsRefreshTicks = 0;
         MonitorNetwork.requestDeepCoreFacilities(this.link);
+        if (this.deepCoreFleetOpen) {
+            MonitorNetwork.requestDeepCoreDiagnostics(this.link);
+            this.deepCoreDiagnosticsRefreshTicks = 100;
+        }
     }
 
     private void switchView(ViewMode viewMode) {
@@ -258,6 +269,28 @@ extends Screen {
         if (this.search == null) {
             return;
         }
+        if (this.deepCoreFleetOpen) {
+            this.search.visible = this.search.active = false;
+            this.sortButton.visible = this.sortButton.active = false;
+            this.filterButton.visible = this.filterButton.active = false;
+            this.previousButton.visible = this.previousButton.active = false;
+            this.nextButton.visible = this.nextButton.active = false;
+            this.storageCapacityButton.visible = this.storageCapacityButton.active = false;
+            this.nbtItemsButton.visible = this.nbtItemsButton.active = false;
+            this.dashboardTab.visible = this.dashboardTab.active = false;
+            this.productionTab.visible = this.productionTab.active = false;
+            this.storageTab.visible = this.storageTab.active = false;
+            this.devicesTab.visible = this.devicesTab.active = false;
+            this.mapTab.visible = this.mapTab.active = false;
+            this.craftingTab.visible = this.craftingTab.active = false;
+            return;
+        }
+        this.dashboardTab.visible = this.dashboardTab.active = true;
+        this.productionTab.visible = this.productionTab.active = true;
+        this.storageTab.visible = this.storageTab.active = true;
+        this.devicesTab.visible = this.devicesTab.active = true;
+        this.mapTab.visible = this.mapTab.active = true;
+        this.craftingTab.visible = this.craftingTab.active = true;
         this.layoutCurrentView();
         this.search.active = this.search.visible = this.viewMode != ViewMode.STORAGE && this.viewMode != ViewMode.DASHBOARD;
         this.search.setHint((Component)Component.translatable((String)(this.viewMode == ViewMode.DEVICES ? "screen.forever_production_monitor.search.devices" : (this.viewMode == ViewMode.MAP ? "screen.forever_production_monitor.search.map" : (this.viewMode == ViewMode.COMPONENTS ? "screen.forever_production_monitor.search.components" : "screen.forever_production_monitor.search")))));
@@ -390,11 +423,18 @@ extends Screen {
 
     public void tick() {
         super.tick();
-        if (this.searchDelay > 0 && --this.searchDelay == 0) {
-            this.requestNow();
-        }
-        if (--this.refreshTicks <= 0) {
-            this.requestNow();
+        if (this.deepCoreFleetOpen) {
+            if (--this.deepCoreDiagnosticsRefreshTicks <= 0) {
+                this.deepCoreDiagnosticsRefreshTicks = 100;
+                MonitorNetwork.requestDeepCoreDiagnostics(this.link);
+            }
+        } else {
+            if (this.searchDelay > 0 && --this.searchDelay == 0) {
+                this.requestNow();
+            }
+            if (--this.refreshTicks <= 0) {
+                this.requestNow();
+            }
         }
         if (--this.deepCoreRefreshTicks <= 0) {
             this.deepCoreRefreshTicks = 100;
@@ -408,6 +448,40 @@ extends Screen {
         this.deepCoreFacilities = payload.facilities();
         this.clampDeepCoreDropdownScroll();
         if (this.deepCoreFacilities.isEmpty()) this.deepCoreDropdownOpen = false;
+    }
+
+    public void acceptDeepCoreDiagnostics(MonitorNetwork.DeepCoreDiagnosticsPayload payload) {
+        if (!payload.monitorDimension().equals(this.link.dimension())
+                || !payload.monitorPos().equals(this.link.pos())) return;
+
+        ResourceLocation selectedDimension = null;
+        BlockPos selectedPos = null;
+        if (!this.deepCoreDiagnostics.isEmpty()
+                && this.selectedDeepCoreIndex >= 0
+                && this.selectedDeepCoreIndex < this.deepCoreDiagnostics.size()) {
+            MonitorNetwork.DeepCoreDiagnostic selected = this.deepCoreDiagnostics.get(this.selectedDeepCoreIndex);
+            selectedDimension = selected.dimension();
+            selectedPos = selected.pos();
+        }
+
+        this.deepCoreDiagnostics = payload.facilities();
+        this.clampDeepCoreFleetScroll();
+
+        int preserved = -1;
+        if (selectedDimension != null && selectedPos != null) {
+            for (int i = 0; i < this.deepCoreDiagnostics.size(); i++) {
+                MonitorNetwork.DeepCoreDiagnostic candidate = this.deepCoreDiagnostics.get(i);
+                if (candidate.dimension().equals(selectedDimension) && candidate.pos().equals(selectedPos)) {
+                    preserved = i;
+                    break;
+                }
+            }
+        }
+        if (preserved >= 0) this.selectedDeepCoreIndex = preserved;
+        else this.selectedDeepCoreIndex = Math.max(0,
+                Math.min(this.selectedDeepCoreIndex, Math.max(0, this.deepCoreDiagnostics.size() - 1)));
+        this.selectedDeepCoreBore = Math.max(0, Math.min(this.selectedDeepCoreBore, 2));
+        this.dataPulseStartedNanos = GuiMotion.enabled() ? GuiMotion.now() : 0L;
     }
 
     public void accept(MonitorNetwork.MonitorSnapshot monitorSnapshot) {
