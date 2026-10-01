@@ -849,9 +849,10 @@ extends Screen {
         guiGraphics.fill(this.deepCoreMenuX - 1, this.deepCoreMenuY - 1,
                 this.deepCoreMenuX + this.deepCoreMenuWidth + 1,
                 this.deepCoreMenuY + menuHeight + 1, palette.border());
+        int opaqueTable = 0xFF000000 | (palette.tableOuter() & 0x00FFFFFF);
         guiGraphics.fill(this.deepCoreMenuX, this.deepCoreMenuY,
                 this.deepCoreMenuX + this.deepCoreMenuWidth,
-                this.deepCoreMenuY + menuHeight, palette.tableOuter());
+                this.deepCoreMenuY + menuHeight, opaqueTable);
 
         this.clampDeepCoreDropdownScroll();
         for (int row = 0; row < this.deepCoreMenuRows; row++) {
@@ -862,10 +863,16 @@ extends Screen {
             boolean rowHover = mouseX >= this.deepCoreMenuX
                     && mouseX < this.deepCoreMenuX + this.deepCoreMenuWidth
                     && mouseY >= y && mouseY < y + DEEP_CORE_MENU_ROW_HEIGHT;
+            int rowColor = row % 2 == 0 ? palette.rowEven() : palette.rowOdd();
+            int opaqueRow = 0xFF000000 | (rowColor & 0x00FFFFFF);
             guiGraphics.fill(this.deepCoreMenuX + 1, y,
                     this.deepCoreMenuX + this.deepCoreMenuWidth - 1,
-                    y + DEEP_CORE_MENU_ROW_HEIGHT - 1,
-                    rowHover ? palette.hover() : (row % 2 == 0 ? palette.rowEven() : palette.rowOdd()));
+                    y + DEEP_CORE_MENU_ROW_HEIGHT - 1, opaqueRow);
+            if (rowHover) {
+                guiGraphics.fill(this.deepCoreMenuX + 1, y,
+                        this.deepCoreMenuX + this.deepCoreMenuWidth - 1,
+                        y + DEEP_CORE_MENU_ROW_HEIGHT - 1, palette.hover());
+            }
 
             String facilityName = facility.name().isBlank()
                     ? Component.translatable("screen.forever_production_monitor.deep_core.unnamed").getString()
