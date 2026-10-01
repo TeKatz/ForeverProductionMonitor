@@ -1129,6 +1129,10 @@ extends Screen {
     }
 
     private void drawContent(GuiGraphics guiGraphics, int n, int n2, float f) {
+        if (this.deepCoreFleetOpen) {
+            this.drawDeepCoreFleetContent(guiGraphics, n, n2);
+            return;
+        }
         switch (this.viewMode) {
             case DASHBOARD: {
                 this.drawDashboardContent(guiGraphics, n, n2);
@@ -1154,6 +1158,457 @@ extends Screen {
                 this.drawNetworkMapContent(guiGraphics, n, n2, f);
             }
         }
+    }
+
+    private void drawDeepCoreFleetContent(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        int navY = this.top + 39;
+        int bodyY = this.top + 66;
+        int bodyBottom = this.contentBottom;
+        int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        int gap = 8;
+        int listWidth = Math.min(270, Math.max(205, innerWidth / 3));
+        int listX = this.contentLeft;
+        int detailX = listX + listWidth + gap;
+        int detailWidth = Math.max(1, this.contentRight - detailX);
+
+        drawDeepCoreFleetButton(guiGraphics, listX, navY, 104, 18,
+                Component.translatable("screen.forever_production_monitor.deep_core.back"),
+                mouseX, mouseY, true);
+
+        guiGraphics.fill(listX, bodyY, listX + listWidth, bodyBottom, palette.tableOuter());
+        guiGraphics.fill(listX + 1, bodyY + 1, listX + listWidth - 1, bodyY + 22, palette.tableHeader());
+        guiGraphics.drawString(this.font,
+                Component.translatable("screen.forever_production_monitor.deep_core.facilities"),
+                listX + 8, bodyY + 7, palette.text(), false);
+        String count = Integer.toString(this.deepCoreDiagnostics.size());
+        this.drawRight(guiGraphics, Component.literal(count), listX + listWidth - 8, bodyY + 7, palette.accentA());
+
+        if (this.deepCoreDiagnostics.isEmpty()) {
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.deep_core.loading"),
+                    listX + listWidth / 2, bodyY + 52, palette.muted());
+            guiGraphics.fill(detailX, bodyY, this.contentRight, bodyBottom, palette.tableOuter());
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.deep_core.loading"),
+                    detailX + detailWidth / 2, bodyY + 52, palette.muted());
+            drawDeepCoreFleetFooter(guiGraphics);
+            return;
+        }
+
+        this.clampDeepCoreFleetScroll();
+        int visibleRows = this.deepCoreFleetVisibleRows();
+        int rowTop = bodyY + 24;
+        for (int row = 0; row < visibleRows; row++) {
+            int index = this.deepCoreFleetScroll + row;
+            if (index >= this.deepCoreDiagnostics.size()) break;
+            MonitorNetwork.DeepCoreDiagnostic facility = this.deepCoreDiagnostics.get(index);
+            int y = rowTop + row * DEEP_CORE_FLEET_ROW_HEIGHT;
+            if (y + DEEP_CORE_FLEET_ROW_HEIGHT > bodyBottom) break;
+            boolean selected = index == this.selectedDeepCoreIndex;
+            boolean hover = mouseX >= listX + 1 && mouseX < listX + listWidth - 1
+                    && mouseY >= y && mouseY < y + DEEP_CORE_FLEET_ROW_HEIGHT - 2;
+            int rowColor = selected ? palette.summary() : (row % 2 == 0 ? palette.rowEven() : palette.rowOdd());
+            guiGraphics.fill(listX + 1, y, listX + listWidth - 1,
+                    y + DEEP_CORE_FLEET_ROW_HEIGHT - 2, rowColor);
+            if (hover) {
+                guiGraphics.fill(listX + 1, y, listX + listWidth - 1,
+                        y + DEEP_CORE_FLEET_ROW_HEIGHT - 2, palette.hover());
+            }
+            int stateColor = deepCoreFacilityDiagnosticColor(facility);
+            guiGraphics.fill(listX + 1, y, listX + 4,
+                    y + DEEP_CORE_FLEET_ROW_HEIGHT - 2, stateColor);
+
+            String name = deepCoreFacilityName(facility);
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(name, Math.max(30, listWidth - 68)),
+                    listX + 10, y + 6, selected ? palette.accentB() : palette.text(), false);
+            String state = facility.diagnosticsAvailable()
+                    ? prettyDeepCoreText(facility.facilityState())
+                    : facility.availability().name();
+            this.drawRight(guiGraphics, Component.literal(state),
+                    listX + listWidth - 8, y + 6, stateColor);
+
+            String location = NetworkMapView.dimensionName(facility.dimension())
+                    + " · " + facility.pos().toShortString();
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(location, Math.max(20, listWidth - 18)),
+                    listX + 10, y + 20, palette.muted(), false);
+
+            String summary;
+            if (!facility.diagnosticsAvailable()) {
+                summary = Component.translatable(
+                        "screen.forever_production_monitor.deep_core.diagnostics_unavailable_short").getString();
+            } else {
+                String storage = deepCoreStorageUsageText(facility.storage());
+                summary = facility.runningBores() + "/" + facility.installedBores() + " running"
+                        + " · " + formatAmount(facility.itemsLastMinute()) + "/min"
+                        + " · " + storage;
+            }
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(summary, Math.max(20, listWidth - 18)),
+                    listX + 10, y + 35, palette.muted(), false);
+        }
+
+        if (this.deepCoreDiagnostics.size() > visibleRows) {
+            int trackX = listX + listWidth - 4;
+            int trackY = rowTop + 2;
+            int trackH = Math.max(16, bodyBottom - trackY - 4);
+            guiGraphics.fill(trackX, trackY, trackX + 2, trackY + trackH, palette.outer());
+            int thumbH = Math.max(12, Math.round(trackH * (visibleRows / (float)this.deepCoreDiagnostics.size())));
+            int maxScroll = Math.max(1, this.deepCoreDiagnostics.size() - visibleRows);
+            int thumbY = trackY + Math.round((trackH - thumbH) * (this.deepCoreFleetScroll / (float)maxScroll));
+            guiGraphics.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, palette.accentB());
+        }
+
+        this.selectedDeepCoreIndex = Math.max(0,
+                Math.min(this.selectedDeepCoreIndex, this.deepCoreDiagnostics.size() - 1));
+        MonitorNetwork.DeepCoreDiagnostic selected = this.deepCoreDiagnostics.get(this.selectedDeepCoreIndex);
+        drawDeepCoreFacilityDetail(guiGraphics, selected, detailX, bodyY, detailWidth,
+                bodyBottom - bodyY, mouseX, mouseY);
+        drawDeepCoreFleetFooter(guiGraphics);
+    }
+
+    private void drawDeepCoreFacilityDetail(GuiGraphics guiGraphics,
+                                            MonitorNetwork.DeepCoreDiagnostic facility,
+                                            int x, int y, int width, int height,
+                                            int mouseX, int mouseY) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        int right = x + width;
+        int bottom = y + height;
+        guiGraphics.fill(x, y, right, bottom, palette.tableOuter());
+        guiGraphics.fill(x + 1, y + 1, right - 1, y + 31, palette.tableHeader());
+
+        String name = deepCoreFacilityName(facility);
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(name, Math.max(40, width - 154)),
+                x + 10, y + 7, palette.text(), false);
+        String location = NetworkMapView.dimensionName(facility.dimension())
+                + " · " + facility.pos().toShortString();
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(location, Math.max(40, width - 154)),
+                x + 10, y + 18, palette.muted(), false);
+
+        boolean canOpen = facility.availability() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE;
+        drawDeepCoreFleetButton(guiGraphics, right - 126, y + 7, 116, 18,
+                Component.translatable("screen.forever_production_monitor.deep_core.open"),
+                mouseX, mouseY, canOpen);
+
+        if (!facility.diagnosticsAvailable()) {
+            int color = facility.availability() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE
+                    ? 0xFFD5A45B : deepCoreStatusColor(facility.availability(), palette);
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.deep_core.diagnostics_unavailable"),
+                    x + width / 2, y + 72, color);
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.deep_core.requires_07"),
+                    x + width / 2, y + 88, palette.muted());
+            return;
+        }
+
+        int summaryY = y + 38;
+        int summaryGap = 5;
+        int cardW = Math.max(55, (width - 20 - summaryGap * 3) / 4);
+        drawDeepCoreStatCard(guiGraphics, x + 5, summaryY, cardW,
+                "STATE", prettyDeepCoreText(facility.facilityState()),
+                deepCoreFacilityStateColor(facility.facilityState()));
+        drawDeepCoreStatCard(guiGraphics, x + 5 + (cardW + summaryGap), summaryY, cardW,
+                "BORES", facility.runningBores() + "/" + facility.installedBores(),
+                palette.accentA());
+        drawDeepCoreStatCard(guiGraphics, x + 5 + (cardW + summaryGap) * 2, summaryY, cardW,
+                "OUTPUT", formatAmount(facility.itemsLastMinute()) + "/min",
+                0xFF62CF99);
+        drawDeepCoreStatCard(guiGraphics, x + 5 + (cardW + summaryGap) * 3, summaryY,
+                Math.max(55, width - 10 - (cardW + summaryGap) * 3), "POWER",
+                formatAmount(facility.estimatedAePerMinute()) + " AE/min",
+                palette.accentB());
+
+        int storageY = summaryY + 43;
+        drawDeepCoreStoragePanel(guiGraphics, facility.storage(), x + 5, storageY, width - 10);
+
+        int boreY = storageY + 62;
+        int boreGap = 5;
+        int boreW = Math.max(66, (width - 10 - boreGap * 2) / 3);
+        for (int i = 0; i < 3; i++) {
+            MonitorNetwork.DeepCoreBoreDiagnostic bore = i < facility.bores().size()
+                    ? facility.bores().get(i) : null;
+            int boreX = x + 5 + i * (boreW + boreGap);
+            int actualW = i == 2 ? Math.max(66, right - 5 - boreX) : boreW;
+            drawDeepCoreBoreCard(guiGraphics, bore, i, boreX, boreY, actualW, 78,
+                    i == this.selectedDeepCoreBore,
+                    mouseX >= boreX && mouseX < boreX + actualW
+                            && mouseY >= boreY && mouseY < boreY + 78);
+        }
+
+        int detailY = boreY + 85;
+        int detailH = Math.max(64, bottom - detailY - 5);
+        MonitorNetwork.DeepCoreBoreDiagnostic selectedBore =
+                this.selectedDeepCoreBore >= 0 && this.selectedDeepCoreBore < facility.bores().size()
+                        ? facility.bores().get(this.selectedDeepCoreBore) : null;
+        drawDeepCoreBoreDetail(guiGraphics, selectedBore, x + 5, detailY, width - 10, detailH);
+    }
+
+    private void drawDeepCoreStoragePanel(GuiGraphics guiGraphics,
+                                          MonitorNetwork.DeepCoreStorageDiagnostic storage,
+                                          int x, int y, int width) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        guiGraphics.fill(x, y, x + width, y + 56, palette.rowEven());
+        guiGraphics.drawString(this.font,
+                Component.translatable("screen.forever_production_monitor.deep_core.internal_storage"),
+                x + 8, y + 6, palette.muted(), false);
+        String state = prettyDeepCoreText(storage.state());
+        this.drawRight(guiGraphics, Component.literal(state), x + width - 8, y + 6,
+                deepCoreStorageStateColor(storage.state()));
+
+        int barX = x + 8;
+        int barY = y + 20;
+        int barW = width - 16;
+        guiGraphics.fill(barX, barY, barX + barW, barY + 7, palette.outer());
+        double usage = storage.usagePercent();
+        int filled = "INFINITE".equals(storage.state())
+                ? barW : usage < 0.0 ? 0 : (int)Math.round(barW * Math.min(100.0, usage) / 100.0);
+        if (filled > 0) {
+            guiGraphics.fill(barX, barY, barX + filled, barY + 7,
+                    deepCoreStorageStateColor(storage.state()));
+        }
+
+        String left = formatBytes(storage.usedBytes()) + " / " + formatBytes(storage.totalBytes());
+        String right = deepCoreStorageUsageText(storage)
+                + " · Types " + formatAmount(storage.usedTypes()) + "/" + formatAmount(storage.totalTypes())
+                + " · Items " + formatAmount(storage.storedItems());
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(left, Math.max(30, width / 2 - 12)),
+                x + 8, y + 35, palette.text(), false);
+        this.drawRight(guiGraphics,
+                Component.literal(this.font.plainSubstrByWidth(right, Math.max(30, width / 2 + 30))),
+                x + width - 8, y + 35, palette.muted());
+    }
+
+    private void drawDeepCoreBoreCard(GuiGraphics guiGraphics,
+                                      MonitorNetwork.DeepCoreBoreDiagnostic bore,
+                                      int fallbackIndex,
+                                      int x, int y, int width, int height,
+                                      boolean selected, boolean hover) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        int background = selected ? palette.summary() : palette.rowOdd();
+        guiGraphics.fill(x, y, x + width, y + height, background);
+        if (hover) guiGraphics.fill(x, y, x + width, y + height, palette.hover());
+
+        if (bore == null) {
+            guiGraphics.drawString(this.font, "BORE 0" + (fallbackIndex + 1),
+                    x + 8, y + 7, palette.muted(), false);
+            guiGraphics.drawString(this.font, "No diagnostics",
+                    x + 8, y + 25, palette.muted(), false);
+            return;
+        }
+
+        int stateColor = deepCoreBoreStateColor(bore.state());
+        guiGraphics.fill(x, y, x + 3, y + height, stateColor);
+        guiGraphics.drawString(this.font, "BORE 0" + bore.number(),
+                x + 8, y + 7, selected ? palette.accentB() : palette.text(), false);
+        String state = prettyDeepCoreText(bore.state());
+        this.drawRight(guiGraphics, Component.literal(state), x + width - 7, y + 7, stateColor);
+
+        String resource = deepCoreResourceName(bore.resource());
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(resource, Math.max(20, width - 16)),
+                x + 8, y + 24, bore.installed() ? palette.text() : palette.muted(), false);
+
+        String reserve = bore.initialReserve() > 0
+                ? String.format(Locale.ROOT, "%.1f%%", bore.remaining() * 100.0 / bore.initialReserve())
+                : "--";
+        guiGraphics.drawString(this.font, "Reserve " + reserve,
+                x + 8, y + 39, palette.muted(), false);
+        String rate = formatAmount(bore.itemsLastMinute()) + "/min · "
+                + formatAmount(bore.aePerItem()) + " AE/i";
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(rate, Math.max(20, width - 16)),
+                x + 8, y + 52, palette.muted(), false);
+
+        String bottom = "STALLED".equals(bore.state())
+                ? prettyDeepCoreText(bore.stallReason())
+                : "T" + bore.effectiveTier() + " · "
+                    + formatAmount(bore.theoreticalItemsPerMinute()) + "/min max";
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(bottom, Math.max(20, width - 16)),
+                x + 8, y + 65,
+                "STALLED".equals(bore.state()) ? 0xFFE0A15B : palette.muted(), false);
+    }
+
+    private void drawDeepCoreBoreDetail(GuiGraphics guiGraphics,
+                                        MonitorNetwork.DeepCoreBoreDiagnostic bore,
+                                        int x, int y, int width, int height) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        guiGraphics.fill(x, y, x + width, y + height, palette.rowEven());
+        if (bore == null) {
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.deep_core.no_bore_diagnostics"),
+                    x + width / 2, y + 18, palette.muted());
+            return;
+        }
+
+        guiGraphics.drawString(this.font,
+                Component.literal("BORE 0" + bore.number() + " DETAILS"),
+                x + 8, y + 7, palette.accentB(), false);
+        int colGap = 8;
+        int colW = Math.max(70, (width - 24 - colGap * 2) / 3);
+        int c1 = x + 8;
+        int c2 = c1 + colW + colGap;
+        int c3 = c2 + colW + colGap;
+
+        guiGraphics.drawString(this.font, "DEPOSIT", c1, y + 23, palette.accentA(), false);
+        guiGraphics.drawString(this.font, "Reserve " + formatAmount(bore.remaining())
+                + " / " + formatAmount(bore.initialReserve()), c1, y + 36, palette.text(), false);
+        guiGraphics.drawString(this.font, "Purity " + bore.purity() + "% · Depth " + bore.depth() + "m",
+                c1, y + 49, palette.muted(), false);
+        guiGraphics.drawString(this.font, "Required T" + bore.requiredTier()
+                + " · Effective T" + bore.effectiveTier(), c1, y + 62, palette.muted(), false);
+
+        guiGraphics.drawString(this.font, "PERFORMANCE", c2, y + 23, palette.accentA(), false);
+        guiGraphics.drawString(this.font, "Actual " + formatAmount(bore.itemsLastMinute()) + "/min",
+                c2, y + 36, palette.text(), false);
+        guiGraphics.drawString(this.font, "Normal " + formatAmount(bore.theoreticalItemsPerMinute()) + "/min",
+                c2, y + 49, palette.muted(), false);
+        guiGraphics.drawString(this.font, "ETA " + deepCoreEta(bore.estimatedDepletionMinutes())
+                + " · Total " + formatAmount(bore.totalProduced()),
+                c2, y + 62, palette.muted(), false);
+
+        guiGraphics.drawString(this.font, "UPGRADES", c3, y + 23, palette.accentA(), false);
+        if (bore.upgrades().isEmpty()) {
+            guiGraphics.drawString(this.font, "No upgrades installed", c3, y + 36, palette.muted(), false);
+        } else {
+            for (int i = 0; i < Math.min(3, bore.upgrades().size()); i++) {
+                MonitorNetwork.DeepCoreUpgradeDiagnostic upgrade = bore.upgrades().get(i);
+                String text = prettyDeepCoreText(upgrade.family()) + " " + deepCoreRoman(upgrade.tier());
+                guiGraphics.drawString(this.font,
+                        this.font.plainSubstrByWidth(text, colW),
+                        c3, y + 36 + i * 13, palette.text(), false);
+            }
+        }
+        if ("STALLED".equals(bore.state()) && height >= 86) {
+            guiGraphics.drawString(this.font,
+                    "Reason: " + prettyDeepCoreText(bore.stallReason()),
+                    c3, y + Math.min(height - 14, 75), 0xFFE0A15B, false);
+        }
+    }
+
+    private void drawDeepCoreStatCard(GuiGraphics guiGraphics, int x, int y, int width,
+                                      String label, String value, int valueColor) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        guiGraphics.fill(x, y, x + width, y + 38, palette.rowEven());
+        guiGraphics.drawCenteredString(this.font, label, x + width / 2, y + 6, palette.muted());
+        guiGraphics.drawCenteredString(this.font,
+                this.font.plainSubstrByWidth(value, Math.max(20, width - 8)),
+                x + width / 2, y + 21, valueColor);
+    }
+
+    private void drawDeepCoreFleetButton(GuiGraphics guiGraphics, int x, int y, int width, int height,
+                                         Component label, int mouseX, int mouseY, boolean enabled) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        boolean hover = enabled && mouseX >= x && mouseX < x + width
+                && mouseY >= y && mouseY < y + height;
+        guiGraphics.fill(x, y, x + width, y + height,
+                hover ? palette.accentB() : palette.border());
+        guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1,
+                hover ? palette.hover() : palette.summary());
+        guiGraphics.drawCenteredString(this.font,
+                this.font.plainSubstrByWidth(label.getString(), Math.max(20, width - 8)),
+                x + width / 2, y + 5, enabled ? palette.text() : palette.muted());
+    }
+
+    private void drawDeepCoreFleetFooter(GuiGraphics guiGraphics) {
+        InterfaceTheme.Palette palette = InterfaceTheme.current();
+        String footer = Component.translatable("screen.forever_production_monitor.deep_core.fleet_footer",
+                this.deepCoreDiagnostics.size()).getString();
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(footer, Math.max(30, (this.contentRight - this.contentLeft) / 2)),
+                this.contentLeft, this.footerY, palette.muted(), false);
+        this.drawStatus(guiGraphics, MonitorNetwork.Status.ONLINE, this.contentRight, this.footerY);
+    }
+
+    private int deepCoreFacilityDiagnosticColor(MonitorNetwork.DeepCoreDiagnostic facility) {
+        if (facility.availability() != MonitorNetwork.DeepCoreFacilityStatus.ONLINE) {
+            return this.deepCoreStatusColor(facility.availability(), InterfaceTheme.current());
+        }
+        if (!facility.diagnosticsAvailable()) return 0xFFD5A45B;
+        return deepCoreFacilityStateColor(facility.facilityState());
+    }
+
+    private static int deepCoreFacilityStateColor(String state) {
+        return switch (state == null ? "" : state) {
+            case "RUNNING" -> 0xFF62CF99;
+            case "STALLED" -> 0xFFE0A15B;
+            case "INVALID" -> 0xFFE06B6B;
+            case "IDLE" -> 0xFFAEB8C5;
+            default -> 0xFF8E9AA8;
+        };
+    }
+
+    private static int deepCoreStorageStateColor(String state) {
+        return switch (state == null ? "" : state) {
+            case "OK" -> 0xFF62CF99;
+            case "HIGH" -> 0xFFD5A45B;
+            case "CRITICAL", "FULL" -> 0xFFE06B6B;
+            case "INFINITE" -> 0xFFBA91EA;
+            default -> 0xFF8E9AA8;
+        };
+    }
+
+    private static int deepCoreBoreStateColor(String state) {
+        return switch (state == null ? "" : state) {
+            case "RUNNING" -> 0xFF62CF99;
+            case "STALLED" -> 0xFFE0A15B;
+            case "PAUSED", "EXHAUSTED" -> 0xFFD5A45B;
+            case "NOT_INSTALLED" -> 0xFF545B66;
+            default -> 0xFF8E9AA8;
+        };
+    }
+
+    private static String deepCoreFacilityName(MonitorNetwork.DeepCoreDiagnostic facility) {
+        return facility.name().isBlank()
+                ? Component.translatable("screen.forever_production_monitor.deep_core.unnamed").getString()
+                : facility.name();
+    }
+
+    private static String deepCoreStorageUsageText(MonitorNetwork.DeepCoreStorageDiagnostic storage) {
+        if ("INFINITE".equals(storage.state())) return "Infinite";
+        double usage = storage.usagePercent();
+        return usage < 0.0 ? "--" : String.format(Locale.ROOT, "%.1f%%", usage);
+    }
+
+    private static String deepCoreResourceName(ResourceLocation resource) {
+        if (resource == null) return "No deposit assigned";
+        return prettyDeepCoreText(resource.getPath());
+    }
+
+    private static String prettyDeepCoreText(String value) {
+        if (value == null || value.isBlank()) return "--";
+        String[] parts = value.toLowerCase(Locale.ROOT).replace('-', '_').split("_");
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            if (!result.isEmpty()) result.append(' ');
+            result.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return result.isEmpty() ? "--" : result.toString();
+    }
+
+    private static String deepCoreEta(long minutes) {
+        if (minutes < 0L) return "--";
+        if (minutes < 60L) return minutes + "m";
+        long hours = minutes / 60L;
+        long rest = minutes % 60L;
+        if (hours < 24L) return rest == 0L ? hours + "h" : hours + "h " + rest + "m";
+        return (hours / 24L) + "d " + (hours % 24L) + "h";
+    }
+
+    private static String deepCoreRoman(int tier) {
+        return switch (tier) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            default -> Integer.toString(Math.max(0, tier));
+        };
     }
 
     private void drawNetworkMapContent(GuiGraphics guiGraphics, int n, int n2, float f) {
