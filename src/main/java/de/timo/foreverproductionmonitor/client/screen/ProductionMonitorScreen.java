@@ -844,7 +844,7 @@ extends Screen {
             guiGraphics.renderItem(AEItems.BLANK_PATTERN.stack(),
                     this.craftingTab.getX() + 5, this.craftingTab.getY() + 1);
         }
-        if (this.viewMode == ViewMode.MAP) {
+        if (!this.deepCoreFleetOpen && this.viewMode == ViewMode.MAP) {
             this.drawDimensionDropdownOverlay(guiGraphics, n, n2);
         }
         this.drawTitle(guiGraphics);
