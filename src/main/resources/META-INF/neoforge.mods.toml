@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="forever_production_monitor"
-version="5.1.2-SNAPSHOT"
+version="5.2.0-SNAPSHOT"
 displayName="Forever Production Monitor"
 description='''AE2 monitoring and diagnostics with production and storage statistics, alarms, a Mini HUD, Missing Channel tools and an interactive 3D Network Map.'''
 authors="Timo"
