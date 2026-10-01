@@ -21,7 +21,7 @@ public final class DeepCoreDiagnosticsBridge {
                                                             BlockEntity target,
                                                             String fallbackName,
                                                             MonitorNetwork.DeepCoreFacilityStatus availability) {
-        if (target == null || availability != MonitorNetwork.DeepCoreFacilityStatus.ONLINE) {
+        if (target == null) {
             return MonitorNetwork.DeepCoreDiagnostic.unavailable(
                     dimension, pos, fallbackName, availability);
         }
