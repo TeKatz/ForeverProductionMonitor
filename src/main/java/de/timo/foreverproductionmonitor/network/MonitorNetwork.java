@@ -42,6 +42,7 @@ import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -91,6 +92,8 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(RequestNetworkMap.TYPE, RequestNetworkMap.STREAM_CODEC, MonitorNetwork::handleNetworkMapRequest);
         payloadRegistrar.playToClient(NetworkMapPayload.TYPE, NetworkMapPayload.STREAM_CODEC, MonitorNetwork::handleNetworkMapSnapshot);
         payloadRegistrar.playToServer(RequestOpenDeepCore.TYPE, RequestOpenDeepCore.STREAM_CODEC, MonitorNetwork::handleOpenDeepCoreRequest);
+        payloadRegistrar.playToServer(RequestDeepCoreFacilities.TYPE, RequestDeepCoreFacilities.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesRequest);
+        payloadRegistrar.playToClient(DeepCoreFacilitiesPayload.TYPE, DeepCoreFacilitiesPayload.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesSnapshot);
         CraftingDiagnosticsNetwork.register(payloadRegistrar);
     }
 
@@ -137,6 +140,12 @@ public final class MonitorNetwork {
                                            ResourceLocation targetDimension, BlockPos targetPos) {
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestOpenDeepCore(
                 monitorDimension, monitorPos, targetDimension, targetPos),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    public static void requestDeepCoreFacilities(ProductionTabletItem.MonitorLink monitorLink) {
+        PacketDistributor.sendToServer((CustomPacketPayload)new RequestDeepCoreFacilities(
+                monitorLink.dimension(), monitorLink.pos()),
                 (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
@@ -219,6 +228,93 @@ public final class MonitorNetwork {
                 (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
+    private static void handleDeepCoreFacilitiesRequest(RequestDeepCoreFacilities request, IPayloadContext context) {
+        Object player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+
+        ProductionMonitorBlockEntity monitor = MonitorNetwork.linkedMonitor(
+                serverPlayer, request.monitorDimension(), request.monitorPos());
+        if (monitor == null || !monitor.isMonitorOnline()) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    (CustomPacketPayload)new DeepCoreFacilitiesPayload(
+                            request.monitorDimension(), request.monitorPos(), List.of()),
+                    (CustomPacketPayload[])new CustomPacketPayload[0]);
+            return;
+        }
+
+        ProductionMonitorBlockEntity.NetworkMapSnapshot root =
+                monitor.networkMapSnapshot(request.monitorDimension());
+        List<ResourceLocation> dimensions = root.dimensions().isEmpty()
+                ? List.of(request.monitorDimension()) : root.dimensions();
+
+        ArrayList<DeepCoreFacility> facilities = new ArrayList<>();
+        HashSet<String> seen = new HashSet<>();
+        for (ResourceLocation dimension : dimensions) {
+            ProductionMonitorBlockEntity.NetworkMapSnapshot snapshot =
+                    monitor.networkMapSnapshot(dimension);
+            for (ProductionMonitorBlockEntity.NetworkMapNode node : snapshot.nodes()) {
+                if (!isDeepCoreControlCore(node.visualId())) continue;
+                String key = dimension + ":" + node.pos().asLong();
+                if (!seen.add(key)) continue;
+                facilities.add(inspectDeepCoreFacility(serverPlayer, dimension, node.pos()));
+                if (facilities.size() >= 32) break;
+            }
+            if (facilities.size() >= 32) break;
+        }
+
+        facilities.sort(Comparator
+                .comparing((DeepCoreFacility facility) ->
+                        facility.name().isBlank() ? "~" : facility.name().toLowerCase(Locale.ROOT))
+                .thenComparing(facility -> facility.dimension().toString())
+                .thenComparingLong(facility -> facility.pos().asLong()));
+
+        PacketDistributor.sendToPlayer(serverPlayer,
+                (CustomPacketPayload)new DeepCoreFacilitiesPayload(
+                        request.monitorDimension(), request.monitorPos(), facilities),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    private static DeepCoreFacility inspectDeepCoreFacility(ServerPlayer player,
+                                                             ResourceLocation dimension,
+                                                             BlockPos pos) {
+        ServerLevel targetLevel = player.server.getLevel(
+                ResourceKey.create(Registries.DIMENSION, dimension));
+        if (targetLevel == null || !targetLevel.hasChunkAt(pos)) {
+            return new DeepCoreFacility(dimension, pos, "", DeepCoreFacilityStatus.UNLOADED);
+        }
+
+        var state = targetLevel.getBlockState(pos);
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (!isDeepCoreControlCore(blockId)) {
+            return new DeepCoreFacility(dimension, pos, "", DeepCoreFacilityStatus.INVALID);
+        }
+
+        BlockEntity target = targetLevel.getBlockEntity(pos);
+        if (target == null) {
+            return new DeepCoreFacility(dimension, pos, "", DeepCoreFacilityStatus.INVALID);
+        }
+
+        String name = "";
+        boolean valid = false;
+        try {
+            Object rawName = target.getClass().getMethod("facilityName").invoke(target);
+            if (rawName instanceof String value) name = value;
+            Object rawValid = target.getClass().getMethod("stillValidRemote").invoke(target);
+            valid = Boolean.TRUE.equals(rawValid);
+            target.getClass().getMethod("openRemoteMenu", ServerPlayer.class);
+        } catch (ReflectiveOperationException ignored) {
+            valid = false;
+        }
+        return new DeepCoreFacility(dimension, pos, name,
+                valid ? DeepCoreFacilityStatus.ONLINE : DeepCoreFacilityStatus.INVALID);
+    }
+
+    private static boolean isDeepCoreControlCore(ResourceLocation id) {
+        return id != null
+                && "forever_deep_core".equals(id.getNamespace())
+                && "control_core".equals(id.getPath());
+    }
+
     private static void handleOpenDeepCoreRequest(RequestOpenDeepCore request, IPayloadContext context) {
         Object player = context.player();
         if (!(player instanceof ServerPlayer serverPlayer)) {
@@ -240,8 +336,7 @@ public final class MonitorNetwork {
         }
         boolean recognized = snapshot.nodes().stream().anyMatch(node ->
                 node.pos().equals(request.targetPos())
-                        && "forever_deep_core".equals(node.visualId().getNamespace())
-                        && "control_core".equals(node.visualId().getPath()));
+                        && isDeepCoreControlCore(node.visualId()));
         if (!recognized) {
             return;
         }
@@ -254,8 +349,7 @@ public final class MonitorNetwork {
 
         var targetState = targetLevel.getBlockState(request.targetPos());
         ResourceLocation targetId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock());
-        if (!"forever_deep_core".equals(targetId.getNamespace())
-                || !"control_core".equals(targetId.getPath())) {
+        if (!isDeepCoreControlCore(targetId)) {
             return;
         }
 
@@ -848,6 +942,10 @@ public final class MonitorNetwork {
         ClientMonitorState.acceptNetworkMap(networkMapPayload);
     }
 
+    private static void handleDeepCoreFacilitiesSnapshot(DeepCoreFacilitiesPayload payload, IPayloadContext context) {
+        ClientMonitorState.acceptDeepCoreFacilities(payload);
+    }
+
     private static int clampSampleInterval(int n) {
         return Math.max(20, Math.min(100, n));
     }
@@ -1221,6 +1319,76 @@ public final class MonitorNetwork {
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
             return TYPE;
         }
+    }
+
+    public record RequestDeepCoreFacilities(ResourceLocation monitorDimension,
+                                            BlockPos monitorPos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<RequestDeepCoreFacilities> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("request_deep_core_facilities"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RequestDeepCoreFacilities> STREAM_CODEC =
+                StreamCodec.of((buf, request) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.monitorDimension);
+                    buf.writeBlockPos(request.monitorPos);
+                }, buf -> new RequestDeepCoreFacilities(
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos()));
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record DeepCoreFacilitiesPayload(ResourceLocation monitorDimension,
+                                            BlockPos monitorPos,
+                                            List<DeepCoreFacility> facilities) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<DeepCoreFacilitiesPayload> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("deep_core_facilities"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, DeepCoreFacilitiesPayload> STREAM_CODEC =
+                StreamCodec.of((buf, payload) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, payload.monitorDimension);
+                    buf.writeBlockPos(payload.monitorPos);
+                    buf.writeVarInt(Math.min(32, payload.facilities.size()));
+                    payload.facilities.stream().limit(32L).forEach(facility -> facility.write(buf));
+                }, buf -> {
+                    ResourceLocation dimension =
+                            (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf);
+                    BlockPos pos = buf.readBlockPos();
+                    int count = Math.min(32, buf.readVarInt());
+                    ArrayList<DeepCoreFacility> facilities = new ArrayList<>(count);
+                    for (int i = 0; i < count; i++) facilities.add(DeepCoreFacility.read(buf));
+                    return new DeepCoreFacilitiesPayload(dimension, pos, facilities);
+                });
+
+        public DeepCoreFacilitiesPayload {
+            facilities = List.copyOf(facilities.subList(0, Math.min(32, facilities.size())));
+        }
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record DeepCoreFacility(ResourceLocation dimension, BlockPos pos,
+                                   String name, DeepCoreFacilityStatus status) {
+        private void write(RegistryFriendlyByteBuf buf) {
+            ResourceLocation.STREAM_CODEC.encode(buf, dimension);
+            buf.writeBlockPos(pos);
+            buf.writeUtf(name == null ? "" : name, 32);
+            buf.writeEnum(status);
+        }
+
+        private static DeepCoreFacility read(RegistryFriendlyByteBuf buf) {
+            return new DeepCoreFacility(
+                    (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                    buf.readBlockPos(), buf.readUtf(32),
+                    (DeepCoreFacilityStatus)buf.readEnum(DeepCoreFacilityStatus.class));
+        }
+    }
+
+    public enum DeepCoreFacilityStatus {
+        ONLINE,
+        UNLOADED,
+        INVALID
     }
 
     public record RequestOpenDeepCore(ResourceLocation monitorDimension,
