@@ -846,6 +846,12 @@ extends Screen {
         this.deepCoreMenuY = this.deepCoreButtonY + DEEP_CORE_HEADER_BUTTON_HEIGHT + 3;
         int menuHeight = this.deepCoreMenuRows * DEEP_CORE_MENU_ROW_HEIGHT + 2;
 
+        // Render the dropdown on a dedicated foreground Z layer. Several monitor
+        // widgets render text at the normal GUI depth, so draw-order alone is not
+        // sufficient to guarantee that their glyphs stay behind this overlay.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0f, 0.0f, 400.0f);
+
         guiGraphics.fill(this.deepCoreMenuX - 1, this.deepCoreMenuY - 1,
                 this.deepCoreMenuX + this.deepCoreMenuWidth + 1,
                 this.deepCoreMenuY + menuHeight + 1, palette.border());
@@ -894,6 +900,8 @@ extends Screen {
                     this.font.plainSubstrByWidth(detail, this.deepCoreMenuWidth - 14),
                     this.deepCoreMenuX + 6, y + 13, palette.muted(), false);
         }
+
+        guiGraphics.pose().popPose();
     }
 
     private int deepCoreStatusColor(MonitorNetwork.DeepCoreFacilityStatus status,
