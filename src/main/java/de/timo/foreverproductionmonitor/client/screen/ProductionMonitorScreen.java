@@ -64,6 +64,9 @@ extends Screen {
     private static final int DEEP_CORE_MENU_MAX_ROWS = 6;
     private static final int DEEP_CORE_MENU_FOOTER_HEIGHT = 20;
     private static final int DEEP_CORE_FLEET_ROW_HEIGHT = 54;
+    private static final int DEEP_CORE_FLEET_STAT_HEIGHT = 34;
+    private static final int DEEP_CORE_FLEET_STORAGE_HEIGHT = 46;
+    private static final int DEEP_CORE_FLEET_BORE_CARD_HEIGHT = 64;
     private static ViewMode lastViewMode;
     private final ProductionTabletItem.MonitorLink link;
     private EditBox search;
@@ -1219,20 +1222,20 @@ extends Screen {
             guiGraphics.fill(listX + 1, y, listX + 4,
                     y + DEEP_CORE_FLEET_ROW_HEIGHT - 2, stateColor);
 
-            String name = deepCoreFacilityName(facility);
-            guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(name, Math.max(30, listWidth - 68)),
-                    listX + 10, y + 6, selected ? palette.accentB() : palette.text(), false);
             String state = facility.diagnosticsAvailable()
                     ? prettyDeepCoreText(facility.facilityState())
                     : facility.availability().name();
+            int stateWidth = this.font.width(state);
+            String name = deepCoreFacilityName(facility);
+            guiGraphics.drawString(this.font,
+                    this.font.plainSubstrByWidth(name, Math.max(30, listWidth - stateWidth - 30)),
+                    listX + 10, y + 6, selected ? palette.accentB() : palette.text(), false);
             this.drawRight(guiGraphics, Component.literal(state),
                     listX + listWidth - 8, y + 6, stateColor);
 
-            String location = NetworkMapView.dimensionName(facility.dimension())
-                    + " · " + facility.pos().toShortString();
+            String dimension = NetworkMapView.dimensionName(facility.dimension());
             guiGraphics.drawString(this.font,
-                    this.font.plainSubstrByWidth(location, Math.max(20, listWidth - 18)),
+                    this.font.plainSubstrByWidth(dimension, Math.max(20, listWidth - 18)),
                     listX + 10, y + 20, palette.muted(), false);
 
             String summary;
@@ -1306,7 +1309,7 @@ extends Screen {
             return;
         }
 
-        int summaryY = y + 38;
+        int summaryY = y + 36;
         int summaryGap = 5;
         int cardW = Math.max(55, (width - 20 - summaryGap * 3) / 4);
         drawDeepCoreStatCard(guiGraphics, x + 5, summaryY, cardW,
@@ -1323,10 +1326,10 @@ extends Screen {
                 formatAmount(facility.estimatedAePerMinute()) + " AE/min",
                 palette.accentB());
 
-        int storageY = summaryY + 43;
+        int storageY = summaryY + DEEP_CORE_FLEET_STAT_HEIGHT + 4;
         drawDeepCoreStoragePanel(guiGraphics, facility.storage(), x + 5, storageY, width - 10);
 
-        int boreY = storageY + 62;
+        int boreY = storageY + DEEP_CORE_FLEET_STORAGE_HEIGHT + 6;
         int boreGap = 5;
         int boreW = Math.max(66, (width - 10 - boreGap * 2) / 3);
         for (int i = 0; i < 3; i++) {
@@ -1334,14 +1337,16 @@ extends Screen {
                     ? facility.bores().get(i) : null;
             int boreX = x + 5 + i * (boreW + boreGap);
             int actualW = i == 2 ? Math.max(66, right - 5 - boreX) : boreW;
-            drawDeepCoreBoreCard(guiGraphics, bore, i, boreX, boreY, actualW, 78,
+            drawDeepCoreBoreCard(guiGraphics, bore, i, boreX, boreY, actualW,
+                    DEEP_CORE_FLEET_BORE_CARD_HEIGHT,
                     i == this.selectedDeepCoreBore,
                     mouseX >= boreX && mouseX < boreX + actualW
-                            && mouseY >= boreY && mouseY < boreY + 78);
+                            && mouseY >= boreY
+                            && mouseY < boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT);
         }
 
-        int detailY = boreY + 85;
-        int detailH = Math.max(64, bottom - detailY - 5);
+        int detailY = boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT + 6;
+        int detailH = Math.max(1, bottom - detailY - 5);
         MonitorNetwork.DeepCoreBoreDiagnostic selectedBore =
                 this.selectedDeepCoreBore >= 0 && this.selectedDeepCoreBore < facility.bores().size()
                         ? facility.bores().get(this.selectedDeepCoreBore) : null;
@@ -1352,23 +1357,23 @@ extends Screen {
                                           MonitorNetwork.DeepCoreStorageDiagnostic storage,
                                           int x, int y, int width) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        guiGraphics.fill(x, y, x + width, y + 56, palette.rowEven());
+        guiGraphics.fill(x, y, x + width, y + DEEP_CORE_FLEET_STORAGE_HEIGHT, palette.rowEven());
         guiGraphics.drawString(this.font,
                 Component.translatable("screen.forever_production_monitor.deep_core.internal_storage"),
-                x + 8, y + 6, palette.muted(), false);
+                x + 8, y + 5, palette.muted(), false);
         String state = prettyDeepCoreText(storage.state());
-        this.drawRight(guiGraphics, Component.literal(state), x + width - 8, y + 6,
+        this.drawRight(guiGraphics, Component.literal(state), x + width - 8, y + 5,
                 deepCoreStorageStateColor(storage.state()));
 
         int barX = x + 8;
-        int barY = y + 20;
+        int barY = y + 17;
         int barW = width - 16;
-        guiGraphics.fill(barX, barY, barX + barW, barY + 7, palette.outer());
+        guiGraphics.fill(barX, barY, barX + barW, barY + 6, palette.outer());
         double usage = storage.usagePercent();
         int filled = "INFINITE".equals(storage.state())
                 ? barW : usage < 0.0 ? 0 : (int)Math.round(barW * Math.min(100.0, usage) / 100.0);
         if (filled > 0) {
-            guiGraphics.fill(barX, barY, barX + filled, barY + 7,
+            guiGraphics.fill(barX, barY, barX + filled, barY + 6,
                     deepCoreStorageStateColor(storage.state()));
         }
 
@@ -1378,10 +1383,10 @@ extends Screen {
                 + " · Items " + formatAmount(storage.storedItems());
         guiGraphics.drawString(this.font,
                 this.font.plainSubstrByWidth(left, Math.max(30, width / 2 - 12)),
-                x + 8, y + 35, palette.text(), false);
+                x + 8, y + 30, palette.text(), false);
         this.drawRight(guiGraphics,
                 Component.literal(this.font.plainSubstrByWidth(right, Math.max(30, width / 2 + 30))),
-                x + width - 8, y + 35, palette.muted());
+                x + width - 8, y + 30, palette.muted());
     }
 
     private void drawDeepCoreBoreCard(GuiGraphics guiGraphics,
@@ -1391,39 +1396,40 @@ extends Screen {
                                       boolean selected, boolean hover) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
         int background = selected ? palette.summary() : palette.rowOdd();
-        guiGraphics.fill(x, y, x + width, y + height, background);
-        if (hover) guiGraphics.fill(x, y, x + width, y + height, palette.hover());
+        guiGraphics.fill(x, y, x + width, y + height, selected ? palette.accentB() : palette.border());
+        guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, background);
+        if (hover) guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, palette.hover());
 
         if (bore == null) {
             guiGraphics.drawString(this.font, "BORE 0" + (fallbackIndex + 1),
-                    x + 8, y + 7, palette.muted(), false);
+                    x + 8, y + 5, palette.muted(), false);
             guiGraphics.drawString(this.font, "No diagnostics",
-                    x + 8, y + 25, palette.muted(), false);
+                    x + 8, y + 22, palette.muted(), false);
             return;
         }
 
         int stateColor = deepCoreBoreStateColor(bore.state());
-        guiGraphics.fill(x, y, x + 3, y + height, stateColor);
+        guiGraphics.fill(x + 1, y + 1, x + 4, y + height - 1, stateColor);
         guiGraphics.drawString(this.font, "BORE 0" + bore.number(),
-                x + 8, y + 7, selected ? palette.accentB() : palette.text(), false);
+                x + 8, y + 5, selected ? palette.accentB() : palette.text(), false);
         String state = prettyDeepCoreText(bore.state());
-        this.drawRight(guiGraphics, Component.literal(state), x + width - 7, y + 7, stateColor);
+        this.drawRight(guiGraphics, Component.literal(state), x + width - 7, y + 5, stateColor);
 
         String resource = deepCoreResourceName(bore.resource());
         guiGraphics.drawString(this.font,
                 this.font.plainSubstrByWidth(resource, Math.max(20, width - 16)),
-                x + 8, y + 24, bore.installed() ? palette.text() : palette.muted(), false);
+                x + 8, y + 18, bore.installed() ? palette.text() : palette.muted(), false);
 
         String reserve = bore.initialReserve() > 0
                 ? String.format(Locale.ROOT, "%.1f%%", bore.remaining() * 100.0 / bore.initialReserve())
                 : "--";
         guiGraphics.drawString(this.font, "Reserve " + reserve,
-                x + 8, y + 39, palette.muted(), false);
+                x + 8, y + 31, palette.muted(), false);
         String rate = formatAmount(bore.itemsLastMinute()) + "/min · "
                 + formatAmount(bore.aePerItem()) + " AE/i";
         guiGraphics.drawString(this.font,
                 this.font.plainSubstrByWidth(rate, Math.max(20, width - 16)),
-                x + 8, y + 52, palette.muted(), false);
+                x + 8, y + 43, palette.muted(), false);
 
         String bottom = "STALLED".equals(bore.state())
                 ? prettyDeepCoreText(bore.stallReason())
@@ -1431,7 +1437,7 @@ extends Screen {
                     + formatAmount(bore.theoreticalItemsPerMinute()) + "/min max";
         guiGraphics.drawString(this.font,
                 this.font.plainSubstrByWidth(bottom, Math.max(20, width - 16)),
-                x + 8, y + 65,
+                x + 8, y + 54,
                 "STALLED".equals(bore.state()) ? 0xFFE0A15B : palette.muted(), false);
     }
 
@@ -1457,21 +1463,21 @@ extends Screen {
         int c3 = c2 + colW + colGap;
 
         guiGraphics.drawString(this.font, "DEPOSIT", c1, y + 23, palette.accentA(), false);
-        guiGraphics.drawString(this.font, "Reserve " + formatAmount(bore.remaining())
-                + " / " + formatAmount(bore.initialReserve()), c1, y + 36, palette.text(), false);
-        guiGraphics.drawString(this.font, "Purity " + bore.purity() + "% · Depth " + bore.depth() + "m",
-                c1, y + 49, palette.muted(), false);
-        guiGraphics.drawString(this.font, "Required T" + bore.requiredTier()
-                + " · Effective T" + bore.effectiveTier(), c1, y + 62, palette.muted(), false);
+        drawDeepCoreDetailLine(guiGraphics, "Reserve " + formatAmount(bore.remaining())
+                + " / " + formatAmount(bore.initialReserve()), c1, y + 36, colW, palette.text());
+        drawDeepCoreDetailLine(guiGraphics, "Purity " + bore.purity() + "% · Depth " + bore.depth() + "m",
+                c1, y + 49, colW, palette.muted());
+        drawDeepCoreDetailLine(guiGraphics, "Required T" + bore.requiredTier()
+                + " · Effective T" + bore.effectiveTier(), c1, y + 62, colW, palette.muted());
 
         guiGraphics.drawString(this.font, "PERFORMANCE", c2, y + 23, palette.accentA(), false);
-        guiGraphics.drawString(this.font, "Actual " + formatAmount(bore.itemsLastMinute()) + "/min",
-                c2, y + 36, palette.text(), false);
-        guiGraphics.drawString(this.font, "Normal " + formatAmount(bore.theoreticalItemsPerMinute()) + "/min",
-                c2, y + 49, palette.muted(), false);
-        guiGraphics.drawString(this.font, "ETA " + deepCoreEta(bore.estimatedDepletionMinutes())
+        drawDeepCoreDetailLine(guiGraphics, "Actual " + formatAmount(bore.itemsLastMinute()) + "/min",
+                c2, y + 36, colW, palette.text());
+        drawDeepCoreDetailLine(guiGraphics, "Normal " + formatAmount(bore.theoreticalItemsPerMinute()) + "/min",
+                c2, y + 49, colW, palette.muted());
+        drawDeepCoreDetailLine(guiGraphics, "ETA " + deepCoreEta(bore.estimatedDepletionMinutes())
                 + " · Total " + formatAmount(bore.totalProduced()),
-                c2, y + 62, palette.muted(), false);
+                c2, y + 62, colW, palette.muted());
 
         guiGraphics.drawString(this.font, "UPGRADES", c3, y + 23, palette.accentA(), false);
         if (bore.upgrades().isEmpty()) {
@@ -1486,16 +1492,23 @@ extends Screen {
             }
         }
         if ("STALLED".equals(bore.state()) && height >= 86) {
-            guiGraphics.drawString(this.font,
+            drawDeepCoreDetailLine(guiGraphics,
                     "Reason: " + prettyDeepCoreText(bore.stallReason()),
-                    c3, y + Math.min(height - 14, 75), 0xFFE0A15B, false);
+                    c3, y + Math.min(height - 14, 75), colW, 0xFFE0A15B);
         }
+    }
+
+    private void drawDeepCoreDetailLine(GuiGraphics guiGraphics, String text,
+                                        int x, int y, int width, int color) {
+        guiGraphics.drawString(this.font,
+                this.font.plainSubstrByWidth(text, Math.max(20, width)),
+                x, y, color, false);
     }
 
     private void drawDeepCoreStatCard(GuiGraphics guiGraphics, int x, int y, int width,
                                       String label, String value, int valueColor) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        guiGraphics.fill(x, y, x + width, y + 38, palette.rowEven());
+        guiGraphics.fill(x, y, x + width, y + DEEP_CORE_FLEET_STAT_HEIGHT, palette.rowEven());
         guiGraphics.drawCenteredString(this.font, label, x + width / 2, y + 6, palette.muted());
         guiGraphics.drawCenteredString(this.font,
                 this.font.plainSubstrByWidth(value, Math.max(20, width - 8)),
@@ -2121,9 +2134,9 @@ extends Screen {
         }
 
         if (facility.diagnosticsAvailable()) {
-            int summaryY = bodyY + 38;
-            int storageY = summaryY + 43;
-            int boreY = storageY + 62;
+            int summaryY = bodyY + 36;
+            int storageY = summaryY + DEEP_CORE_FLEET_STAT_HEIGHT + 4;
+            int boreY = storageY + DEEP_CORE_FLEET_STORAGE_HEIGHT + 6;
             int boreGap = 5;
             int boreW = Math.max(66, (detailWidth - 10 - boreGap * 2) / 3);
             for (int i = 0; i < 3; i++) {
@@ -2132,7 +2145,8 @@ extends Screen {
                         ? Math.max(66, detailX + detailWidth - 5 - boreX)
                         : boreW;
                 if (mouseX >= boreX && mouseX < boreX + actualW
-                        && mouseY >= boreY && mouseY < boreY + 78) {
+                        && mouseY >= boreY
+                        && mouseY < boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT) {
                     this.selectedDeepCoreBore = i;
                     return true;
                 }
