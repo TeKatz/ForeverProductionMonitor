@@ -67,6 +67,9 @@ extends Screen {
     private static final int DEEP_CORE_FLEET_STAT_HEIGHT = 34;
     private static final int DEEP_CORE_FLEET_STORAGE_HEIGHT = 46;
     private static final int DEEP_CORE_FLEET_BORE_CARD_HEIGHT = 64;
+    private static final int DEEP_CORE_FLEET_BORE_DETAIL_HEIGHT = 86;
+    private static final int DEEP_CORE_FLEET_DETAIL_SCROLL_STEP = 22;
+    private static final int DEEP_CORE_FLEET_SCROLLBAR_RESERVE = 8;
     private static ViewMode lastViewMode;
     private final ProductionTabletItem.MonitorLink link;
     private EditBox search;
@@ -110,6 +113,7 @@ extends Screen {
     private boolean deepCoreFleetOpen;
     private int deepCoreDiagnosticsRefreshTicks;
     private int deepCoreFleetScroll;
+    private int deepCoreDetailScroll;
     private int selectedDeepCoreIndex;
     private int selectedDeepCoreBore;
     private int deepCoreButtonX;
@@ -1049,6 +1053,7 @@ extends Screen {
         this.deepCoreDropdownOpen = false;
         this.deepCoreFleetOpen = true;
         this.deepCoreFleetScroll = 0;
+        this.deepCoreDetailScroll = 0;
         this.selectedDeepCoreIndex = 0;
         this.selectedDeepCoreBore = 0;
         this.deepCoreDiagnosticsRefreshTicks = 100;
@@ -1059,6 +1064,7 @@ extends Screen {
     private void closeDeepCoreFleetView() {
         this.deepCoreFleetOpen = false;
         this.deepCoreDiagnosticsRefreshTicks = 0;
+        this.deepCoreDetailScroll = 0;
         this.updateViewWidgets();
         this.refreshTicks = 0;
     }
@@ -1298,6 +1304,7 @@ extends Screen {
                 mouseX, mouseY, canOpen);
 
         if (!facility.diagnosticsAvailable()) {
+            this.deepCoreDetailScroll = 0;
             int color = facility.availability() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE
                     ? 0xFFD5A45B : deepCoreStatusColor(facility.availability(), palette);
             guiGraphics.drawCenteredString(this.font,
@@ -1309,9 +1316,21 @@ extends Screen {
             return;
         }
 
-        int summaryY = y + 36;
+        int viewportTop = y + 33;
+        int viewportBottom = Math.max(viewportTop + 1, bottom - 2);
+        int viewportHeight = Math.max(1, viewportBottom - viewportTop);
+        int contentWidth = Math.max(1, width - DEEP_CORE_FLEET_SCROLLBAR_RESERVE);
+        int contentRight = x + contentWidth;
+        int maxScroll = deepCoreDetailMaxScroll(facility, viewportHeight);
+        this.deepCoreDetailScroll = Math.max(0, Math.min(this.deepCoreDetailScroll, maxScroll));
+        int contentY = viewportTop - this.deepCoreDetailScroll;
+
+        guiGraphics.enableScissor(x + 1, viewportTop,
+                Math.max(x + 2, right - DEEP_CORE_FLEET_SCROLLBAR_RESERVE), viewportBottom);
+
+        int summaryY = contentY + 3;
         int summaryGap = 5;
-        int cardW = Math.max(55, (width - 20 - summaryGap * 3) / 4);
+        int cardW = Math.max(55, (contentWidth - 20 - summaryGap * 3) / 4);
         drawDeepCoreStatCard(guiGraphics, x + 5, summaryY, cardW,
                 "STATE", prettyDeepCoreText(facility.facilityState()),
                 deepCoreFacilityStateColor(facility.facilityState()));
@@ -1322,35 +1341,72 @@ extends Screen {
                 "OUTPUT", formatAmount(facility.itemsLastMinute()) + "/min",
                 0xFF62CF99);
         drawDeepCoreStatCard(guiGraphics, x + 5 + (cardW + summaryGap) * 3, summaryY,
-                Math.max(55, width - 10 - (cardW + summaryGap) * 3), "POWER",
+                Math.max(55, contentWidth - 10 - (cardW + summaryGap) * 3), "POWER",
                 formatAmount(facility.estimatedAePerMinute()) + " AE/min",
                 palette.accentB());
 
         int storageY = summaryY + DEEP_CORE_FLEET_STAT_HEIGHT + 4;
-        drawDeepCoreStoragePanel(guiGraphics, facility.storage(), x + 5, storageY, width - 10);
+        drawDeepCoreStoragePanel(guiGraphics, facility.storage(), x + 5, storageY, contentWidth - 10);
 
         int boreY = storageY + DEEP_CORE_FLEET_STORAGE_HEIGHT + 6;
         int boreGap = 5;
-        int boreW = Math.max(66, (width - 10 - boreGap * 2) / 3);
+        int boreW = Math.max(66, (contentWidth - 10 - boreGap * 2) / 3);
         for (int i = 0; i < 3; i++) {
             MonitorNetwork.DeepCoreBoreDiagnostic bore = i < facility.bores().size()
                     ? facility.bores().get(i) : null;
             int boreX = x + 5 + i * (boreW + boreGap);
-            int actualW = i == 2 ? Math.max(66, right - 5 - boreX) : boreW;
+            int actualW = i == 2 ? Math.max(66, contentRight - 5 - boreX) : boreW;
             drawDeepCoreBoreCard(guiGraphics, bore, i, boreX, boreY, actualW,
                     DEEP_CORE_FLEET_BORE_CARD_HEIGHT,
                     i == this.selectedDeepCoreBore,
                     mouseX >= boreX && mouseX < boreX + actualW
+                            && mouseY >= viewportTop
+                            && mouseY < viewportBottom
                             && mouseY >= boreY
                             && mouseY < boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT);
         }
 
         int detailY = boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT + 6;
-        int detailH = Math.max(1, bottom - detailY - 5);
         MonitorNetwork.DeepCoreBoreDiagnostic selectedBore =
                 this.selectedDeepCoreBore >= 0 && this.selectedDeepCoreBore < facility.bores().size()
                         ? facility.bores().get(this.selectedDeepCoreBore) : null;
-        drawDeepCoreBoreDetail(guiGraphics, selectedBore, x + 5, detailY, width - 10, detailH);
+        drawDeepCoreBoreDetail(guiGraphics, selectedBore, x + 5, detailY,
+                contentWidth - 10, DEEP_CORE_FLEET_BORE_DETAIL_HEIGHT);
+
+        guiGraphics.disableScissor();
+
+        if (maxScroll > 0) {
+            int trackX = right - 5;
+            int trackY = viewportTop + 2;
+            int trackH = Math.max(12, viewportHeight - 4);
+            guiGraphics.fill(trackX, trackY, trackX + 2, trackY + trackH, palette.outer());
+
+            int contentHeight = deepCoreDetailContentHeight(facility);
+            int thumbH = Math.max(12,
+                    Math.min(trackH, Math.round(trackH * (viewportHeight / (float)contentHeight))));
+            int travel = Math.max(1, trackH - thumbH);
+            int thumbY = trackY + Math.round(travel * (this.deepCoreDetailScroll / (float)maxScroll));
+            guiGraphics.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, palette.accentB());
+        }
+    }
+
+    private int deepCoreDetailContentHeight(MonitorNetwork.DeepCoreDiagnostic facility) {
+        if (!facility.diagnosticsAvailable()) {
+            return 64;
+        }
+        return 3
+                + DEEP_CORE_FLEET_STAT_HEIGHT
+                + 4
+                + DEEP_CORE_FLEET_STORAGE_HEIGHT
+                + 6
+                + DEEP_CORE_FLEET_BORE_CARD_HEIGHT
+                + 6
+                + DEEP_CORE_FLEET_BORE_DETAIL_HEIGHT
+                + 5;
+    }
+
+    private int deepCoreDetailMaxScroll(MonitorNetwork.DeepCoreDiagnostic facility, int viewportHeight) {
+        return Math.max(0, deepCoreDetailContentHeight(facility) - Math.max(1, viewportHeight));
     }
 
     private void drawDeepCoreStoragePanel(GuiGraphics guiGraphics,
@@ -2069,20 +2125,50 @@ extends Screen {
 
     private boolean handleDeepCoreFleetScroll(double mouseX, double mouseY, double scrollY) {
         if (!this.deepCoreFleetOpen || scrollY == 0.0) return false;
+
         int bodyY = this.top + 66;
         int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        int gap = 8;
         int listWidth = Math.min(270, Math.max(205, innerWidth / 3));
+        int detailX = this.contentLeft + listWidth + gap;
         int visibleRows = this.deepCoreFleetVisibleRows();
-        if (this.deepCoreDiagnostics.size() <= visibleRows
-                || mouseX < this.contentLeft
-                || mouseX >= this.contentLeft + listWidth
-                || mouseY < bodyY + 24
-                || mouseY >= this.contentBottom) {
-            return false;
+
+        if (mouseX >= this.contentLeft
+                && mouseX < this.contentLeft + listWidth
+                && mouseY >= bodyY + 24
+                && mouseY < this.contentBottom) {
+            if (this.deepCoreDiagnostics.size() > visibleRows) {
+                this.deepCoreFleetScroll += scrollY < 0.0 ? 1 : -1;
+                this.clampDeepCoreFleetScroll();
+            }
+            return true;
         }
-        this.deepCoreFleetScroll += scrollY < 0.0 ? 1 : -1;
-        this.clampDeepCoreFleetScroll();
-        return true;
+
+        int viewportTop = bodyY + 33;
+        int viewportBottom = this.contentBottom - 2;
+        if (mouseX >= detailX
+                && mouseX < this.contentRight
+                && mouseY >= viewportTop
+                && mouseY < viewportBottom) {
+            if (!this.deepCoreDiagnostics.isEmpty()
+                    && this.selectedDeepCoreIndex >= 0
+                    && this.selectedDeepCoreIndex < this.deepCoreDiagnostics.size()) {
+                MonitorNetwork.DeepCoreDiagnostic facility =
+                        this.deepCoreDiagnostics.get(this.selectedDeepCoreIndex);
+                int viewportHeight = Math.max(1, viewportBottom - viewportTop);
+                int maxScroll = deepCoreDetailMaxScroll(facility, viewportHeight);
+                if (maxScroll > 0) {
+                    this.deepCoreDetailScroll += scrollY < 0.0
+                            ? DEEP_CORE_FLEET_DETAIL_SCROLL_STEP
+                            : -DEEP_CORE_FLEET_DETAIL_SCROLL_STEP;
+                    this.deepCoreDetailScroll = Math.max(0,
+                            Math.min(this.deepCoreDetailScroll, maxScroll));
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private boolean handleDeepCoreFleetClick(double mouseX, double mouseY, int button) {
@@ -2110,6 +2196,7 @@ extends Screen {
                     && index >= 0 && index < this.deepCoreDiagnostics.size()) {
                 this.selectedDeepCoreIndex = index;
                 this.selectedDeepCoreBore = 0;
+                this.deepCoreDetailScroll = 0;
                 return true;
             }
         }
@@ -2134,17 +2221,28 @@ extends Screen {
         }
 
         if (facility.diagnosticsAvailable()) {
-            int summaryY = bodyY + 36;
+            int viewportTop = bodyY + 33;
+            int viewportBottom = this.contentBottom - 2;
+            int viewportHeight = Math.max(1, viewportBottom - viewportTop);
+            this.deepCoreDetailScroll = Math.max(0, Math.min(
+                    this.deepCoreDetailScroll,
+                    deepCoreDetailMaxScroll(facility, viewportHeight)));
+
+            int contentY = viewportTop - this.deepCoreDetailScroll;
+            int summaryY = contentY + 3;
             int storageY = summaryY + DEEP_CORE_FLEET_STAT_HEIGHT + 4;
             int boreY = storageY + DEEP_CORE_FLEET_STORAGE_HEIGHT + 6;
             int boreGap = 5;
-            int boreW = Math.max(66, (detailWidth - 10 - boreGap * 2) / 3);
+            int contentWidth = Math.max(1, detailWidth - DEEP_CORE_FLEET_SCROLLBAR_RESERVE);
+            int boreW = Math.max(66, (contentWidth - 10 - boreGap * 2) / 3);
             for (int i = 0; i < 3; i++) {
                 int boreX = detailX + 5 + i * (boreW + boreGap);
                 int actualW = i == 2
-                        ? Math.max(66, detailX + detailWidth - 5 - boreX)
+                        ? Math.max(66, detailX + contentWidth - 5 - boreX)
                         : boreW;
                 if (mouseX >= boreX && mouseX < boreX + actualW
+                        && mouseY >= viewportTop
+                        && mouseY < viewportBottom
                         && mouseY >= boreY
                         && mouseY < boreY + DEEP_CORE_FLEET_BORE_CARD_HEIGHT) {
                     this.selectedDeepCoreBore = i;
