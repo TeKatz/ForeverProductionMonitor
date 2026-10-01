@@ -2054,6 +2054,93 @@ extends Screen {
         guiGraphics.drawString(this.font, value, n6 + this.font.width(label) + 3, n3 + 6, n4, false);
     }
 
+    private boolean handleDeepCoreFleetScroll(double mouseX, double mouseY, double scrollY) {
+        if (!this.deepCoreFleetOpen || scrollY == 0.0) return false;
+        int bodyY = this.top + 66;
+        int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        int listWidth = Math.min(270, Math.max(205, innerWidth / 3));
+        int visibleRows = this.deepCoreFleetVisibleRows();
+        if (this.deepCoreDiagnostics.size() <= visibleRows
+                || mouseX < this.contentLeft
+                || mouseX >= this.contentLeft + listWidth
+                || mouseY < bodyY + 24
+                || mouseY >= this.contentBottom) {
+            return false;
+        }
+        this.deepCoreFleetScroll += scrollY < 0.0 ? 1 : -1;
+        this.clampDeepCoreFleetScroll();
+        return true;
+    }
+
+    private boolean handleDeepCoreFleetClick(double mouseX, double mouseY, int button) {
+        if (!this.deepCoreFleetOpen || button != 0) return false;
+
+        int navY = this.top + 39;
+        if (mouseX >= this.contentLeft && mouseX < this.contentLeft + 104
+                && mouseY >= navY && mouseY < navY + 18) {
+            this.closeDeepCoreFleetView();
+            return true;
+        }
+
+        int bodyY = this.top + 66;
+        int innerWidth = Math.max(1, this.contentRight - this.contentLeft);
+        int gap = 8;
+        int listWidth = Math.min(270, Math.max(205, innerWidth / 3));
+        int detailX = this.contentLeft + listWidth + gap;
+        int detailWidth = Math.max(1, this.contentRight - detailX);
+
+        if (mouseX >= this.contentLeft && mouseX < this.contentLeft + listWidth
+                && mouseY >= bodyY + 24 && mouseY < this.contentBottom) {
+            int row = (int)((mouseY - (bodyY + 24)) / DEEP_CORE_FLEET_ROW_HEIGHT);
+            int index = this.deepCoreFleetScroll + row;
+            if (row >= 0 && row < this.deepCoreFleetVisibleRows()
+                    && index >= 0 && index < this.deepCoreDiagnostics.size()) {
+                this.selectedDeepCoreIndex = index;
+                this.selectedDeepCoreBore = 0;
+                return true;
+            }
+        }
+
+        if (this.deepCoreDiagnostics.isEmpty()
+                || this.selectedDeepCoreIndex < 0
+                || this.selectedDeepCoreIndex >= this.deepCoreDiagnostics.size()) {
+            return false;
+        }
+        MonitorNetwork.DeepCoreDiagnostic facility =
+                this.deepCoreDiagnostics.get(this.selectedDeepCoreIndex);
+
+        int openX = detailX + detailWidth - 126;
+        int openY = bodyY + 7;
+        if (mouseX >= openX && mouseX < openX + 116
+                && mouseY >= openY && mouseY < openY + 18) {
+            if (facility.availability() == MonitorNetwork.DeepCoreFacilityStatus.ONLINE) {
+                MonitorNetwork.requestOpenDeepCore(this.link.dimension(), this.link.pos(),
+                        facility.dimension(), facility.pos());
+            }
+            return true;
+        }
+
+        if (facility.diagnosticsAvailable()) {
+            int summaryY = bodyY + 38;
+            int storageY = summaryY + 43;
+            int boreY = storageY + 62;
+            int boreGap = 5;
+            int boreW = Math.max(66, (detailWidth - 10 - boreGap * 2) / 3);
+            for (int i = 0; i < 3; i++) {
+                int boreX = detailX + 5 + i * (boreW + boreGap);
+                int actualW = i == 2
+                        ? Math.max(66, detailX + detailWidth - 5 - boreX)
+                        : boreW;
+                if (mouseX >= boreX && mouseX < boreX + actualW
+                        && mouseY >= boreY && mouseY < boreY + 78) {
+                    this.selectedDeepCoreBore = i;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean contentTransitionRunning() {
         return GuiMotion.enabled() && GuiMotion.progress(this.contentTransitionStartedNanos, 160L) < 1.0f;
     }
@@ -2061,6 +2148,9 @@ extends Screen {
     public boolean mouseScrolled(double d, double d2, double d3, double d4) {
         if (this.contentTransitionRunning()) {
             return false;
+        }
+        if (this.handleDeepCoreFleetScroll(d, d2, d4)) {
+            return true;
         }
         if (this.handleDeepCoreDropdownScroll(d, d2, d4)) {
             return true;
@@ -2092,7 +2182,10 @@ extends Screen {
         if (ThemeInteractionState.mouseClicked(d, d2, n)) {
             return true;
         }
-        if (this.handleDeepCoreAccessClick(d, d2, n)) {
+        if (this.handleDeepCoreFleetClick(d, d2, n)) {
+            return true;
+        }
+        if (!this.deepCoreFleetOpen && this.handleDeepCoreAccessClick(d, d2, n)) {
             return true;
         }
         Object object;
