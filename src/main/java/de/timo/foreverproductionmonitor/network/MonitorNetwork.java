@@ -90,6 +90,7 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(UpdateDashboardPin.TYPE, UpdateDashboardPin.STREAM_CODEC, MonitorNetwork::handleDashboardUpdate);
         payloadRegistrar.playToServer(RequestNetworkMap.TYPE, RequestNetworkMap.STREAM_CODEC, MonitorNetwork::handleNetworkMapRequest);
         payloadRegistrar.playToClient(NetworkMapPayload.TYPE, NetworkMapPayload.STREAM_CODEC, MonitorNetwork::handleNetworkMapSnapshot);
+        payloadRegistrar.playToServer(RequestOpenDeepCore.TYPE, RequestOpenDeepCore.STREAM_CODEC, MonitorNetwork::handleOpenDeepCoreRequest);
         CraftingDiagnosticsNetwork.register(payloadRegistrar);
     }
 
@@ -130,6 +131,13 @@ public final class MonitorNetwork {
     public static void requestNetworkMap(ProductionTabletItem.MonitorLink monitorLink, ResourceLocation viewDimension) {
         PacketDistributor.sendToServer((CustomPacketPayload)new RequestNetworkMap(
                 monitorLink.dimension(), monitorLink.pos(), viewDimension), (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    public static void requestOpenDeepCore(ResourceLocation monitorDimension, BlockPos monitorPos,
+                                           ResourceLocation targetDimension, BlockPos targetPos) {
+        PacketDistributor.sendToServer((CustomPacketPayload)new RequestOpenDeepCore(
+                monitorDimension, monitorPos, targetDimension, targetPos),
+                (CustomPacketPayload[])new CustomPacketPayload[0]);
     }
 
     public static void updateDashboardPin(ProductionTabletItem.MonitorLink monitorLink, DashboardAction dashboardAction, EntryKind entryKind, AEKey aEKey, ProductionMonitorBlockEntity.AlarmMode alarmMode, long l, int n, long l2) {
@@ -209,6 +217,61 @@ public final class MonitorNetwork {
                         wirelessLinks,
                         nodes),
                 (CustomPacketPayload[])new CustomPacketPayload[0]);
+    }
+
+    private static void handleOpenDeepCoreRequest(RequestOpenDeepCore request, IPayloadContext context) {
+        Object player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        ProductionMonitorBlockEntity monitor = MonitorNetwork.linkedMonitor(
+                serverPlayer, request.monitorDimension(), request.monitorPos());
+        if (monitor == null || !monitor.isMonitorOnline()) {
+            return;
+        }
+
+        // Rebuild the authoritative map snapshot on the server. The client may only
+        // remote-open a Control Core that this linked monitor currently recognizes.
+        ProductionMonitorBlockEntity.NetworkMapSnapshot snapshot =
+                monitor.networkMapSnapshot(request.targetDimension());
+        if (!snapshot.viewDimension().equals(request.targetDimension())) {
+            return;
+        }
+        boolean recognized = snapshot.nodes().stream().anyMatch(node ->
+                node.pos().equals(request.targetPos())
+                        && "forever_deep_core".equals(node.visualId().getNamespace())
+                        && "control_core".equals(node.visualId().getPath()));
+        if (!recognized) {
+            return;
+        }
+
+        ServerLevel targetLevel = serverPlayer.server.getLevel(
+                ResourceKey.create(Registries.DIMENSION, request.targetDimension()));
+        if (targetLevel == null || !targetLevel.hasChunkAt(request.targetPos())) {
+            return;
+        }
+
+        var targetState = targetLevel.getBlockState(request.targetPos());
+        ResourceLocation targetId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock());
+        if (!"forever_deep_core".equals(targetId.getNamespace())
+                || !"control_core".equals(targetId.getPath())) {
+            return;
+        }
+
+        BlockEntity target = targetLevel.getBlockEntity(request.targetPos());
+        if (target == null) {
+            return;
+        }
+
+        // Reflection keeps Forever Deep Core optional. The Deep Core side owns the
+        // remote-menu validity rules and still refuses unloaded/invalid facilities.
+        try {
+            target.getClass().getMethod("openRemoteMenu", ServerPlayer.class)
+                    .invoke(target, serverPlayer);
+        } catch (ReflectiveOperationException ignored) {
+            // Older Deep Core versions simply do not support remote access.
+        }
     }
 
     private static void handleDashboardUpdate(UpdateDashboardPin updateDashboardPin, IPayloadContext iPayloadContext) {
@@ -1154,6 +1217,30 @@ public final class MonitorNetwork {
                         (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
                         buf.readBlockPos(),
                         (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf)));
+
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public record RequestOpenDeepCore(ResourceLocation monitorDimension,
+                                      BlockPos monitorPos,
+                                      ResourceLocation targetDimension,
+                                      BlockPos targetPos) implements CustomPacketPayload
+    {
+        public static final CustomPacketPayload.Type<RequestOpenDeepCore> TYPE =
+                new CustomPacketPayload.Type(MonitorNetwork.id("request_open_deep_core"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RequestOpenDeepCore> STREAM_CODEC =
+                StreamCodec.of((buf, request) -> {
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.monitorDimension);
+                    buf.writeBlockPos(request.monitorPos);
+                    ResourceLocation.STREAM_CODEC.encode(buf, request.targetDimension);
+                    buf.writeBlockPos(request.targetPos);
+                }, buf -> new RequestOpenDeepCore(
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos(),
+                        (ResourceLocation)ResourceLocation.STREAM_CODEC.decode(buf),
+                        buf.readBlockPos()));
 
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
             return TYPE;

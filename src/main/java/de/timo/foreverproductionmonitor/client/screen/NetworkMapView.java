@@ -127,6 +127,11 @@ final class NetworkMapView {
     private int followButtonY;
     private int followButtonWidth;
     private static final int FOLLOW_BUTTON_HEIGHT = 16;
+    private BlockPos deepCoreTarget;
+    private int deepCoreButtonX;
+    private int deepCoreButtonY;
+    private int deepCoreButtonWidth;
+    private static final int DEEP_CORE_BUTTON_HEIGHT = 16;
     private MapFilter filter = MapFilter.ALL;
     private String search = "";
     private int searchCursor = -1;
@@ -311,8 +316,9 @@ final class NetworkMapView {
 
     void render(GuiGraphics guiGraphics, int n, int n2, float f) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        // Follow Path is only clickable in frames where its details button is actually drawn.
+        // Detail actions are only clickable in frames where their buttons are actually drawn.
         this.followTarget = null;
+        this.deepCoreTarget = null;
         int n3 = this.sceneRight();
         int detailLeft = this.detailLeft();
         int cameraLeft = this.cameraToolbarLeft();
@@ -1063,6 +1069,25 @@ final class NetworkMapView {
             registryY = this.followButtonY + FOLLOW_BUTTON_HEIGHT + 9;
         }
 
+        if (NetworkMapView.isDeepCoreControlCore(selected)) {
+            this.deepCoreTarget = selected.pos();
+            this.deepCoreButtonX = left;
+            this.deepCoreButtonY = registryY;
+            this.deepCoreButtonWidth = Math.max(40, right - left);
+            guiGraphics.fill(this.deepCoreButtonX, this.deepCoreButtonY,
+                    this.deepCoreButtonX + this.deepCoreButtonWidth,
+                    this.deepCoreButtonY + DEEP_CORE_BUTTON_HEIGHT,
+                    palette.rowOdd());
+            guiGraphics.fill(this.deepCoreButtonX, this.deepCoreButtonY,
+                    this.deepCoreButtonX + this.deepCoreButtonWidth,
+                    this.deepCoreButtonY + 1, palette.accentA());
+            guiGraphics.drawCenteredString(this.font,
+                    Component.translatable("screen.forever_production_monitor.map.open_deep_core"),
+                    this.deepCoreButtonX + this.deepCoreButtonWidth / 2,
+                    this.deepCoreButtonY + 4, palette.text());
+            registryY = this.deepCoreButtonY + DEEP_CORE_BUTTON_HEIGHT + 9;
+        }
+
         guiGraphics.drawWordWrap(this.font, Component.literal(selected.visualId().toString()),
                 left, registryY, Math.max(40, right - left), palette.muted());
     }
@@ -1174,6 +1199,27 @@ final class NetworkMapView {
         return d < 1000.0 ? String.format(Locale.ROOT, "%.2f AE/t", d) : String.format(Locale.ROOT, "%.2fk AE/t", d / 1000.0);
     }
 
+    private static boolean isDeepCoreControlCore(MonitorNetwork.MapNode node) {
+        return node != null
+                && "forever_deep_core".equals(node.visualId().getNamespace())
+                && "control_core".equals(node.visualId().getPath());
+    }
+
+    private boolean clickOpenDeepCore(double mouseX, double mouseY) {
+        if (this.deepCoreTarget == null
+                || this.snapshot == null
+                || mouseX < this.deepCoreButtonX
+                || mouseX >= this.deepCoreButtonX + this.deepCoreButtonWidth
+                || mouseY < this.deepCoreButtonY
+                || mouseY >= this.deepCoreButtonY + DEEP_CORE_BUTTON_HEIGHT) {
+            return false;
+        }
+        MonitorNetwork.requestOpenDeepCore(
+                this.snapshot.dimension(), this.snapshot.pos(),
+                this.snapshot.viewDimension(), this.deepCoreTarget);
+        return true;
+    }
+
     private boolean clickFollowPath(double mouseX, double mouseY) {
         if (this.followTarget == null
                 || mouseX < this.followButtonX
@@ -1202,6 +1248,9 @@ final class NetworkMapView {
     }
 
     boolean mouseClicked(double d, double d2, int n) {
+        if (n == 0 && this.clickOpenDeepCore(d, d2)) {
+            return true;
+        }
         if (n == 0 && this.clickFollowPath(d, d2)) {
             return true;
         }

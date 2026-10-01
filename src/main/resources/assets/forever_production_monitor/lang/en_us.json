@@ -294,6 +294,7 @@
   ,"screen.forever_production_monitor.map.wireless_connector": "Wireless Connector"
   ,"screen.forever_production_monitor.map.destination": "Destination: %s"
   ,"screen.forever_production_monitor.map.follow_path": "Follow Path"
+  ,"screen.forever_production_monitor.map.open_deep_core": "Open Deep Core"
   ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s network dimensions"
   ,"screen.forever_production_monitor.map.dimension_count": "· %s network dimensions"
   ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Drag=rotate · Wheel=zoom"
