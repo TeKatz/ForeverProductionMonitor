@@ -91,394 +91,394 @@
   "screen.forever_production_monitor.status.network_offline": "● Network offline",
   "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor chunk unloaded",
   "screen.forever_production_monitor.status.monitor_missing": "● Monitor missing",
-  "screen.forever_production_monitor.status.invalid_link": "● Invalid tablet link"
-  ,"message.forever_production_monitor.locator.found": "%s marked at %s, %s, %s (%s/%s)"
-  ,"message.forever_production_monitor.locator.unavailable": "No loaded location found for %s"
-  ,"message.forever_production_monitor.locator.wrong_dimension": "%s is in %s at %s, %s, %s. Travel to that dimension to locate it."
-  ,"key.forever_production_monitor.open_tablet": "Open Production Tablet"
-  ,"key.categories.forever_production_monitor": "Forever Production Monitor"
-  ,"curios.identifier.production_tablet": "Production Tablet"
-  ,"hud.forever_production_monitor.mode.activity": "Top Activity"
-  ,"hud.forever_production_monitor.mode.stored": "Top Stored"
-  ,"hud.forever_production_monitor.mode.incoming": "Top Incoming"
-  ,"hud.forever_production_monitor.mode.outgoing": "Top Outgoing"
-  ,"hud.forever_production_monitor.mode.fluids": "Top Fluids"
-  ,"hud.forever_production_monitor.mode.energy": "FE Energy"
-  ,"hud.forever_production_monitor.infinite": "Infinite"
-  ,"config.forever_production_monitor.title": "Production Monitor HUD"
-  ,"config.forever_production_monitor.hint": "The live preview follows your selected screen position"
-  ,"config.forever_production_monitor.enabled": "HUD: %s"
-  ,"config.forever_production_monitor.anchor": "Position: %s"
-  ,"config.forever_production_monitor.anchor.top_left": "Top Left"
-  ,"config.forever_production_monitor.anchor.top_right": "Top Right"
-  ,"config.forever_production_monitor.anchor.bottom_left": "Bottom Left"
-  ,"config.forever_production_monitor.anchor.bottom_right": "Bottom Right"
-  ,"config.forever_production_monitor.mode": "Display: %s"
-  ,"config.forever_production_monitor.scale": "Scale: %s"
-  ,"config.forever_production_monitor.opacity": "Opacity: %s"
-  ,"config.forever_production_monitor.x_offset": "X Offset: %s"
-  ,"config.forever_production_monitor.y_offset": "Y Offset: %s"
-  ,"config.forever_production_monitor.frame": "Frame: %s"
-  ,"config.forever_production_monitor.frame.none": "No Frame"
-  ,"config.forever_production_monitor.frame.oritech": "Oritech Theme"
-  ,"config.forever_production_monitor.frame.ae2": "AE2 Theme"
-  ,"config.forever_production_monitor.frame.forever": "Forever Theme"
-  ,"config.forever_production_monitor.frame.standard": "Standard Frame"
-  ,"config.forever_production_monitor.frame.custom": "Custom"
-  ,"config.forever_production_monitor.custom_hue": "Custom Color: %s°"
-  ,"config.forever_production_monitor.rate_unit": "Rate Unit: %s"
-  ,"config.forever_production_monitor.refresh": "Refresh: %s"
-  ,"config.forever_production_monitor.refresh.one_second": "Every second"
-  ,"config.forever_production_monitor.refresh.two_seconds": "Every 2 seconds"
-  ,"config.forever_production_monitor.refresh.five_seconds": "Every 5 seconds"
-  ,"config.forever_production_monitor.reset": "Reset"
-  ,"screen.forever_production_monitor.theme.open": "Appearance settings"
-  ,"screen.forever_production_monitor.theme.title": "Production Monitor Appearance"
-  ,"screen.forever_production_monitor.theme.subtitle": "Choose a dashboard theme — changes are previewed live"
-  ,"screen.forever_production_monitor.theme.preview": "Forever Production Monitor"
-  ,"screen.forever_production_monitor.theme.standard": "Standard"
-  ,"screen.forever_production_monitor.theme.forever": "Forever"
-  ,"screen.forever_production_monitor.theme.ae2": "AE2"
-  ,"screen.forever_production_monitor.theme.oritech": "Oritech"
-  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
-  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
-  ,"screen.forever_production_monitor.theme.holographic": "Holographic"
-  ,"screen.forever_production_monitor.theme.monochrome": "Monochrome"
-  ,"screen.forever_production_monitor.theme.minimal": "Minimal"
-  ,"screen.forever_production_monitor.theme.carbon": "Carbon Industrial"
-  ,"screen.forever_production_monitor.theme.terminal": "Terminal"
-  ,"screen.forever_production_monitor.theme.deep_space": "Deep Space"
-  ,"screen.forever_production_monitor.theme.copper": "Copper Works"
-  ,"screen.forever_production_monitor.theme.aurora": "Aurora"
-  ,"screen.forever_production_monitor.theme.redstone": "Redstone"
-  ,"screen.forever_production_monitor.theme.frost": "Frost"
-  ,"screen.forever_production_monitor.theme.nature": "Nature"
-  ,"screen.forever_production_monitor.theme.cat": "Cats"
-  ,"screen.forever_production_monitor.theme.custom": "Custom"
-  ,"screen.forever_production_monitor.theme.hue": "Custom accent: %s°"
-  ,"screen.forever_production_monitor.theme.match_hud": "Match compact HUD: %s"
-  ,"screen.forever_production_monitor.settings.gui_animations": "GUI Animations: %s"
-  ,"screen.forever_production_monitor.tab.dashboard": "Dashboard"
-  ,"screen.forever_production_monitor.dashboard.pinned": "Pinned resource"
-  ,"screen.forever_production_monitor.dashboard.alarm": "Alarm"
-  ,"screen.forever_production_monitor.dashboard.empty": "No resources pinned yet"
-  ,"screen.forever_production_monitor.dashboard.empty_hint": "Open Production and click ◇ to pin an entry"
-  ,"screen.forever_production_monitor.dashboard.summary": "%s pinned · %s active alarms"
-  ,"screen.forever_production_monitor.alarm.none": "No alarm"
-  ,"screen.forever_production_monitor.alarm.amount_below": "Amount below"
-  ,"screen.forever_production_monitor.alarm.amount_above": "Amount above"
-  ,"screen.forever_production_monitor.alarm.rate_below": "Rate below"
-  ,"screen.forever_production_monitor.alarm.rate_above": "Rate above"
-  ,"screen.forever_production_monitor.alarm.stalled": "Stalled"
-  ,"screen.forever_production_monitor.alarm_editor.title": "Dashboard Alarm"
-  ,"screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s"
-  ,"screen.forever_production_monitor.alarm_editor.threshold": "Threshold"
-  ,"screen.forever_production_monitor.alarm_editor.delay": "Trigger delay: %s seconds"
-  ,"screen.forever_production_monitor.alarm_editor.delay_label": "Delay and anti-flapping"
-  ,"screen.forever_production_monitor.alarm_editor.hysteresis": "Hysteresis"
-  ,"screen.forever_production_monitor.alarm_editor.disabled": "This pin is displayed without an alarm."
-  ,"screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm when this resource does not change for the selected delay."
-  ,"screen.forever_production_monitor.alarm_editor.save": "Save Rule"
-  ,"message.forever_production_monitor.alarm": "Production alarm: %s"
-  ,"hud.forever_production_monitor.mode.pinned": "Pinned Dashboard"
-  ,"screen.forever_production_monitor.tab.map": "Network Map"
-  ,"screen.forever_production_monitor.map.loading": "Scanning ME network..."
-  ,"screen.forever_production_monitor.map.empty": "No physical network nodes found"
-  ,"screen.forever_production_monitor.map.controls": "Drag: rotate · RMB drag: pan · Wheel: zoom · Click: select · Double-click: focus · R: reset"
-  ,"screen.forever_production_monitor.map.controls.navigation": "Drag: rotate · RMB drag: pan · Wheel: zoom"
-  ,"screen.forever_production_monitor.map.controls.selection": "Click: select · Double-click: focus · R: reset"
-  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Drag=rotate · RMB=pan · Wheel=zoom"
-  ,"screen.forever_production_monitor.map.controls.selection.compact": "Click=select · 2×=focus · R=reset"
-  ,"screen.forever_production_monitor.map.view.fit": "Fit"
-  ,"screen.forever_production_monitor.map.view.iso": "Iso"
-  ,"screen.forever_production_monitor.map.view.top": "Top"
-  ,"screen.forever_production_monitor.map.view.front": "Front"
-  ,"screen.forever_production_monitor.map.truncated": "Large network: showing the first 4,096 blocks"
-  ,"screen.forever_production_monitor.map.details": "Selected block"
-  ,"screen.forever_production_monitor.map.blocks": "%s network blocks"
-  ,"screen.forever_production_monitor.map.select_hint": "Click a block in the 3D view to inspect it."
-  ,"screen.forever_production_monitor.map.position": "Position"
-  ,"screen.forever_production_monitor.map.state": "Network state"
-  ,"screen.forever_production_monitor.map.channels": "Channels"
-  ,"screen.forever_production_monitor.map.power": "Idle power"
-  ,"screen.forever_production_monitor.map.state.connected": "Connected"
-  ,"screen.forever_production_monitor.map.state.active": "Active"
-  ,"screen.forever_production_monitor.map.state.missing_channel": "Missing channel"
-  ,"screen.forever_production_monitor.map.state.unpowered": "Unpowered"
-  ,"screen.forever_production_monitor.map.state.booting": "Booting"
-  ,"screen.forever_production_monitor.theme.map_rotation": "Map rotation: %s"
-  ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
-  ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Inverted"
-  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
-  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
-  ,"screen.forever_production_monitor.theme.holographic": "Holographic"
-  ,"screen.forever_production_monitor.theme.monochrome": "Monochrome"
-  ,"screen.forever_production_monitor.settings.title": "Production Monitor Settings"
-  ,"screen.forever_production_monitor.settings.category.general": "General"
-  ,"screen.forever_production_monitor.settings.category.interface": "Interface"
-  ,"screen.forever_production_monitor.settings.category.map": "Network Map"
-  ,"screen.forever_production_monitor.settings.category.hud": "Mini HUD"
-  ,"screen.forever_production_monitor.settings.category.animations": "Animations"
-  ,"screen.forever_production_monitor.settings.default_tab": "Default tab: %s"
-  ,"screen.forever_production_monitor.settings.remember_tab": "Remember last tab: %s"
-  ,"screen.forever_production_monitor.settings.rate": "Rate unit: %s"
-  ,"screen.forever_production_monitor.settings.refresh": "Refresh: %s"
-  ,"screen.forever_production_monitor.settings.custom.primary": "Primary accent: %s°"
-  ,"screen.forever_production_monitor.settings.custom.secondary": "Secondary accent: %s°"
-  ,"screen.forever_production_monitor.settings.custom.brightness": "Surface brightness: %s"
-  ,"screen.forever_production_monitor.settings.interface.opacity": "Interface opacity: %s"
-  ,"screen.forever_production_monitor.settings.animations.update_pulse": "Update pulse: %s"
-  ,"screen.forever_production_monitor.settings.animations.pulse_intensity": "Pulse intensity: %s"
-  ,"screen.forever_production_monitor.settings.animations.pulse_duration": "Pulse duration: %s s"
-  ,"screen.forever_production_monitor.settings.animations.ambient_motion": "Ambient motion: %s"
-  ,"screen.forever_production_monitor.settings.animations.ambient_intensity": "Ambient intensity: %s"
-  ,"screen.forever_production_monitor.settings.map.default_view": "Default view: %s"
-  ,"screen.forever_production_monitor.settings.map.view.iso": "Isometric"
-  ,"screen.forever_production_monitor.settings.map.view.top": "Top"
-  ,"screen.forever_production_monitor.settings.map.view.front": "Front"
-  ,"screen.forever_production_monitor.settings.map.remember": "Remember camera: %s"
-  ,"screen.forever_production_monitor.settings.map.rotation": "Rotation sensitivity: %s"
-  ,"screen.forever_production_monitor.settings.map.pan": "Pan sensitivity: %s"
-  ,"screen.forever_production_monitor.settings.map.zoom": "Zoom sensitivity: %s"
-  ,"screen.forever_production_monitor.settings.map.focus_zoom": "Focus zoom: %s"
-  ,"screen.forever_production_monitor.settings.map.invert_horizontal": "Invert horizontal: %s"
-  ,"screen.forever_production_monitor.settings.map.invert_vertical": "Invert vertical: %s"
-  ,"screen.forever_production_monitor.settings.map.cables": "Show cables: %s"
-  ,"screen.forever_production_monitor.settings.map.parts": "Show buses and parts: %s"
-  ,"screen.forever_production_monitor.settings.map.inactive": "Show inactive nodes: %s"
-  ,"screen.forever_production_monitor.settings.map.controls": "Show control help: %s"
-  ,"screen.forever_production_monitor.settings.map.view_buttons": "Show view shortcuts: %s"
-  ,"screen.forever_production_monitor.settings.map.details": "Show details panel: %s"
-  ,"screen.forever_production_monitor.settings.hud.enabled": "HUD enabled: %s"
-  ,"screen.forever_production_monitor.settings.hud.anchor": "Position: %s"
-  ,"screen.forever_production_monitor.settings.hud.mode": "Display: %s"
-  ,"screen.forever_production_monitor.settings.hud.frame": "Frame: %s"
-  ,"screen.forever_production_monitor.settings.hud.match": "Match interface theme: %s"
-  ,"screen.forever_production_monitor.settings.hud.entries": "Rows: %s"
-  ,"screen.forever_production_monitor.settings.hud.icons": "Icons: %s"
-  ,"screen.forever_production_monitor.settings.hud.names": "Names: %s"
-  ,"screen.forever_production_monitor.settings.hud.values": "Values: %s"
-  ,"screen.forever_production_monitor.settings.hud.scale": "Scale: %s"
-  ,"screen.forever_production_monitor.settings.hud.opacity": "Opacity: %s"
-  ,"screen.forever_production_monitor.settings.hud.hue": "Custom hue: %s°"
-  ,"screen.forever_production_monitor.settings.hud.x": "X offset: %s"
-  ,"screen.forever_production_monitor.settings.hud.y": "Y offset: %s"
-  ,"screen.forever_production_monitor.settings.hud.live_preview": "Live HUD preview"
-  ,"screen.forever_production_monitor.map.filter.all": "All"
-  ,"screen.forever_production_monitor.map.filter.devices": "Devices"
-  ,"screen.forever_production_monitor.map.filter.cables": "Cables"
-  ,"screen.forever_production_monitor.map.filter.parts": "Parts"
-  ,"screen.forever_production_monitor.map.filter.errors": "Errors"
-  ,"screen.forever_production_monitor.map.heatmap": "Heatmap"
-  ,"screen.forever_production_monitor.map.events": "Events"
-  ,"screen.forever_production_monitor.map.bookmark_hint": "Left click: load · Right click: save"
-  ,"screen.forever_production_monitor.map.event_log": "Network events"
-  ,"screen.forever_production_monitor.map.event_log.empty": "No network changes recorded in this session."
-  ,"screen.forever_production_monitor.map.event.added": "Network element added"
-  ,"screen.forever_production_monitor.map.event.removed": "Network element removed"
-  ,"screen.forever_production_monitor.map.event.channel_lost": "Channel lost"
-  ,"screen.forever_production_monitor.map.event.channel_restored": "Channel restored"
-  ,"screen.forever_production_monitor.map.event.power_lost": "Power lost"
-  ,"screen.forever_production_monitor.map.event.power_restored": "Power restored"
-  ,"screen.forever_production_monitor.map.event.state_changed": "State changed"
-  ,"screen.forever_production_monitor.settings.hud.theme": "HUD theme: %s"
-  ,"screen.forever_production_monitor.settings.hud.theme_matched": "HUD theme: %s (matched)"
-  ,"screen.forever_production_monitor.settings.hud.layout": "Frame: %s"
-  ,"screen.forever_production_monitor.settings.hud.layout.full": "Full"
-  ,"screen.forever_production_monitor.settings.hud.layout.compact": "Compact"
-  ,"screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal"
-  ,"screen.forever_production_monitor.settings.hud.layout.none": "None"
-  ,"screen.forever_production_monitor.settings.hud.animations": "HUD animations: %s"
-  ,"screen.forever_production_monitor.settings.hud.animation_intensity": "HUD motion: %s"
-  ,"screen.forever_production_monitor.map.quantum_bridge": "Quantum Bridge"
-  ,"screen.forever_production_monitor.map.wireless_connector": "Wireless Connector"
-  ,"screen.forever_production_monitor.map.destination": "Destination: %s"
-  ,"screen.forever_production_monitor.map.follow_path": "Follow Path"
-  ,"screen.forever_production_monitor.map.open_deep_core": "Open Deep Core"
-  ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s network dimensions"
-  ,"screen.forever_production_monitor.map.dimension_count": "· %s network dimensions"
-  ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Drag=rotate · Wheel=zoom"
-  ,"screen.forever_production_monitor.map.controls.selection.minimal": "Click=select · R=reset"
-  ,"screen.forever_production_monitor.tab.crafting": "Crafting"
-  ,"screen.forever_production_monitor.crafting.title": "Crafting Diagnostics"
-  ,"screen.forever_production_monitor.crafting.jobs": "Jobs"
-  ,"screen.forever_production_monitor.crafting.patterns": "Patterns"
-  ,"screen.forever_production_monitor.crafting.dependents": "Dependencies"
-  ,"screen.forever_production_monitor.crafting.providers": "Providers"
-  ,"screen.forever_production_monitor.crafting.search": "Search crafting data"
-  ,"screen.forever_production_monitor.crafting.refresh": "Refresh"
-  ,"screen.forever_production_monitor.crafting.back": "Back"
-  ,"screen.forever_production_monitor.crafting.loading": "Loading diagnostics…"
-  ,"screen.forever_production_monitor.crafting.offline": "Monitor or AE2 network is offline."
-  ,"screen.forever_production_monitor.crafting.limited": "Partial snapshot (scan limit)"
-  ,"screen.forever_production_monitor.crafting.empty": "No entries"
-  ,"screen.forever_production_monitor.crafting.inactive": "inactive"
-  ,"screen.forever_production_monitor.crafting.active": "active"
-  ,"screen.forever_production_monitor.crafting.target": "Target"
-  ,"screen.forever_production_monitor.crafting.job_active": "Active crafting job"
-  ,"screen.forever_production_monitor.crafting.cpu": "Crafting CPU"
-  ,"screen.forever_production_monitor.crafting.recipe_context": "Recipe context"
-  ,"screen.forever_production_monitor.crafting.direct_recipes": "Direct matching patterns"
-  ,"screen.forever_production_monitor.crafting.prerequisite_patterns": "Prerequisite patterns"
-  ,"screen.forever_production_monitor.crafting.related_providers": "Providers in recipe graph"
-  ,"screen.forever_production_monitor.crafting.matching_patterns": "Matching target patterns"
-  ,"screen.forever_production_monitor.crafting.no_matching_pattern": "No matching pattern found in this snapshot."
-  ,"screen.forever_production_monitor.crafting.storage": "CPU storage"
-  ,"screen.forever_production_monitor.crafting.coprocessors": "Co-processors"
-  ,"screen.forever_production_monitor.crafting.job_limit": "AE2 does not expose pending job steps or the provider handling a job through its public API."
-  ,"screen.forever_production_monitor.crafting.select_job": "Select a running crafting job."
-  ,"screen.forever_production_monitor.crafting.power": "Powered"
-  ,"screen.forever_production_monitor.crafting.channel": "Channel requirement met"
-  ,"screen.forever_production_monitor.crafting.booted": "Network booted"
-  ,"screen.forever_production_monitor.crafting.priority": "Pattern priority"
-  ,"screen.forever_production_monitor.crafting.provider_status": "Provider status"
-  ,"screen.forever_production_monitor.crafting.provider_patterns": "Pattern inventory"
-  ,"screen.forever_production_monitor.crafting.crafting_patterns": "Crafting patterns"
-  ,"screen.forever_production_monitor.crafting.processing_patterns": "Processing patterns"
-  ,"screen.forever_production_monitor.crafting.hosted_patterns": "Hosted patterns"
-  ,"screen.forever_production_monitor.crafting.no_location": "No physical node position available."
-  ,"screen.forever_production_monitor.crafting.locate": "Locate in Network Map ↗"
-  ,"screen.forever_production_monitor.crafting.select_provider": "Select a provider."
-  ,"screen.forever_production_monitor.crafting.select_pattern": "Select a pattern."
-  ,"screen.forever_production_monitor.crafting.inputs": "Inputs"
-  ,"screen.forever_production_monitor.crafting.outputs": "Outputs"
-  ,"screen.forever_production_monitor.crafting.provider_trace": "Pattern providers"
-  ,"screen.forever_production_monitor.crafting.multiple_providers": "Identical pattern on multiple providers (informational)."
-  ,"screen.forever_production_monitor.crafting.output_variants": "Same output with different inputs (informational)."
-  ,"screen.forever_production_monitor.crafting.dependencies": "Dependencies"
-  ,"screen.forever_production_monitor.crafting.details": "Details"
-  ,"screen.forever_production_monitor.crafting.crafting_tree": "Crafting Tree"
-  ,"screen.forever_production_monitor.crafting.fit": "Fit"
-  ,"screen.forever_production_monitor.crafting.select_pattern_tree": "Select a pattern to visualize its crafting tree."
-  ,"screen.forever_production_monitor.crafting.tree_unavailable": "Crafting tree unavailable for this pattern."
-  ,"screen.forever_production_monitor.crafting.tree_controls": "Drag to pan · Ctrl+wheel zooms · Wheel scrolls · Shift+wheel horizontal"
-  ,"screen.forever_production_monitor.crafting.tree_limited": "Tree view limited for performance."
-  ,"screen.forever_production_monitor.crafting.recipe_options": "recipe options"
-  ,"screen.forever_production_monitor.crafting.craft": "Craft"
-  ,"screen.forever_production_monitor.crafting.amount_title": "Start Craft"
-  ,"screen.forever_production_monitor.crafting.amount": "Amount"
-  ,"screen.forever_production_monitor.crafting.start": "Start Craft"
-  ,"screen.forever_production_monitor.crafting.craft_planning": "Planning craft for %s..."
-  ,"screen.forever_production_monitor.crafting.craft_started": "Craft started: %s requested."
-  ,"screen.forever_production_monitor.crafting.craft_invalid_amount": "Craft not started: invalid amount."
-  ,"screen.forever_production_monitor.crafting.craft_invalid_link": "Craft not started: monitor link is no longer valid."
-  ,"screen.forever_production_monitor.crafting.craft_network_offline": "Craft not started: AE2 network is offline."
-  ,"screen.forever_production_monitor.crafting.craft_not_craftable": "Craft not started: target is not craftable."
-  ,"screen.forever_production_monitor.crafting.craft_missing": "Craft not started: required ingredients are missing."
-  ,"screen.forever_production_monitor.crafting.craft_submit_failed": "Craft could not be submitted (%s): %s."
-  ,"screen.forever_production_monitor.crafting.craft_error": "Craft failed (%s): %s."
-  ,"screen.forever_production_monitor.crafting.requires": "Pattern prerequisites"
-  ,"screen.forever_production_monitor.crafting.cycle": "Cycle detected in the visible pattern graph."
-  ,"screen.forever_production_monitor.crafting.partial": "Results may be incomplete due to the scan limit."
-  ,"screen.forever_production_monitor.crafting.yes": "yes"
-  ,"screen.forever_production_monitor.crafting.no": "no"
-  ,"screen.forever_production_monitor.crafting.pattern_count": "Patterns"
-  ,"screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse dependencies"
-  ,"screen.forever_production_monitor.crafting.identical_copies": "Identical pattern copies (informational)"
-  ,"screen.forever_production_monitor.crafting.hint_jobs": "Select a crafting job to inspect its CPU and recipe context."
-  ,"screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern to inspect inputs, outputs, providers and dependencies."
-  ,"screen.forever_production_monitor.crafting.hint_dependents": "Select a pattern to inspect prerequisites and reverse dependencies."
-  ,"screen.forever_production_monitor.crafting.hint_providers": "Select a provider to inspect status and hosted patterns; use Locate for the Network Map."
-  ,"screen.forever_production_monitor.settings.custom.open_designer": "Open Custom Theme Designer"
-  ,"screen.forever_production_monitor.settings.animations.interactions": "Theme interactions: %s"
-  ,"screen.forever_production_monitor.custom_theme.title": "Custom Theme Designer"
-  ,"screen.forever_production_monitor.custom_theme.controls": "Theme controls"
-  ,"screen.forever_production_monitor.custom_theme.preview": "Live preview"
-  ,"screen.forever_production_monitor.custom_theme.preview_title": "Custom Theme"
-  ,"screen.forever_production_monitor.custom_theme.accents": "Accent colours"
-  ,"screen.forever_production_monitor.custom_theme.primary_hue": "Primary hue: %s"
-  ,"screen.forever_production_monitor.custom_theme.secondary_hue": "Secondary hue: %s"
-  ,"screen.forever_production_monitor.custom_theme.primary_saturation": "Primary saturation: %s"
-  ,"screen.forever_production_monitor.custom_theme.secondary_saturation": "Secondary saturation: %s"
-  ,"screen.forever_production_monitor.custom_theme.surface_saturation": "Surface saturation: %s"
-  ,"screen.forever_production_monitor.custom_theme.brightness": "Surface brightness: %s"
-  ,"screen.forever_production_monitor.custom_theme.contrast": "Contrast: %s"
-  ,"screen.forever_production_monitor.custom_theme.header_strength": "Header strength: %s"
-  ,"screen.forever_production_monitor.custom_theme.border_strength": "Border strength: %s"
-  ,"screen.forever_production_monitor.custom_theme.accent_brightness": "Accent brightness: %s"
-  ,"screen.forever_production_monitor.custom_theme.opacity": "Interface opacity: %s"
-  ,"screen.forever_production_monitor.custom_theme.category.colors": "Colors"
-  ,"screen.forever_production_monitor.custom_theme.category.background": "Background"
-  ,"screen.forever_production_monitor.custom_theme.category.particles": "Particles"
-  ,"screen.forever_production_monitor.custom_theme.category.components": "Components"
-  ,"screen.forever_production_monitor.custom_theme.background_style": "Background: %s"
-  ,"screen.forever_production_monitor.custom_theme.background.none": "None"
-  ,"screen.forever_production_monitor.custom_theme.background.grid": "Grid"
-  ,"screen.forever_production_monitor.custom_theme.background.circuit": "Circuit"
-  ,"screen.forever_production_monitor.custom_theme.background.starfield": "Starfield"
-  ,"screen.forever_production_monitor.custom_theme.background.scan_lines": "Scan Lines"
-  ,"screen.forever_production_monitor.custom_theme.background.energy_waves": "Energy Waves"
-  ,"screen.forever_production_monitor.custom_theme.background_density": "Background density: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_speed": "Background speed: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_opacity": "Background opacity: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_scale": "Background scale: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_style": "Particles: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle.none": "None"
-  ,"screen.forever_production_monitor.custom_theme.particle.pixels": "Pixels"
-  ,"screen.forever_production_monitor.custom_theme.particle.sparks": "Sparks"
-  ,"screen.forever_production_monitor.custom_theme.particle.data_packets": "Data Packets"
-  ,"screen.forever_production_monitor.custom_theme.particle.stars": "Stars"
-  ,"screen.forever_production_monitor.custom_theme.particle_color": "Particle color: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.primary": "Primary"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.secondary": "Secondary"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.mixed": "Mixed"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.white": "White"
-  ,"screen.forever_production_monitor.custom_theme.particle_amount": "Particle amount: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_speed": "Particle speed: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_size": "Particle size: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_opacity": "Particle opacity: %s"
-  ,"screen.forever_production_monitor.custom_theme.tab_style": "Tab style: %s"
-  ,"screen.forever_production_monitor.custom_theme.tab.flat": "Flat"
-  ,"screen.forever_production_monitor.custom_theme.tab.filled": "Filled"
-  ,"screen.forever_production_monitor.custom_theme.tab.underline": "Underline"
-  ,"screen.forever_production_monitor.custom_theme.tab.framed": "Framed"
-  ,"screen.forever_production_monitor.custom_theme.tab.segmented": "Segmented"
-  ,"screen.forever_production_monitor.custom_theme.tab_accent_strength": "Active tab accent: %s"
-  ,"screen.forever_production_monitor.custom_theme.button_style": "Button style: %s"
-  ,"screen.forever_production_monitor.custom_theme.button.flat": "Flat"
-  ,"screen.forever_production_monitor.custom_theme.button.filled": "Filled"
-  ,"screen.forever_production_monitor.custom_theme.button.outline": "Outline"
-  ,"screen.forever_production_monitor.custom_theme.button.underline": "Underline"
-  ,"screen.forever_production_monitor.custom_theme.button.segmented": "Segmented"
-  ,"screen.forever_production_monitor.custom_theme.button_hover_strength": "Button hover strength: %s"
-  ,"screen.forever_production_monitor.settings.hud.open_custom_designer": "Open Custom Mini HUD Designer"
-  ,"screen.forever_production_monitor.custom_hud.title": "Custom Mini HUD Designer"
-  ,"screen.forever_production_monitor.custom_hud.preview": "Live Mini HUD preview"
-  ,"screen.forever_production_monitor.custom_hud.preview_title": "Custom Mini HUD"
-  ,"screen.forever_production_monitor.custom_hud.category.colors": "Colors"
-  ,"screen.forever_production_monitor.custom_hud.category.structure": "Structure"
-  ,"screen.forever_production_monitor.custom_hud.primary_hue": "Primary hue: %s"
-  ,"screen.forever_production_monitor.custom_hud.secondary_hue": "Secondary hue: %s"
-  ,"screen.forever_production_monitor.custom_hud.primary_saturation": "Primary saturation: %s"
-  ,"screen.forever_production_monitor.custom_hud.secondary_saturation": "Secondary saturation: %s"
-  ,"screen.forever_production_monitor.custom_hud.surface_saturation": "Surface saturation: %s"
-  ,"screen.forever_production_monitor.custom_hud.brightness": "Surface brightness: %s"
-  ,"screen.forever_production_monitor.custom_hud.contrast": "Contrast: %s"
-  ,"screen.forever_production_monitor.custom_hud.accent_brightness": "Accent brightness: %s"
-  ,"screen.forever_production_monitor.custom_hud.header_strength": "Header strength: %s"
-  ,"screen.forever_production_monitor.custom_hud.row_contrast": "Row contrast: %s"
-  ,"screen.forever_production_monitor.custom_hud.border_strength": "Border strength: %s"
-  ,"screen.forever_production_monitor.custom_hud.decoration": "Decoration: %s"
-  ,"screen.forever_production_monitor.custom_hud.decoration.clean": "Clean"
-  ,"screen.forever_production_monitor.custom_hud.decoration.split": "Split accents"
-  ,"screen.forever_production_monitor.custom_hud.decoration.corners": "Corners"
-  ,"screen.forever_production_monitor.custom_hud.decoration.circuit": "Circuit"
-  ,"screen.forever_production_monitor.custom_hud.opacity": "HUD opacity: %s"
-  ,"screen.forever_production_monitor.custom_hud.animation_intensity": "Animation intensity: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_items": "Items: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_fluids": "Fluids: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_energy": "Energy: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_infinite": "Infinite storage: %s"
-  ,"screen.forever_production_monitor.settings.hud.stored_sort": "Stored sort: %s"
-  ,"settings.forever_production_monitor.hud.stored_sort.highest": "Highest first"
-  ,"settings.forever_production_monitor.hud.stored_sort.lowest": "Lowest first"
-  ,"screen.forever_production_monitor.settings.hud.section.general": "General"
-  ,"screen.forever_production_monitor.settings.hud.section.content": "Content"
-  ,"screen.forever_production_monitor.settings.hud.section.layout": "Layout"
-  ,"screen.forever_production_monitor.settings.hud.section.appearance": "Appearance"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom": "Preview zoom: %s"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.fit": "Fit"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one": "1x"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one_half": "1.5x"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.two": "2x"
+  "screen.forever_production_monitor.status.invalid_link": "● Invalid tablet link",
+  "message.forever_production_monitor.locator.found": "%s marked at %s, %s, %s (%s/%s)",
+  "message.forever_production_monitor.locator.unavailable": "No loaded location found for %s",
+  "message.forever_production_monitor.locator.wrong_dimension": "%s is in %s at %s, %s, %s. Travel to that dimension to locate it.",
+  "key.forever_production_monitor.open_tablet": "Open Production Tablet",
+  "key.categories.forever_production_monitor": "Forever Production Monitor",
+  "curios.identifier.production_tablet": "Production Tablet",
+  "hud.forever_production_monitor.mode.activity": "Top Activity",
+  "hud.forever_production_monitor.mode.stored": "Top Stored",
+  "hud.forever_production_monitor.mode.incoming": "Top Incoming",
+  "hud.forever_production_monitor.mode.outgoing": "Top Outgoing",
+  "hud.forever_production_monitor.mode.fluids": "Top Fluids",
+  "hud.forever_production_monitor.mode.energy": "FE Energy",
+  "hud.forever_production_monitor.infinite": "Infinite",
+  "config.forever_production_monitor.title": "Production Monitor HUD",
+  "config.forever_production_monitor.hint": "The live preview follows your selected screen position",
+  "config.forever_production_monitor.enabled": "HUD: %s",
+  "config.forever_production_monitor.anchor": "Position: %s",
+  "config.forever_production_monitor.anchor.top_left": "Top Left",
+  "config.forever_production_monitor.anchor.top_right": "Top Right",
+  "config.forever_production_monitor.anchor.bottom_left": "Bottom Left",
+  "config.forever_production_monitor.anchor.bottom_right": "Bottom Right",
+  "config.forever_production_monitor.mode": "Display: %s",
+  "config.forever_production_monitor.scale": "Scale: %s",
+  "config.forever_production_monitor.opacity": "Opacity: %s",
+  "config.forever_production_monitor.x_offset": "X Offset: %s",
+  "config.forever_production_monitor.y_offset": "Y Offset: %s",
+  "config.forever_production_monitor.frame": "Frame: %s",
+  "config.forever_production_monitor.frame.none": "No Frame",
+  "config.forever_production_monitor.frame.oritech": "Oritech Theme",
+  "config.forever_production_monitor.frame.ae2": "AE2 Theme",
+  "config.forever_production_monitor.frame.forever": "Forever Theme",
+  "config.forever_production_monitor.frame.standard": "Standard Frame",
+  "config.forever_production_monitor.frame.custom": "Custom",
+  "config.forever_production_monitor.custom_hue": "Custom Color: %s°",
+  "config.forever_production_monitor.rate_unit": "Rate Unit: %s",
+  "config.forever_production_monitor.refresh": "Refresh: %s",
+  "config.forever_production_monitor.refresh.one_second": "Every second",
+  "config.forever_production_monitor.refresh.two_seconds": "Every 2 seconds",
+  "config.forever_production_monitor.refresh.five_seconds": "Every 5 seconds",
+  "config.forever_production_monitor.reset": "Reset",
+  "screen.forever_production_monitor.theme.open": "Appearance settings",
+  "screen.forever_production_monitor.theme.title": "Production Monitor Appearance",
+  "screen.forever_production_monitor.theme.subtitle": "Choose a dashboard theme — changes are previewed live",
+  "screen.forever_production_monitor.theme.preview": "Forever Production Monitor",
+  "screen.forever_production_monitor.theme.standard": "Standard",
+  "screen.forever_production_monitor.theme.forever": "Forever",
+  "screen.forever_production_monitor.theme.ae2": "AE2",
+  "screen.forever_production_monitor.theme.oritech": "Oritech",
+  "screen.forever_production_monitor.theme.mekanism": "Mekanism",
+  "screen.forever_production_monitor.theme.quantum": "Quantum",
+  "screen.forever_production_monitor.theme.holographic": "Holographic",
+  "screen.forever_production_monitor.theme.monochrome": "Monochrome",
+  "screen.forever_production_monitor.theme.minimal": "Minimal",
+  "screen.forever_production_monitor.theme.carbon": "Carbon Industrial",
+  "screen.forever_production_monitor.theme.terminal": "Terminal",
+  "screen.forever_production_monitor.theme.deep_space": "Deep Space",
+  "screen.forever_production_monitor.theme.copper": "Copper Works",
+  "screen.forever_production_monitor.theme.aurora": "Aurora",
+  "screen.forever_production_monitor.theme.redstone": "Redstone",
+  "screen.forever_production_monitor.theme.frost": "Frost",
+  "screen.forever_production_monitor.theme.nature": "Nature",
+  "screen.forever_production_monitor.theme.cat": "Cats",
+  "screen.forever_production_monitor.theme.custom": "Custom",
+  "screen.forever_production_monitor.theme.hue": "Custom accent: %s°",
+  "screen.forever_production_monitor.theme.match_hud": "Match compact HUD: %s",
+  "screen.forever_production_monitor.settings.gui_animations": "GUI Animations: %s",
+  "screen.forever_production_monitor.tab.dashboard": "Dashboard",
+  "screen.forever_production_monitor.dashboard.pinned": "Pinned resource",
+  "screen.forever_production_monitor.dashboard.alarm": "Alarm",
+  "screen.forever_production_monitor.dashboard.empty": "No resources pinned yet",
+  "screen.forever_production_monitor.dashboard.empty_hint": "Open Production and click ◇ to pin an entry",
+  "screen.forever_production_monitor.dashboard.summary": "%s pinned · %s active alarms",
+  "screen.forever_production_monitor.alarm.none": "No alarm",
+  "screen.forever_production_monitor.alarm.amount_below": "Amount below",
+  "screen.forever_production_monitor.alarm.amount_above": "Amount above",
+  "screen.forever_production_monitor.alarm.rate_below": "Rate below",
+  "screen.forever_production_monitor.alarm.rate_above": "Rate above",
+  "screen.forever_production_monitor.alarm.stalled": "Stalled",
+  "screen.forever_production_monitor.alarm_editor.title": "Dashboard Alarm",
+  "screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s",
+  "screen.forever_production_monitor.alarm_editor.threshold": "Threshold",
+  "screen.forever_production_monitor.alarm_editor.delay": "Trigger delay: %s seconds",
+  "screen.forever_production_monitor.alarm_editor.delay_label": "Delay and anti-flapping",
+  "screen.forever_production_monitor.alarm_editor.hysteresis": "Hysteresis",
+  "screen.forever_production_monitor.alarm_editor.disabled": "This pin is displayed without an alarm.",
+  "screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm when this resource does not change for the selected delay.",
+  "screen.forever_production_monitor.alarm_editor.save": "Save Rule",
+  "message.forever_production_monitor.alarm": "Production alarm: %s",
+  "hud.forever_production_monitor.mode.pinned": "Pinned Dashboard",
+  "screen.forever_production_monitor.tab.map": "Network Map",
+  "screen.forever_production_monitor.map.loading": "Scanning ME network...",
+  "screen.forever_production_monitor.map.empty": "No physical network nodes found",
+  "screen.forever_production_monitor.map.controls": "Drag: rotate · RMB drag: pan · Wheel: zoom · Click: select · Double-click: focus · R: reset",
+  "screen.forever_production_monitor.map.controls.navigation": "Drag: rotate · RMB drag: pan · Wheel: zoom",
+  "screen.forever_production_monitor.map.controls.selection": "Click: select · Double-click: focus · R: reset",
+  "screen.forever_production_monitor.map.controls.navigation.compact": "Drag=rotate · RMB=pan · Wheel=zoom",
+  "screen.forever_production_monitor.map.controls.selection.compact": "Click=select · 2×=focus · R=reset",
+  "screen.forever_production_monitor.map.view.fit": "Fit",
+  "screen.forever_production_monitor.map.view.iso": "Iso",
+  "screen.forever_production_monitor.map.view.top": "Top",
+  "screen.forever_production_monitor.map.view.front": "Front",
+  "screen.forever_production_monitor.map.truncated": "Large network: showing the first 4,096 blocks",
+  "screen.forever_production_monitor.map.details": "Selected block",
+  "screen.forever_production_monitor.map.blocks": "%s network blocks",
+  "screen.forever_production_monitor.map.select_hint": "Click a block in the 3D view to inspect it.",
+  "screen.forever_production_monitor.map.position": "Position",
+  "screen.forever_production_monitor.map.state": "Network state",
+  "screen.forever_production_monitor.map.channels": "Channels",
+  "screen.forever_production_monitor.map.power": "Idle power",
+  "screen.forever_production_monitor.map.state.connected": "Connected",
+  "screen.forever_production_monitor.map.state.active": "Active",
+  "screen.forever_production_monitor.map.state.missing_channel": "Missing channel",
+  "screen.forever_production_monitor.map.state.unpowered": "Unpowered",
+  "screen.forever_production_monitor.map.state.booting": "Booting",
+  "screen.forever_production_monitor.theme.map_rotation": "Map rotation: %s",
+  "screen.forever_production_monitor.theme.map_rotation.normal": "Normal",
+  "screen.forever_production_monitor.theme.map_rotation.inverted": "Inverted",
+  "screen.forever_production_monitor.settings.title": "Production Monitor Settings",
+  "screen.forever_production_monitor.settings.category.general": "General",
+  "screen.forever_production_monitor.settings.category.interface": "Interface",
+  "screen.forever_production_monitor.settings.category.map": "Network Map",
+  "screen.forever_production_monitor.settings.category.hud": "Mini HUD",
+  "screen.forever_production_monitor.settings.category.animations": "Animations",
+  "screen.forever_production_monitor.settings.default_tab": "Default tab: %s",
+  "screen.forever_production_monitor.settings.remember_tab": "Remember last tab: %s",
+  "screen.forever_production_monitor.settings.rate": "Rate unit: %s",
+  "screen.forever_production_monitor.settings.refresh": "Refresh: %s",
+  "screen.forever_production_monitor.settings.custom.primary": "Primary accent: %s°",
+  "screen.forever_production_monitor.settings.custom.secondary": "Secondary accent: %s°",
+  "screen.forever_production_monitor.settings.custom.brightness": "Surface brightness: %s",
+  "screen.forever_production_monitor.settings.interface.opacity": "Interface opacity: %s",
+  "screen.forever_production_monitor.settings.animations.update_pulse": "Update pulse: %s",
+  "screen.forever_production_monitor.settings.animations.pulse_intensity": "Pulse intensity: %s",
+  "screen.forever_production_monitor.settings.animations.pulse_duration": "Pulse duration: %s s",
+  "screen.forever_production_monitor.settings.animations.ambient_motion": "Ambient motion: %s",
+  "screen.forever_production_monitor.settings.animations.ambient_intensity": "Ambient intensity: %s",
+  "screen.forever_production_monitor.settings.map.default_view": "Default view: %s",
+  "screen.forever_production_monitor.settings.map.view.iso": "Isometric",
+  "screen.forever_production_monitor.settings.map.view.top": "Top",
+  "screen.forever_production_monitor.settings.map.view.front": "Front",
+  "screen.forever_production_monitor.settings.map.remember": "Remember camera: %s",
+  "screen.forever_production_monitor.settings.map.rotation": "Rotation sensitivity: %s",
+  "screen.forever_production_monitor.settings.map.pan": "Pan sensitivity: %s",
+  "screen.forever_production_monitor.settings.map.zoom": "Zoom sensitivity: %s",
+  "screen.forever_production_monitor.settings.map.focus_zoom": "Focus zoom: %s",
+  "screen.forever_production_monitor.settings.map.invert_horizontal": "Invert horizontal: %s",
+  "screen.forever_production_monitor.settings.map.invert_vertical": "Invert vertical: %s",
+  "screen.forever_production_monitor.settings.map.cables": "Show cables: %s",
+  "screen.forever_production_monitor.settings.map.parts": "Show buses and parts: %s",
+  "screen.forever_production_monitor.settings.map.inactive": "Show inactive nodes: %s",
+  "screen.forever_production_monitor.settings.map.controls": "Show control help: %s",
+  "screen.forever_production_monitor.settings.map.view_buttons": "Show view shortcuts: %s",
+  "screen.forever_production_monitor.settings.map.details": "Show details panel: %s",
+  "screen.forever_production_monitor.settings.hud.enabled": "HUD enabled: %s",
+  "screen.forever_production_monitor.settings.hud.anchor": "Position: %s",
+  "screen.forever_production_monitor.settings.hud.mode": "Display: %s",
+  "screen.forever_production_monitor.settings.hud.frame": "Frame: %s",
+  "screen.forever_production_monitor.settings.hud.match": "Match interface theme: %s",
+  "screen.forever_production_monitor.settings.hud.entries": "Rows: %s",
+  "screen.forever_production_monitor.settings.hud.icons": "Icons: %s",
+  "screen.forever_production_monitor.settings.hud.names": "Names: %s",
+  "screen.forever_production_monitor.settings.hud.values": "Values: %s",
+  "screen.forever_production_monitor.settings.hud.scale": "Scale: %s",
+  "screen.forever_production_monitor.settings.hud.opacity": "Opacity: %s",
+  "screen.forever_production_monitor.settings.hud.hue": "Custom hue: %s°",
+  "screen.forever_production_monitor.settings.hud.x": "X offset: %s",
+  "screen.forever_production_monitor.settings.hud.y": "Y offset: %s",
+  "screen.forever_production_monitor.settings.hud.live_preview": "Live HUD preview",
+  "screen.forever_production_monitor.map.filter.all": "All",
+  "screen.forever_production_monitor.map.filter.devices": "Devices",
+  "screen.forever_production_monitor.map.filter.cables": "Cables",
+  "screen.forever_production_monitor.map.filter.parts": "Parts",
+  "screen.forever_production_monitor.map.filter.errors": "Errors",
+  "screen.forever_production_monitor.map.heatmap": "Heatmap",
+  "screen.forever_production_monitor.map.events": "Events",
+  "screen.forever_production_monitor.map.bookmark_hint": "Left click: load · Right click: save",
+  "screen.forever_production_monitor.map.event_log": "Network events",
+  "screen.forever_production_monitor.map.event_log.empty": "No network changes recorded in this session.",
+  "screen.forever_production_monitor.map.event.added": "Network element added",
+  "screen.forever_production_monitor.map.event.removed": "Network element removed",
+  "screen.forever_production_monitor.map.event.channel_lost": "Channel lost",
+  "screen.forever_production_monitor.map.event.channel_restored": "Channel restored",
+  "screen.forever_production_monitor.map.event.power_lost": "Power lost",
+  "screen.forever_production_monitor.map.event.power_restored": "Power restored",
+  "screen.forever_production_monitor.map.event.state_changed": "State changed",
+  "screen.forever_production_monitor.settings.hud.theme": "HUD theme: %s",
+  "screen.forever_production_monitor.settings.hud.theme_matched": "HUD theme: %s (matched)",
+  "screen.forever_production_monitor.settings.hud.layout": "Frame: %s",
+  "screen.forever_production_monitor.settings.hud.layout.full": "Full",
+  "screen.forever_production_monitor.settings.hud.layout.compact": "Compact",
+  "screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal",
+  "screen.forever_production_monitor.settings.hud.layout.none": "None",
+  "screen.forever_production_monitor.settings.hud.animations": "HUD animations: %s",
+  "screen.forever_production_monitor.settings.hud.animation_intensity": "HUD motion: %s",
+  "screen.forever_production_monitor.map.quantum_bridge": "Quantum Bridge",
+  "screen.forever_production_monitor.map.wireless_connector": "Wireless Connector",
+  "screen.forever_production_monitor.map.destination": "Destination: %s",
+  "screen.forever_production_monitor.map.follow_path": "Follow Path",
+  "screen.forever_production_monitor.map.open_deep_core": "Open Deep Core",
+  "screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s network dimensions",
+  "screen.forever_production_monitor.map.dimension_count": "· %s network dimensions",
+  "screen.forever_production_monitor.map.controls.navigation.minimal": "Drag=rotate · Wheel=zoom",
+  "screen.forever_production_monitor.map.controls.selection.minimal": "Click=select · R=reset",
+  "screen.forever_production_monitor.tab.crafting": "Crafting",
+  "screen.forever_production_monitor.crafting.title": "Crafting Diagnostics",
+  "screen.forever_production_monitor.crafting.jobs": "Jobs",
+  "screen.forever_production_monitor.crafting.patterns": "Patterns",
+  "screen.forever_production_monitor.crafting.dependents": "Dependencies",
+  "screen.forever_production_monitor.crafting.providers": "Providers",
+  "screen.forever_production_monitor.crafting.search": "Search crafting data",
+  "screen.forever_production_monitor.crafting.refresh": "Refresh",
+  "screen.forever_production_monitor.crafting.back": "Back",
+  "screen.forever_production_monitor.crafting.loading": "Loading diagnostics…",
+  "screen.forever_production_monitor.crafting.offline": "Monitor or AE2 network is offline.",
+  "screen.forever_production_monitor.crafting.limited": "Partial snapshot (scan limit)",
+  "screen.forever_production_monitor.crafting.empty": "No entries",
+  "screen.forever_production_monitor.crafting.inactive": "inactive",
+  "screen.forever_production_monitor.crafting.active": "active",
+  "screen.forever_production_monitor.crafting.target": "Target",
+  "screen.forever_production_monitor.crafting.job_active": "Active crafting job",
+  "screen.forever_production_monitor.crafting.cpu": "Crafting CPU",
+  "screen.forever_production_monitor.crafting.recipe_context": "Recipe context",
+  "screen.forever_production_monitor.crafting.direct_recipes": "Direct matching patterns",
+  "screen.forever_production_monitor.crafting.prerequisite_patterns": "Prerequisite patterns",
+  "screen.forever_production_monitor.crafting.related_providers": "Providers in recipe graph",
+  "screen.forever_production_monitor.crafting.matching_patterns": "Matching target patterns",
+  "screen.forever_production_monitor.crafting.no_matching_pattern": "No matching pattern found in this snapshot.",
+  "screen.forever_production_monitor.crafting.storage": "CPU storage",
+  "screen.forever_production_monitor.crafting.coprocessors": "Co-processors",
+  "screen.forever_production_monitor.crafting.job_limit": "AE2 does not expose pending job steps or the provider handling a job through its public API.",
+  "screen.forever_production_monitor.crafting.select_job": "Select a running crafting job.",
+  "screen.forever_production_monitor.crafting.power": "Powered",
+  "screen.forever_production_monitor.crafting.channel": "Channel requirement met",
+  "screen.forever_production_monitor.crafting.booted": "Network booted",
+  "screen.forever_production_monitor.crafting.priority": "Pattern priority",
+  "screen.forever_production_monitor.crafting.provider_status": "Provider status",
+  "screen.forever_production_monitor.crafting.provider_patterns": "Pattern inventory",
+  "screen.forever_production_monitor.crafting.crafting_patterns": "Crafting patterns",
+  "screen.forever_production_monitor.crafting.processing_patterns": "Processing patterns",
+  "screen.forever_production_monitor.crafting.hosted_patterns": "Hosted patterns",
+  "screen.forever_production_monitor.crafting.no_location": "No physical node position available.",
+  "screen.forever_production_monitor.crafting.locate": "Locate in Network Map ↗",
+  "screen.forever_production_monitor.crafting.select_provider": "Select a provider.",
+  "screen.forever_production_monitor.crafting.select_pattern": "Select a pattern.",
+  "screen.forever_production_monitor.crafting.inputs": "Inputs",
+  "screen.forever_production_monitor.crafting.outputs": "Outputs",
+  "screen.forever_production_monitor.crafting.provider_trace": "Pattern providers",
+  "screen.forever_production_monitor.crafting.multiple_providers": "Identical pattern on multiple providers (informational).",
+  "screen.forever_production_monitor.crafting.output_variants": "Same output with different inputs (informational).",
+  "screen.forever_production_monitor.crafting.dependencies": "Dependencies",
+  "screen.forever_production_monitor.crafting.details": "Details",
+  "screen.forever_production_monitor.crafting.crafting_tree": "Crafting Tree",
+  "screen.forever_production_monitor.crafting.fit": "Fit",
+  "screen.forever_production_monitor.crafting.select_pattern_tree": "Select a pattern to visualize its crafting tree.",
+  "screen.forever_production_monitor.crafting.tree_unavailable": "Crafting tree unavailable for this pattern.",
+  "screen.forever_production_monitor.crafting.tree_controls": "Drag to pan · Ctrl+wheel zooms · Wheel scrolls · Shift+wheel horizontal",
+  "screen.forever_production_monitor.crafting.tree_limited": "Tree view limited for performance.",
+  "screen.forever_production_monitor.crafting.recipe_options": "recipe options",
+  "screen.forever_production_monitor.crafting.craft": "Craft",
+  "screen.forever_production_monitor.crafting.amount_title": "Start Craft",
+  "screen.forever_production_monitor.crafting.amount": "Amount",
+  "screen.forever_production_monitor.crafting.start": "Start Craft",
+  "screen.forever_production_monitor.crafting.craft_planning": "Planning craft for %s...",
+  "screen.forever_production_monitor.crafting.craft_started": "Craft started: %s requested.",
+  "screen.forever_production_monitor.crafting.craft_invalid_amount": "Craft not started: invalid amount.",
+  "screen.forever_production_monitor.crafting.craft_invalid_link": "Craft not started: monitor link is no longer valid.",
+  "screen.forever_production_monitor.crafting.craft_network_offline": "Craft not started: AE2 network is offline.",
+  "screen.forever_production_monitor.crafting.craft_not_craftable": "Craft not started: target is not craftable.",
+  "screen.forever_production_monitor.crafting.craft_missing": "Craft not started: required ingredients are missing.",
+  "screen.forever_production_monitor.crafting.craft_submit_failed": "Craft could not be submitted (%s): %s.",
+  "screen.forever_production_monitor.crafting.craft_error": "Craft failed (%s): %s.",
+  "screen.forever_production_monitor.crafting.requires": "Pattern prerequisites",
+  "screen.forever_production_monitor.crafting.cycle": "Cycle detected in the visible pattern graph.",
+  "screen.forever_production_monitor.crafting.partial": "Results may be incomplete due to the scan limit.",
+  "screen.forever_production_monitor.crafting.yes": "yes",
+  "screen.forever_production_monitor.crafting.no": "no",
+  "screen.forever_production_monitor.crafting.pattern_count": "Patterns",
+  "screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse dependencies",
+  "screen.forever_production_monitor.crafting.identical_copies": "Identical pattern copies (informational)",
+  "screen.forever_production_monitor.crafting.hint_jobs": "Select a crafting job to inspect its CPU and recipe context.",
+  "screen.forever_production_monitor.crafting.hint_patterns": "Select a pattern to inspect inputs, outputs, providers and dependencies.",
+  "screen.forever_production_monitor.crafting.hint_dependents": "Select a pattern to inspect prerequisites and reverse dependencies.",
+  "screen.forever_production_monitor.crafting.hint_providers": "Select a provider to inspect status and hosted patterns; use Locate for the Network Map.",
+  "screen.forever_production_monitor.settings.custom.open_designer": "Open Custom Theme Designer",
+  "screen.forever_production_monitor.settings.animations.interactions": "Theme interactions: %s",
+  "screen.forever_production_monitor.custom_theme.title": "Custom Theme Designer",
+  "screen.forever_production_monitor.custom_theme.controls": "Theme controls",
+  "screen.forever_production_monitor.custom_theme.preview": "Live preview",
+  "screen.forever_production_monitor.custom_theme.preview_title": "Custom Theme",
+  "screen.forever_production_monitor.custom_theme.accents": "Accent colours",
+  "screen.forever_production_monitor.custom_theme.primary_hue": "Primary hue: %s",
+  "screen.forever_production_monitor.custom_theme.secondary_hue": "Secondary hue: %s",
+  "screen.forever_production_monitor.custom_theme.primary_saturation": "Primary saturation: %s",
+  "screen.forever_production_monitor.custom_theme.secondary_saturation": "Secondary saturation: %s",
+  "screen.forever_production_monitor.custom_theme.surface_saturation": "Surface saturation: %s",
+  "screen.forever_production_monitor.custom_theme.brightness": "Surface brightness: %s",
+  "screen.forever_production_monitor.custom_theme.contrast": "Contrast: %s",
+  "screen.forever_production_monitor.custom_theme.header_strength": "Header strength: %s",
+  "screen.forever_production_monitor.custom_theme.border_strength": "Border strength: %s",
+  "screen.forever_production_monitor.custom_theme.accent_brightness": "Accent brightness: %s",
+  "screen.forever_production_monitor.custom_theme.opacity": "Interface opacity: %s",
+  "screen.forever_production_monitor.custom_theme.category.colors": "Colors",
+  "screen.forever_production_monitor.custom_theme.category.background": "Background",
+  "screen.forever_production_monitor.custom_theme.category.particles": "Particles",
+  "screen.forever_production_monitor.custom_theme.category.components": "Components",
+  "screen.forever_production_monitor.custom_theme.background_style": "Background: %s",
+  "screen.forever_production_monitor.custom_theme.background.none": "None",
+  "screen.forever_production_monitor.custom_theme.background.grid": "Grid",
+  "screen.forever_production_monitor.custom_theme.background.circuit": "Circuit",
+  "screen.forever_production_monitor.custom_theme.background.starfield": "Starfield",
+  "screen.forever_production_monitor.custom_theme.background.scan_lines": "Scan Lines",
+  "screen.forever_production_monitor.custom_theme.background.energy_waves": "Energy Waves",
+  "screen.forever_production_monitor.custom_theme.background_density": "Background density: %s",
+  "screen.forever_production_monitor.custom_theme.background_speed": "Background speed: %s",
+  "screen.forever_production_monitor.custom_theme.background_opacity": "Background opacity: %s",
+  "screen.forever_production_monitor.custom_theme.background_scale": "Background scale: %s",
+  "screen.forever_production_monitor.custom_theme.particle_style": "Particles: %s",
+  "screen.forever_production_monitor.custom_theme.particle.none": "None",
+  "screen.forever_production_monitor.custom_theme.particle.pixels": "Pixels",
+  "screen.forever_production_monitor.custom_theme.particle.sparks": "Sparks",
+  "screen.forever_production_monitor.custom_theme.particle.data_packets": "Data Packets",
+  "screen.forever_production_monitor.custom_theme.particle.stars": "Stars",
+  "screen.forever_production_monitor.custom_theme.particle_color": "Particle color: %s",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.primary": "Primary",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.secondary": "Secondary",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.mixed": "Mixed",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.white": "White",
+  "screen.forever_production_monitor.custom_theme.particle_amount": "Particle amount: %s",
+  "screen.forever_production_monitor.custom_theme.particle_speed": "Particle speed: %s",
+  "screen.forever_production_monitor.custom_theme.particle_size": "Particle size: %s",
+  "screen.forever_production_monitor.custom_theme.particle_opacity": "Particle opacity: %s",
+  "screen.forever_production_monitor.custom_theme.tab_style": "Tab style: %s",
+  "screen.forever_production_monitor.custom_theme.tab.flat": "Flat",
+  "screen.forever_production_monitor.custom_theme.tab.filled": "Filled",
+  "screen.forever_production_monitor.custom_theme.tab.underline": "Underline",
+  "screen.forever_production_monitor.custom_theme.tab.framed": "Framed",
+  "screen.forever_production_monitor.custom_theme.tab.segmented": "Segmented",
+  "screen.forever_production_monitor.custom_theme.tab_accent_strength": "Active tab accent: %s",
+  "screen.forever_production_monitor.custom_theme.button_style": "Button style: %s",
+  "screen.forever_production_monitor.custom_theme.button.flat": "Flat",
+  "screen.forever_production_monitor.custom_theme.button.filled": "Filled",
+  "screen.forever_production_monitor.custom_theme.button.outline": "Outline",
+  "screen.forever_production_monitor.custom_theme.button.underline": "Underline",
+  "screen.forever_production_monitor.custom_theme.button.segmented": "Segmented",
+  "screen.forever_production_monitor.custom_theme.button_hover_strength": "Button hover strength: %s",
+  "screen.forever_production_monitor.settings.hud.open_custom_designer": "Open Custom Mini HUD Designer",
+  "screen.forever_production_monitor.custom_hud.title": "Custom Mini HUD Designer",
+  "screen.forever_production_monitor.custom_hud.preview": "Live Mini HUD preview",
+  "screen.forever_production_monitor.custom_hud.preview_title": "Custom Mini HUD",
+  "screen.forever_production_monitor.custom_hud.category.colors": "Colors",
+  "screen.forever_production_monitor.custom_hud.category.structure": "Structure",
+  "screen.forever_production_monitor.custom_hud.primary_hue": "Primary hue: %s",
+  "screen.forever_production_monitor.custom_hud.secondary_hue": "Secondary hue: %s",
+  "screen.forever_production_monitor.custom_hud.primary_saturation": "Primary saturation: %s",
+  "screen.forever_production_monitor.custom_hud.secondary_saturation": "Secondary saturation: %s",
+  "screen.forever_production_monitor.custom_hud.surface_saturation": "Surface saturation: %s",
+  "screen.forever_production_monitor.custom_hud.brightness": "Surface brightness: %s",
+  "screen.forever_production_monitor.custom_hud.contrast": "Contrast: %s",
+  "screen.forever_production_monitor.custom_hud.accent_brightness": "Accent brightness: %s",
+  "screen.forever_production_monitor.custom_hud.header_strength": "Header strength: %s",
+  "screen.forever_production_monitor.custom_hud.row_contrast": "Row contrast: %s",
+  "screen.forever_production_monitor.custom_hud.border_strength": "Border strength: %s",
+  "screen.forever_production_monitor.custom_hud.decoration": "Decoration: %s",
+  "screen.forever_production_monitor.custom_hud.decoration.clean": "Clean",
+  "screen.forever_production_monitor.custom_hud.decoration.split": "Split accents",
+  "screen.forever_production_monitor.custom_hud.decoration.corners": "Corners",
+  "screen.forever_production_monitor.custom_hud.decoration.circuit": "Circuit",
+  "screen.forever_production_monitor.custom_hud.opacity": "HUD opacity: %s",
+  "screen.forever_production_monitor.custom_hud.animation_intensity": "Animation intensity: %s",
+  "screen.forever_production_monitor.settings.hud.include_items": "Items: %s",
+  "screen.forever_production_monitor.settings.hud.include_fluids": "Fluids: %s",
+  "screen.forever_production_monitor.settings.hud.include_energy": "Energy: %s",
+  "screen.forever_production_monitor.settings.hud.include_infinite": "Infinite storage: %s",
+  "screen.forever_production_monitor.settings.hud.stored_sort": "Stored sort: %s",
+  "settings.forever_production_monitor.hud.stored_sort.highest": "Highest first",
+  "settings.forever_production_monitor.hud.stored_sort.lowest": "Lowest first",
+  "screen.forever_production_monitor.settings.hud.section.general": "General",
+  "screen.forever_production_monitor.settings.hud.section.content": "Content",
+  "screen.forever_production_monitor.settings.hud.section.layout": "Layout",
+  "screen.forever_production_monitor.settings.hud.section.appearance": "Appearance",
+  "screen.forever_production_monitor.settings.hud.preview_zoom": "Preview zoom: %s",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.fit": "Fit",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.one": "1x",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.one_half": "1.5x",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.two": "2x",
+  "screen.forever_production_monitor.deep_core.unnamed": "Unnamed Deep Core",
+  "screen.forever_production_monitor.deep_core.status.online": "Online",
+  "screen.forever_production_monitor.deep_core.status.unloaded": "Unloaded",
+  "screen.forever_production_monitor.deep_core.status.invalid": "Invalid"
 }
