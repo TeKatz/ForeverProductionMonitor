@@ -91,398 +91,426 @@
   "screen.forever_production_monitor.status.network_offline": "● Netzwerk offline",
   "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor-Chunk nicht geladen",
   "screen.forever_production_monitor.status.monitor_missing": "● Monitor fehlt",
-  "screen.forever_production_monitor.status.invalid_link": "● Ungültige Tablet-Verbindung"
-  ,"message.forever_production_monitor.locator.found": "%s bei %s, %s, %s markiert (%s/%s)"
-  ,"message.forever_production_monitor.locator.unavailable": "Kein geladener Standort für %s gefunden"
-  ,"message.forever_production_monitor.locator.wrong_dimension": "%s befindet sich in %s bei %s, %s, %s. Wechsle zum Markieren in diese Dimension."
-  ,"key.forever_production_monitor.open_tablet": "Produktionstablet öffnen"
-  ,"key.categories.forever_production_monitor": "Forever Produktionsmonitor"
-  ,"curios.identifier.production_tablet": "Produktionstablet"
-  ,"hud.forever_production_monitor.mode.activity": "Höchste Aktivität"
-  ,"hud.forever_production_monitor.mode.stored": "Größter Bestand"
-  ,"hud.forever_production_monitor.mode.incoming": "Größte Eingänge"
-  ,"hud.forever_production_monitor.mode.outgoing": "Größte Ausgänge"
-  ,"hud.forever_production_monitor.mode.fluids": "Top-Fluids"
-  ,"hud.forever_production_monitor.mode.energy": "FE-Energie"
-  ,"hud.forever_production_monitor.infinite": "Unendlich"
-  ,"config.forever_production_monitor.title": "Produktionsmonitor-HUD"
-  ,"config.forever_production_monitor.hint": "Die Live-Vorschau folgt der gewählten Bildschirmposition"
-  ,"config.forever_production_monitor.enabled": "HUD: %s"
-  ,"config.forever_production_monitor.anchor": "Position: %s"
-  ,"config.forever_production_monitor.anchor.top_left": "Oben links"
-  ,"config.forever_production_monitor.anchor.top_right": "Oben rechts"
-  ,"config.forever_production_monitor.anchor.bottom_left": "Unten links"
-  ,"config.forever_production_monitor.anchor.bottom_right": "Unten rechts"
-  ,"config.forever_production_monitor.mode": "Anzeige: %s"
-  ,"config.forever_production_monitor.scale": "Größe: %s"
-  ,"config.forever_production_monitor.opacity": "Transparenz: %s"
-  ,"config.forever_production_monitor.x_offset": "X-Abstand: %s"
-  ,"config.forever_production_monitor.y_offset": "Y-Abstand: %s"
-  ,"config.forever_production_monitor.frame": "Rahmen: %s"
-  ,"config.forever_production_monitor.frame.none": "Ohne Rahmen"
-  ,"config.forever_production_monitor.frame.oritech": "Oritech-Theme"
-  ,"config.forever_production_monitor.frame.ae2": "AE2-Theme"
-  ,"config.forever_production_monitor.frame.forever": "Forever-Theme"
-  ,"config.forever_production_monitor.frame.standard": "Standardrahmen"
-  ,"config.forever_production_monitor.frame.custom": "Benutzerdefiniert"
-  ,"config.forever_production_monitor.custom_hue": "Eigene Farbe: %s°"
-  ,"config.forever_production_monitor.rate_unit": "Rateneinheit: %s"
-  ,"config.forever_production_monitor.refresh": "Aktualisierung: %s"
-  ,"config.forever_production_monitor.refresh.one_second": "Jede Sekunde"
-  ,"config.forever_production_monitor.refresh.two_seconds": "Alle 2 Sekunden"
-  ,"config.forever_production_monitor.refresh.five_seconds": "Alle 5 Sekunden"
-  ,"config.forever_production_monitor.reset": "Zurücksetzen"
-  ,"screen.forever_production_monitor.theme.open": "Design-Einstellungen"
-  ,"screen.forever_production_monitor.theme.title": "Produktionsmonitor-Design"
-  ,"screen.forever_production_monitor.theme.subtitle": "Wähle ein Dashboard-Theme — Änderungen erscheinen sofort"
-  ,"screen.forever_production_monitor.theme.preview": "Forever Produktionsmonitor"
-  ,"screen.forever_production_monitor.theme.standard": "Standard"
-  ,"screen.forever_production_monitor.theme.forever": "Forever"
-  ,"screen.forever_production_monitor.theme.ae2": "AE2"
-  ,"screen.forever_production_monitor.theme.oritech": "Oritech"
-  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
-  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
-  ,"screen.forever_production_monitor.theme.holographic": "Holografisch"
-  ,"screen.forever_production_monitor.theme.monochrome": "Monochrom"
-  ,"screen.forever_production_monitor.theme.minimal": "Minimal"
-  ,"screen.forever_production_monitor.theme.carbon": "Carbon Industrial"
-  ,"screen.forever_production_monitor.theme.terminal": "Terminal"
-  ,"screen.forever_production_monitor.theme.deep_space": "Deep Space"
-  ,"screen.forever_production_monitor.theme.copper": "Kupferwerk"
-  ,"screen.forever_production_monitor.theme.aurora": "Aurora"
-  ,"screen.forever_production_monitor.theme.redstone": "Redstone"
-  ,"screen.forever_production_monitor.theme.frost": "Frost"
-  ,"screen.forever_production_monitor.theme.nature": "Natur"
-  ,"screen.forever_production_monitor.theme.cat": "Katzen"
-  ,"screen.forever_production_monitor.theme.custom": "Benutzerdefiniert"
-  ,"screen.forever_production_monitor.theme.hue": "Eigener Akzent: %s°"
-  ,"screen.forever_production_monitor.theme.match_hud": "Kompaktes HUD koppeln: %s"
-  ,"screen.forever_production_monitor.settings.gui_animations": "GUI-Animationen: %s"
-  ,"screen.forever_production_monitor.tab.dashboard": "Dashboard"
-  ,"screen.forever_production_monitor.dashboard.pinned": "Angepinnte Ressource"
-  ,"screen.forever_production_monitor.dashboard.alarm": "Alarm"
-  ,"screen.forever_production_monitor.dashboard.empty": "Noch keine Ressourcen angepinnt"
-  ,"screen.forever_production_monitor.dashboard.empty_hint": "Öffne Produktion und klicke zum Anpinnen auf ◇"
-  ,"screen.forever_production_monitor.dashboard.summary": "%s angepinnt · %s aktive Alarme"
-  ,"screen.forever_production_monitor.alarm.none": "Kein Alarm"
-  ,"screen.forever_production_monitor.alarm.amount_below": "Menge unter"
-  ,"screen.forever_production_monitor.alarm.amount_above": "Menge über"
-  ,"screen.forever_production_monitor.alarm.rate_below": "Rate unter"
-  ,"screen.forever_production_monitor.alarm.rate_above": "Rate über"
-  ,"screen.forever_production_monitor.alarm.stalled": "Stillstand"
-  ,"screen.forever_production_monitor.alarm_editor.title": "Dashboard-Alarm"
-  ,"screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s"
-  ,"screen.forever_production_monitor.alarm_editor.threshold": "Grenzwert"
-  ,"screen.forever_production_monitor.alarm_editor.delay": "Auslöseverzögerung: %s Sekunden"
-  ,"screen.forever_production_monitor.alarm_editor.delay_label": "Verzögerung gegen Alarm-Flattern"
-  ,"screen.forever_production_monitor.alarm_editor.hysteresis": "Hysterese"
-  ,"screen.forever_production_monitor.alarm_editor.disabled": "Dieser Pin wird ohne Alarm angezeigt."
-  ,"screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm, wenn sich die Ressource für die gewählte Zeit nicht verändert."
-  ,"screen.forever_production_monitor.alarm_editor.save": "Regel speichern"
-  ,"message.forever_production_monitor.alarm": "Produktionsalarm: %s"
-  ,"hud.forever_production_monitor.mode.pinned": "Angepinntes Dashboard"
-  ,"screen.forever_production_monitor.tab.map": "Netzwerkkarte"
-  ,"screen.forever_production_monitor.map.loading": "ME-Netzwerk wird gescannt..."
-  ,"screen.forever_production_monitor.map.empty": "Keine physischen Netzwerkknoten gefunden"
-  ,"screen.forever_production_monitor.map.controls": "Ziehen: drehen · RMB ziehen: verschieben · Rad: zoomen · Klick: auswählen · Doppelklick: fokussieren · R: zurücksetzen"
-  ,"screen.forever_production_monitor.map.controls.navigation": "Ziehen: drehen · RMB ziehen: verschieben · Rad: zoomen"
-  ,"screen.forever_production_monitor.map.controls.selection": "Klick: auswählen · Doppelklick: fokussieren · R: zurücksetzen"
-  ,"screen.forever_production_monitor.map.controls.navigation.compact": "Ziehen=Drehen · RMB=Schieben · Rad=Zoom"
-  ,"screen.forever_production_monitor.map.controls.selection.compact": "Klick=Auswahl · 2×=Fokus · R=Reset"
-  ,"screen.forever_production_monitor.map.view.fit": "Alles"
-  ,"screen.forever_production_monitor.map.view.iso": "Iso"
-  ,"screen.forever_production_monitor.map.view.top": "Oben"
-  ,"screen.forever_production_monitor.map.view.front": "Vorne"
-  ,"screen.forever_production_monitor.map.truncated": "Großes Netzwerk: Die ersten 4.096 Blöcke werden angezeigt"
-  ,"screen.forever_production_monitor.map.details": "Ausgewählter Block"
-  ,"screen.forever_production_monitor.map.blocks": "%s Netzwerkblöcke"
-  ,"screen.forever_production_monitor.map.select_hint": "Klicke in der 3D-Ansicht auf einen Block, um ihn zu untersuchen."
-  ,"screen.forever_production_monitor.map.position": "Position"
-  ,"screen.forever_production_monitor.map.state": "Netzwerkstatus"
-  ,"screen.forever_production_monitor.map.channels": "Channels"
-  ,"screen.forever_production_monitor.map.power": "Passiver Verbrauch"
-  ,"screen.forever_production_monitor.map.state.connected": "Verbunden"
-  ,"screen.forever_production_monitor.map.state.active": "Aktiv"
-  ,"screen.forever_production_monitor.map.state.missing_channel": "Channel fehlt"
-  ,"screen.forever_production_monitor.map.state.unpowered": "Ohne Strom"
-  ,"screen.forever_production_monitor.map.state.booting": "Startet"
-  ,"screen.forever_production_monitor.theme.map_rotation": "Kartendrehung: %s"
-  ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
-  ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Invertiert"
-  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
-  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
-  ,"screen.forever_production_monitor.theme.holographic": "Holografisch"
-  ,"screen.forever_production_monitor.theme.monochrome": "Monochrom"
-  ,"screen.forever_production_monitor.settings.title": "Produktionsmonitor-Einstellungen"
-  ,"screen.forever_production_monitor.settings.category.general": "Allgemein"
-  ,"screen.forever_production_monitor.settings.category.interface": "Oberfläche"
-  ,"screen.forever_production_monitor.settings.category.map": "Netzwerkkarte"
-  ,"screen.forever_production_monitor.settings.category.hud": "Mini-HUD"
-  ,"screen.forever_production_monitor.settings.category.animations": "Animationen"
-  ,"screen.forever_production_monitor.settings.default_tab": "Startseite: %s"
-  ,"screen.forever_production_monitor.settings.remember_tab": "Letzten Tab merken: %s"
-  ,"screen.forever_production_monitor.settings.rate": "Rateneinheit: %s"
-  ,"screen.forever_production_monitor.settings.refresh": "Aktualisierung: %s"
-  ,"screen.forever_production_monitor.settings.custom.primary": "Primärakzent: %s°"
-  ,"screen.forever_production_monitor.settings.custom.secondary": "Sekundärakzent: %s°"
-  ,"screen.forever_production_monitor.settings.custom.brightness": "Flächenhelligkeit: %s"
-  ,"screen.forever_production_monitor.settings.interface.opacity": "Fensterdeckkraft: %s"
-  ,"screen.forever_production_monitor.settings.animations.update_pulse": "Aktualisierungspuls: %s"
-  ,"screen.forever_production_monitor.settings.animations.pulse_intensity": "Pulsstärke: %s"
-  ,"screen.forever_production_monitor.settings.animations.pulse_duration": "Pulsdauer: %s s"
-  ,"screen.forever_production_monitor.settings.animations.ambient_motion": "Ambient-Bewegung: %s"
-  ,"screen.forever_production_monitor.settings.animations.ambient_intensity": "Ambient-Stärke: %s"
-  ,"screen.forever_production_monitor.settings.map.default_view": "Startansicht: %s"
-  ,"screen.forever_production_monitor.settings.map.view.iso": "Isometrisch"
-  ,"screen.forever_production_monitor.settings.map.view.top": "Oben"
-  ,"screen.forever_production_monitor.settings.map.view.front": "Vorne"
-  ,"screen.forever_production_monitor.settings.map.remember": "Kamera merken: %s"
-  ,"screen.forever_production_monitor.settings.map.rotation": "Dreh-Empfindlichkeit: %s"
-  ,"screen.forever_production_monitor.settings.map.pan": "Bewegen-Empfindlichkeit: %s"
-  ,"screen.forever_production_monitor.settings.map.zoom": "Zoom-Empfindlichkeit: %s"
-  ,"screen.forever_production_monitor.settings.map.focus_zoom": "Fokus-Zoom: %s"
-  ,"screen.forever_production_monitor.settings.map.invert_horizontal": "Horizontal invertieren: %s"
-  ,"screen.forever_production_monitor.settings.map.invert_vertical": "Vertikal invertieren: %s"
-  ,"screen.forever_production_monitor.settings.map.cables": "Kabel anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.map.parts": "Busse und Parts anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.map.inactive": "Inaktive Knoten anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.map.controls": "Steuerungshilfe anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.map.view_buttons": "Ansichtsbuttons anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.map.details": "Detailleiste anzeigen: %s"
-  ,"screen.forever_production_monitor.settings.hud.enabled": "HUD aktiviert: %s"
-  ,"screen.forever_production_monitor.settings.hud.anchor": "Position: %s"
-  ,"screen.forever_production_monitor.settings.hud.mode": "Anzeige: %s"
-  ,"screen.forever_production_monitor.settings.hud.frame": "Rahmen: %s"
-  ,"screen.forever_production_monitor.settings.hud.match": "An Oberfläche koppeln: %s"
-  ,"screen.forever_production_monitor.settings.hud.entries": "Zeilen: %s"
-  ,"screen.forever_production_monitor.settings.hud.icons": "Icons: %s"
-  ,"screen.forever_production_monitor.settings.hud.names": "Namen: %s"
-  ,"screen.forever_production_monitor.settings.hud.values": "Werte: %s"
-  ,"screen.forever_production_monitor.settings.hud.scale": "Größe: %s"
-  ,"screen.forever_production_monitor.settings.hud.opacity": "Deckkraft: %s"
-  ,"screen.forever_production_monitor.settings.hud.hue": "Eigene Farbe: %s°"
-  ,"screen.forever_production_monitor.settings.hud.x": "X-Abstand: %s"
-  ,"screen.forever_production_monitor.settings.hud.y": "Y-Abstand: %s"
-  ,"screen.forever_production_monitor.settings.hud.live_preview": "Live-HUD-Vorschau"
-  ,"screen.forever_production_monitor.map.filter.all": "Alle"
-  ,"screen.forever_production_monitor.map.filter.devices": "Geräte"
-  ,"screen.forever_production_monitor.map.filter.cables": "Kabel"
-  ,"screen.forever_production_monitor.map.filter.parts": "Parts"
-  ,"screen.forever_production_monitor.map.filter.errors": "Fehler"
-  ,"screen.forever_production_monitor.map.heatmap": "Heatmap"
-  ,"screen.forever_production_monitor.map.events": "Ereignisse"
-  ,"screen.forever_production_monitor.map.bookmark_hint": "Linksklick: laden · Rechtsklick: speichern"
-  ,"screen.forever_production_monitor.map.event_log": "Netzwerkereignisse"
-  ,"screen.forever_production_monitor.map.event_log.empty": "In dieser Sitzung wurden noch keine Netzwerkänderungen erfasst."
-  ,"screen.forever_production_monitor.map.event.added": "Netzwerkelement hinzugefügt"
-  ,"screen.forever_production_monitor.map.event.removed": "Netzwerkelement entfernt"
-  ,"screen.forever_production_monitor.map.event.channel_lost": "Channel verloren"
-  ,"screen.forever_production_monitor.map.event.channel_restored": "Channel wiederhergestellt"
-  ,"screen.forever_production_monitor.map.event.power_lost": "Stromversorgung verloren"
-  ,"screen.forever_production_monitor.map.event.power_restored": "Stromversorgung wiederhergestellt"
-  ,"screen.forever_production_monitor.map.event.state_changed": "Status geändert"
-  ,"screen.forever_production_monitor.settings.hud.theme": "HUD-Theme: %s"
-  ,"screen.forever_production_monitor.settings.hud.theme_matched": "HUD-Theme: %s (gekoppelt)"
-  ,"screen.forever_production_monitor.settings.hud.layout": "Rahmen: %s"
-  ,"screen.forever_production_monitor.settings.hud.layout.full": "Voll"
-  ,"screen.forever_production_monitor.settings.hud.layout.compact": "Kompakt"
-  ,"screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal"
-  ,"screen.forever_production_monitor.settings.hud.layout.none": "Ohne"
-  ,"screen.forever_production_monitor.settings.hud.animations": "HUD-Animationen: %s"
-  ,"screen.forever_production_monitor.settings.hud.animation_intensity": "HUD-Bewegung: %s"
-  ,"screen.forever_production_monitor.map.quantum_bridge": "Quantum Bridge"
-  ,"screen.forever_production_monitor.map.wireless_connector": "Wireless Connector"
-  ,"screen.forever_production_monitor.map.destination": "Ziel: %s"
-  ,"screen.forever_production_monitor.map.follow_path": "Pfad folgen"
-  ,"screen.forever_production_monitor.map.open_deep_core": "Deep Core öffnen"
-  ,"screen.forever_production_monitor.deep_core.unnamed": "Unbenannter Deep Core"
-  ,"screen.forever_production_monitor.deep_core.status.online": "Online"
-  ,"screen.forever_production_monitor.deep_core.status.unloaded": "Nicht geladen"
-  ,"screen.forever_production_monitor.deep_core.status.invalid": "Ungültig"
-  ,"screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s Netzwerkdimensionen"
-  ,"screen.forever_production_monitor.map.dimension_count": "· %s Netzwerkdimensionen"
-  ,"screen.forever_production_monitor.map.controls.navigation.minimal": "Ziehen=Drehen · Rad=Zoom"
-  ,"screen.forever_production_monitor.map.controls.selection.minimal": "Klick=Auswahl · R=Reset"
-  ,"screen.forever_production_monitor.tab.crafting": "Crafting"
-  ,"screen.forever_production_monitor.crafting.title": "Crafting-Diagnose"
-  ,"screen.forever_production_monitor.crafting.jobs": "Jobs"
-  ,"screen.forever_production_monitor.crafting.patterns": "Patterns"
-  ,"screen.forever_production_monitor.crafting.dependents": "Abhängigkeiten"
-  ,"screen.forever_production_monitor.crafting.providers": "Provider"
-  ,"screen.forever_production_monitor.crafting.search": "Crafting-Daten durchsuchen"
-  ,"screen.forever_production_monitor.crafting.refresh": "Aktualisieren"
-  ,"screen.forever_production_monitor.crafting.back": "Zurück"
-  ,"screen.forever_production_monitor.crafting.loading": "Diagnose wird geladen…"
-  ,"screen.forever_production_monitor.crafting.offline": "Monitor oder AE2-Netzwerk ist offline."
-  ,"screen.forever_production_monitor.crafting.limited": "Teilsnapshot (Scanlimit)"
-  ,"screen.forever_production_monitor.crafting.empty": "Keine Einträge"
-  ,"screen.forever_production_monitor.crafting.inactive": "inaktiv"
-  ,"screen.forever_production_monitor.crafting.active": "aktiv"
-  ,"screen.forever_production_monitor.crafting.target": "Ziel"
-  ,"screen.forever_production_monitor.crafting.job_active": "Aktiver Crafting-Job"
-  ,"screen.forever_production_monitor.crafting.cpu": "Crafting-CPU"
-  ,"screen.forever_production_monitor.crafting.recipe_context": "Rezept-Kontext"
-  ,"screen.forever_production_monitor.crafting.direct_recipes": "Direkt passende Patterns"
-  ,"screen.forever_production_monitor.crafting.prerequisite_patterns": "Voraussetzungs-Patterns"
-  ,"screen.forever_production_monitor.crafting.related_providers": "Provider im Rezeptgraph"
-  ,"screen.forever_production_monitor.crafting.matching_patterns": "Passende Ziel-Patterns"
-  ,"screen.forever_production_monitor.crafting.no_matching_pattern": "Kein passendes Pattern in diesem Snapshot gefunden."
-  ,"screen.forever_production_monitor.crafting.storage": "CPU-Speicher"
-  ,"screen.forever_production_monitor.crafting.coprocessors": "Co-Prozessoren"
-  ,"screen.forever_production_monitor.crafting.job_limit": "AE2 stellt offene Jobschritte und die Provider-Zuordnung eines Jobs nicht über die öffentliche API bereit."
-  ,"screen.forever_production_monitor.crafting.select_job": "Laufenden Crafting-Job auswählen."
-  ,"screen.forever_production_monitor.crafting.power": "Stromversorgung"
-  ,"screen.forever_production_monitor.crafting.channel": "Channel-Anforderung erfüllt"
-  ,"screen.forever_production_monitor.crafting.booted": "Netzwerk gestartet"
-  ,"screen.forever_production_monitor.crafting.priority": "Pattern-Priorität"
-  ,"screen.forever_production_monitor.crafting.provider_status": "Provider-Status"
-  ,"screen.forever_production_monitor.crafting.provider_patterns": "Pattern-Inventar"
-  ,"screen.forever_production_monitor.crafting.crafting_patterns": "Crafting-Patterns"
-  ,"screen.forever_production_monitor.crafting.processing_patterns": "Processing-Patterns"
-  ,"screen.forever_production_monitor.crafting.hosted_patterns": "Enthaltene Patterns"
-  ,"screen.forever_production_monitor.crafting.no_location": "Keine physische Node-Position verfügbar."
-  ,"screen.forever_production_monitor.crafting.locate": "In Netzwerk-Karte lokalisieren ↗"
-  ,"screen.forever_production_monitor.crafting.select_provider": "Provider auswählen."
-  ,"screen.forever_production_monitor.crafting.select_pattern": "Pattern auswählen."
-  ,"screen.forever_production_monitor.crafting.inputs": "Inputs"
-  ,"screen.forever_production_monitor.crafting.outputs": "Outputs"
-  ,"screen.forever_production_monitor.crafting.provider_trace": "Pattern Provider"
-  ,"screen.forever_production_monitor.crafting.multiple_providers": "Identisches Pattern auf mehreren Providern (Information)."
-  ,"screen.forever_production_monitor.crafting.output_variants": "Gleicher Output mit unterschiedlichen Inputs (Information)."
-  ,"screen.forever_production_monitor.crafting.dependencies": "Abhängigkeiten"
-  ,"screen.forever_production_monitor.crafting.details": "Details"
-  ,"screen.forever_production_monitor.crafting.crafting_tree": "Crafting Tree"
-  ,"screen.forever_production_monitor.crafting.fit": "Fit"
-  ,"screen.forever_production_monitor.crafting.select_pattern_tree": "Pattern auswählen, um den Crafting Tree anzuzeigen."
-  ,"screen.forever_production_monitor.crafting.tree_unavailable": "Für dieses Pattern ist kein Crafting Tree verfügbar."
-  ,"screen.forever_production_monitor.crafting.tree_controls": "Ziehen zum Verschieben · Strg+Mausrad zoomt · Mausrad scrollt · Shift+Mausrad horizontal"
-  ,"screen.forever_production_monitor.crafting.tree_limited": "Tree-Ansicht aus Performancegründen begrenzt."
-  ,"screen.forever_production_monitor.crafting.recipe_options": "Rezeptoptionen"
-  ,"screen.forever_production_monitor.crafting.craft": "Craft starten"
-  ,"screen.forever_production_monitor.crafting.amount_title": "Craft starten"
-  ,"screen.forever_production_monitor.crafting.amount": "Menge"
-  ,"screen.forever_production_monitor.crafting.start": "Craft starten"
-  ,"screen.forever_production_monitor.crafting.craft_planning": "Craft für %s wird geplant..."
-  ,"screen.forever_production_monitor.crafting.craft_started": "Craft gestartet: %s angefordert."
-  ,"screen.forever_production_monitor.crafting.craft_invalid_amount": "Craft nicht gestartet: ungültige Menge."
-  ,"screen.forever_production_monitor.crafting.craft_invalid_link": "Craft nicht gestartet: Monitor-Verknüpfung ist nicht mehr gültig."
-  ,"screen.forever_production_monitor.crafting.craft_network_offline": "Craft nicht gestartet: AE2-Netzwerk ist offline."
-  ,"screen.forever_production_monitor.crafting.craft_not_craftable": "Craft nicht gestartet: Ziel ist nicht craftbar."
-  ,"screen.forever_production_monitor.crafting.craft_missing": "Craft nicht gestartet: benötigte Zutaten fehlen."
-  ,"screen.forever_production_monitor.crafting.craft_submit_failed": "Craft konnte nicht gestartet werden (%s): %s."
-  ,"screen.forever_production_monitor.crafting.craft_error": "Craft fehlgeschlagen (%s): %s."
-  ,"screen.forever_production_monitor.crafting.requires": "Pattern-Voraussetzungen"
-  ,"screen.forever_production_monitor.crafting.cycle": "Zyklus im sichtbaren Pattern-Graph erkannt."
-  ,"screen.forever_production_monitor.crafting.partial": "Ergebnisse können wegen des Scanlimits unvollständig sein."
-  ,"screen.forever_production_monitor.crafting.yes": "ja"
-  ,"screen.forever_production_monitor.crafting.no": "nein"
-  ,"screen.forever_production_monitor.crafting.pattern_count": "Patterns"
-  ,"screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse Dependencies"
-  ,"screen.forever_production_monitor.crafting.identical_copies": "Identische Pattern-Kopien (Information)"
-  ,"screen.forever_production_monitor.crafting.hint_jobs": "Crafting-Job auswählen, um CPU und Rezept-Kontext zu untersuchen."
-  ,"screen.forever_production_monitor.crafting.hint_patterns": "Pattern auswählen, um Inputs, Outputs, Provider und Abhängigkeiten zu untersuchen."
-  ,"screen.forever_production_monitor.crafting.hint_dependents": "Pattern auswählen, um Voraussetzungen und Abhängigkeiten zu sehen."
-  ,"screen.forever_production_monitor.crafting.hint_providers": "Provider auswählen, um Status und enthaltene Patterns zu untersuchen; Lokalisieren öffnet die Netzwerk-Karte."
-  ,"screen.forever_production_monitor.settings.custom.open_designer": "Custom-Theme-Designer öffnen"
-  ,"screen.forever_production_monitor.settings.animations.interactions": "Theme-Interaktionen: %s"
-  ,"screen.forever_production_monitor.custom_theme.title": "Custom-Theme-Designer"
-  ,"screen.forever_production_monitor.custom_theme.controls": "Theme-Einstellungen"
-  ,"screen.forever_production_monitor.custom_theme.preview": "Live-Vorschau"
-  ,"screen.forever_production_monitor.custom_theme.preview_title": "Custom Theme"
-  ,"screen.forever_production_monitor.custom_theme.accents": "Akzentfarben"
-  ,"screen.forever_production_monitor.custom_theme.primary_hue": "Primärfarbton: %s"
-  ,"screen.forever_production_monitor.custom_theme.secondary_hue": "Sekundärfarbton: %s"
-  ,"screen.forever_production_monitor.custom_theme.primary_saturation": "Primärsättigung: %s"
-  ,"screen.forever_production_monitor.custom_theme.secondary_saturation": "Sekundärsättigung: %s"
-  ,"screen.forever_production_monitor.custom_theme.surface_saturation": "Flächensättigung: %s"
-  ,"screen.forever_production_monitor.custom_theme.brightness": "Flächenhelligkeit: %s"
-  ,"screen.forever_production_monitor.custom_theme.contrast": "Kontrast: %s"
-  ,"screen.forever_production_monitor.custom_theme.header_strength": "Header-Stärke: %s"
-  ,"screen.forever_production_monitor.custom_theme.border_strength": "Rahmen-Stärke: %s"
-  ,"screen.forever_production_monitor.custom_theme.accent_brightness": "Akzenthelligkeit: %s"
-  ,"screen.forever_production_monitor.custom_theme.opacity": "Interface-Deckkraft: %s"
-  ,"screen.forever_production_monitor.custom_theme.category.colors": "Farben"
-  ,"screen.forever_production_monitor.custom_theme.category.background": "Hintergrund"
-  ,"screen.forever_production_monitor.custom_theme.category.particles": "Partikel"
-  ,"screen.forever_production_monitor.custom_theme.category.components": "Komponenten"
-  ,"screen.forever_production_monitor.custom_theme.background_style": "Hintergrund: %s"
-  ,"screen.forever_production_monitor.custom_theme.background.none": "Keiner"
-  ,"screen.forever_production_monitor.custom_theme.background.grid": "Raster"
-  ,"screen.forever_production_monitor.custom_theme.background.circuit": "Schaltkreis"
-  ,"screen.forever_production_monitor.custom_theme.background.starfield": "Sternenfeld"
-  ,"screen.forever_production_monitor.custom_theme.background.scan_lines": "Scanlinien"
-  ,"screen.forever_production_monitor.custom_theme.background.energy_waves": "Energiewellen"
-  ,"screen.forever_production_monitor.custom_theme.background_density": "Hintergrunddichte: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_speed": "Hintergrundtempo: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_opacity": "Hintergrunddeckkraft: %s"
-  ,"screen.forever_production_monitor.custom_theme.background_scale": "Hintergrundskalierung: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_style": "Partikel: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle.none": "Keine"
-  ,"screen.forever_production_monitor.custom_theme.particle.pixels": "Pixel"
-  ,"screen.forever_production_monitor.custom_theme.particle.sparks": "Funken"
-  ,"screen.forever_production_monitor.custom_theme.particle.data_packets": "Datenpakete"
-  ,"screen.forever_production_monitor.custom_theme.particle.stars": "Sterne"
-  ,"screen.forever_production_monitor.custom_theme.particle_color": "Partikelfarbe: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.primary": "Primär"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.secondary": "Sekundär"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.mixed": "Gemischt"
-  ,"screen.forever_production_monitor.custom_theme.particle_color_mode.white": "Weiß"
-  ,"screen.forever_production_monitor.custom_theme.particle_amount": "Partikelmenge: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_speed": "Partikeltempo: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_size": "Partikelgröße: %s"
-  ,"screen.forever_production_monitor.custom_theme.particle_opacity": "Partikeldeckkraft: %s"
-  ,"screen.forever_production_monitor.custom_theme.tab_style": "Tab-Stil: %s"
-  ,"screen.forever_production_monitor.custom_theme.tab.flat": "Flach"
-  ,"screen.forever_production_monitor.custom_theme.tab.filled": "Gefüllt"
-  ,"screen.forever_production_monitor.custom_theme.tab.underline": "Unterstrich"
-  ,"screen.forever_production_monitor.custom_theme.tab.framed": "Gerahmt"
-  ,"screen.forever_production_monitor.custom_theme.tab.segmented": "Segmentiert"
-  ,"screen.forever_production_monitor.custom_theme.tab_accent_strength": "Aktiver Tab-Akzent: %s"
-  ,"screen.forever_production_monitor.custom_theme.button_style": "Button-Stil: %s"
-  ,"screen.forever_production_monitor.custom_theme.button.flat": "Flach"
-  ,"screen.forever_production_monitor.custom_theme.button.filled": "Gefüllt"
-  ,"screen.forever_production_monitor.custom_theme.button.outline": "Kontur"
-  ,"screen.forever_production_monitor.custom_theme.button.underline": "Unterstrich"
-  ,"screen.forever_production_monitor.custom_theme.button.segmented": "Segmentiert"
-  ,"screen.forever_production_monitor.custom_theme.button_hover_strength": "Button-Hover-Stärke: %s"
-  ,"screen.forever_production_monitor.settings.hud.open_custom_designer": "Custom-Mini-HUD-Designer öffnen"
-  ,"screen.forever_production_monitor.custom_hud.title": "Custom-Mini-HUD-Designer"
-  ,"screen.forever_production_monitor.custom_hud.preview": "Live-Mini-HUD-Vorschau"
-  ,"screen.forever_production_monitor.custom_hud.preview_title": "Custom Mini HUD"
-  ,"screen.forever_production_monitor.custom_hud.category.colors": "Farben"
-  ,"screen.forever_production_monitor.custom_hud.category.structure": "Struktur"
-  ,"screen.forever_production_monitor.custom_hud.primary_hue": "Primärfarbton: %s"
-  ,"screen.forever_production_monitor.custom_hud.secondary_hue": "Sekundärfarbton: %s"
-  ,"screen.forever_production_monitor.custom_hud.primary_saturation": "Primärsättigung: %s"
-  ,"screen.forever_production_monitor.custom_hud.secondary_saturation": "Sekundärsättigung: %s"
-  ,"screen.forever_production_monitor.custom_hud.surface_saturation": "Flächensättigung: %s"
-  ,"screen.forever_production_monitor.custom_hud.brightness": "Flächenhelligkeit: %s"
-  ,"screen.forever_production_monitor.custom_hud.contrast": "Kontrast: %s"
-  ,"screen.forever_production_monitor.custom_hud.accent_brightness": "Akzenthelligkeit: %s"
-  ,"screen.forever_production_monitor.custom_hud.header_strength": "Header-Stärke: %s"
-  ,"screen.forever_production_monitor.custom_hud.row_contrast": "Zeilenkontrast: %s"
-  ,"screen.forever_production_monitor.custom_hud.border_strength": "Rahmen-Stärke: %s"
-  ,"screen.forever_production_monitor.custom_hud.decoration": "Dekoration: %s"
-  ,"screen.forever_production_monitor.custom_hud.decoration.clean": "Clean"
-  ,"screen.forever_production_monitor.custom_hud.decoration.split": "Geteilte Akzente"
-  ,"screen.forever_production_monitor.custom_hud.decoration.corners": "Ecken"
-  ,"screen.forever_production_monitor.custom_hud.decoration.circuit": "Schaltkreis"
-  ,"screen.forever_production_monitor.custom_hud.opacity": "HUD-Deckkraft: %s"
-  ,"screen.forever_production_monitor.custom_hud.animation_intensity": "Animationsstärke: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_items": "Items: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_fluids": "Flüssigkeiten: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_energy": "Energie: %s"
-  ,"screen.forever_production_monitor.settings.hud.include_infinite": "Infinite Speicher: %s"
-  ,"screen.forever_production_monitor.settings.hud.stored_sort": "Speicher-Sortierung: %s"
-  ,"settings.forever_production_monitor.hud.stored_sort.highest": "Höchste zuerst"
-  ,"settings.forever_production_monitor.hud.stored_sort.lowest": "Niedrigste zuerst"
-  ,"screen.forever_production_monitor.settings.hud.section.general": "Allgemein"
-  ,"screen.forever_production_monitor.settings.hud.section.content": "Inhalt"
-  ,"screen.forever_production_monitor.settings.hud.section.layout": "Layout"
-  ,"screen.forever_production_monitor.settings.hud.section.appearance": "Aussehen"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom": "Vorschau-Zoom: %s"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.fit": "Einpassen"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one": "1x"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.one_half": "1,5x"
-  ,"screen.forever_production_monitor.settings.hud.preview_zoom.two": "2x"
+  "screen.forever_production_monitor.status.invalid_link": "● Ungültige Tablet-Verbindung",
+  "message.forever_production_monitor.locator.found": "%s bei %s, %s, %s markiert (%s/%s)",
+  "message.forever_production_monitor.locator.unavailable": "Kein geladener Standort für %s gefunden",
+  "message.forever_production_monitor.locator.wrong_dimension": "%s befindet sich in %s bei %s, %s, %s. Wechsle zum Markieren in diese Dimension.",
+  "key.forever_production_monitor.open_tablet": "Produktionstablet öffnen",
+  "key.categories.forever_production_monitor": "Forever Produktionsmonitor",
+  "curios.identifier.production_tablet": "Produktionstablet",
+  "hud.forever_production_monitor.mode.activity": "Höchste Aktivität",
+  "hud.forever_production_monitor.mode.stored": "Größter Bestand",
+  "hud.forever_production_monitor.mode.incoming": "Größte Eingänge",
+  "hud.forever_production_monitor.mode.outgoing": "Größte Ausgänge",
+  "hud.forever_production_monitor.mode.fluids": "Top-Fluids",
+  "hud.forever_production_monitor.mode.energy": "FE-Energie",
+  "hud.forever_production_monitor.infinite": "Unendlich",
+  "config.forever_production_monitor.title": "Produktionsmonitor-HUD",
+  "config.forever_production_monitor.hint": "Die Live-Vorschau folgt der gewählten Bildschirmposition",
+  "config.forever_production_monitor.enabled": "HUD: %s",
+  "config.forever_production_monitor.anchor": "Position: %s",
+  "config.forever_production_monitor.anchor.top_left": "Oben links",
+  "config.forever_production_monitor.anchor.top_right": "Oben rechts",
+  "config.forever_production_monitor.anchor.bottom_left": "Unten links",
+  "config.forever_production_monitor.anchor.bottom_right": "Unten rechts",
+  "config.forever_production_monitor.mode": "Anzeige: %s",
+  "config.forever_production_monitor.scale": "Größe: %s",
+  "config.forever_production_monitor.opacity": "Transparenz: %s",
+  "config.forever_production_monitor.x_offset": "X-Abstand: %s",
+  "config.forever_production_monitor.y_offset": "Y-Abstand: %s",
+  "config.forever_production_monitor.frame": "Rahmen: %s",
+  "config.forever_production_monitor.frame.none": "Ohne Rahmen",
+  "config.forever_production_monitor.frame.oritech": "Oritech-Theme",
+  "config.forever_production_monitor.frame.ae2": "AE2-Theme",
+  "config.forever_production_monitor.frame.forever": "Forever-Theme",
+  "config.forever_production_monitor.frame.standard": "Standardrahmen",
+  "config.forever_production_monitor.frame.custom": "Benutzerdefiniert",
+  "config.forever_production_monitor.custom_hue": "Eigene Farbe: %s°",
+  "config.forever_production_monitor.rate_unit": "Rateneinheit: %s",
+  "config.forever_production_monitor.refresh": "Aktualisierung: %s",
+  "config.forever_production_monitor.refresh.one_second": "Jede Sekunde",
+  "config.forever_production_monitor.refresh.two_seconds": "Alle 2 Sekunden",
+  "config.forever_production_monitor.refresh.five_seconds": "Alle 5 Sekunden",
+  "config.forever_production_monitor.reset": "Zurücksetzen",
+  "screen.forever_production_monitor.theme.open": "Design-Einstellungen",
+  "screen.forever_production_monitor.theme.title": "Produktionsmonitor-Design",
+  "screen.forever_production_monitor.theme.subtitle": "Wähle ein Dashboard-Theme — Änderungen erscheinen sofort",
+  "screen.forever_production_monitor.theme.preview": "Forever Produktionsmonitor",
+  "screen.forever_production_monitor.theme.standard": "Standard",
+  "screen.forever_production_monitor.theme.forever": "Forever",
+  "screen.forever_production_monitor.theme.ae2": "AE2",
+  "screen.forever_production_monitor.theme.oritech": "Oritech",
+  "screen.forever_production_monitor.theme.mekanism": "Mekanism",
+  "screen.forever_production_monitor.theme.quantum": "Quantum",
+  "screen.forever_production_monitor.theme.holographic": "Holografisch",
+  "screen.forever_production_monitor.theme.monochrome": "Monochrom",
+  "screen.forever_production_monitor.theme.minimal": "Minimal",
+  "screen.forever_production_monitor.theme.carbon": "Carbon Industrial",
+  "screen.forever_production_monitor.theme.terminal": "Terminal",
+  "screen.forever_production_monitor.theme.deep_space": "Deep Space",
+  "screen.forever_production_monitor.theme.copper": "Kupferwerk",
+  "screen.forever_production_monitor.theme.aurora": "Aurora",
+  "screen.forever_production_monitor.theme.redstone": "Redstone",
+  "screen.forever_production_monitor.theme.frost": "Frost",
+  "screen.forever_production_monitor.theme.nature": "Natur",
+  "screen.forever_production_monitor.theme.cat": "Katzen",
+  "screen.forever_production_monitor.theme.custom": "Benutzerdefiniert",
+  "screen.forever_production_monitor.theme.hue": "Eigener Akzent: %s°",
+  "screen.forever_production_monitor.theme.match_hud": "Kompaktes HUD koppeln: %s",
+  "screen.forever_production_monitor.settings.gui_animations": "GUI-Animationen: %s",
+  "screen.forever_production_monitor.tab.dashboard": "Dashboard",
+  "screen.forever_production_monitor.dashboard.pinned": "Angepinnte Ressource",
+  "screen.forever_production_monitor.dashboard.alarm": "Alarm",
+  "screen.forever_production_monitor.dashboard.empty": "Noch keine Ressourcen angepinnt",
+  "screen.forever_production_monitor.dashboard.empty_hint": "Öffne Produktion und klicke zum Anpinnen auf ◇",
+  "screen.forever_production_monitor.dashboard.summary": "%s angepinnt · %s aktive Alarme",
+  "screen.forever_production_monitor.alarm.none": "Kein Alarm",
+  "screen.forever_production_monitor.alarm.amount_below": "Menge unter",
+  "screen.forever_production_monitor.alarm.amount_above": "Menge über",
+  "screen.forever_production_monitor.alarm.rate_below": "Rate unter",
+  "screen.forever_production_monitor.alarm.rate_above": "Rate über",
+  "screen.forever_production_monitor.alarm.stalled": "Stillstand",
+  "screen.forever_production_monitor.alarm_editor.title": "Dashboard-Alarm",
+  "screen.forever_production_monitor.alarm_editor.mode": "Alarm: %s",
+  "screen.forever_production_monitor.alarm_editor.threshold": "Grenzwert",
+  "screen.forever_production_monitor.alarm_editor.delay": "Auslöseverzögerung: %s Sekunden",
+  "screen.forever_production_monitor.alarm_editor.delay_label": "Verzögerung gegen Alarm-Flattern",
+  "screen.forever_production_monitor.alarm_editor.hysteresis": "Hysterese",
+  "screen.forever_production_monitor.alarm_editor.disabled": "Dieser Pin wird ohne Alarm angezeigt.",
+  "screen.forever_production_monitor.alarm_editor.stalled_hint": "Alarm, wenn sich die Ressource für die gewählte Zeit nicht verändert.",
+  "screen.forever_production_monitor.alarm_editor.save": "Regel speichern",
+  "message.forever_production_monitor.alarm": "Produktionsalarm: %s",
+  "hud.forever_production_monitor.mode.pinned": "Angepinntes Dashboard",
+  "screen.forever_production_monitor.tab.map": "Netzwerkkarte",
+  "screen.forever_production_monitor.map.loading": "ME-Netzwerk wird gescannt...",
+  "screen.forever_production_monitor.map.empty": "Keine physischen Netzwerkknoten gefunden",
+  "screen.forever_production_monitor.map.controls": "Ziehen: drehen · RMB ziehen: verschieben · Rad: zoomen · Klick: auswählen · Doppelklick: fokussieren · R: zurücksetzen",
+  "screen.forever_production_monitor.map.controls.navigation": "Ziehen: drehen · RMB ziehen: verschieben · Rad: zoomen",
+  "screen.forever_production_monitor.map.controls.selection": "Klick: auswählen · Doppelklick: fokussieren · R: zurücksetzen",
+  "screen.forever_production_monitor.map.controls.navigation.compact": "Ziehen=Drehen · RMB=Schieben · Rad=Zoom",
+  "screen.forever_production_monitor.map.controls.selection.compact": "Klick=Auswahl · 2×=Fokus · R=Reset",
+  "screen.forever_production_monitor.map.view.fit": "Alles",
+  "screen.forever_production_monitor.map.view.iso": "Iso",
+  "screen.forever_production_monitor.map.view.top": "Oben",
+  "screen.forever_production_monitor.map.view.front": "Vorne",
+  "screen.forever_production_monitor.map.truncated": "Großes Netzwerk: Die ersten 4.096 Blöcke werden angezeigt",
+  "screen.forever_production_monitor.map.details": "Ausgewählter Block",
+  "screen.forever_production_monitor.map.blocks": "%s Netzwerkblöcke",
+  "screen.forever_production_monitor.map.select_hint": "Klicke in der 3D-Ansicht auf einen Block, um ihn zu untersuchen.",
+  "screen.forever_production_monitor.map.position": "Position",
+  "screen.forever_production_monitor.map.state": "Netzwerkstatus",
+  "screen.forever_production_monitor.map.channels": "Channels",
+  "screen.forever_production_monitor.map.power": "Passiver Verbrauch",
+  "screen.forever_production_monitor.map.state.connected": "Verbunden",
+  "screen.forever_production_monitor.map.state.active": "Aktiv",
+  "screen.forever_production_monitor.map.state.missing_channel": "Channel fehlt",
+  "screen.forever_production_monitor.map.state.unpowered": "Ohne Strom",
+  "screen.forever_production_monitor.map.state.booting": "Startet",
+  "screen.forever_production_monitor.theme.map_rotation": "Kartendrehung: %s",
+  "screen.forever_production_monitor.theme.map_rotation.normal": "Normal",
+  "screen.forever_production_monitor.theme.map_rotation.inverted": "Invertiert",
+  "screen.forever_production_monitor.settings.title": "Produktionsmonitor-Einstellungen",
+  "screen.forever_production_monitor.settings.category.general": "Allgemein",
+  "screen.forever_production_monitor.settings.category.interface": "Oberfläche",
+  "screen.forever_production_monitor.settings.category.map": "Netzwerkkarte",
+  "screen.forever_production_monitor.settings.category.hud": "Mini-HUD",
+  "screen.forever_production_monitor.settings.category.animations": "Animationen",
+  "screen.forever_production_monitor.settings.default_tab": "Startseite: %s",
+  "screen.forever_production_monitor.settings.remember_tab": "Letzten Tab merken: %s",
+  "screen.forever_production_monitor.settings.rate": "Rateneinheit: %s",
+  "screen.forever_production_monitor.settings.refresh": "Aktualisierung: %s",
+  "screen.forever_production_monitor.settings.custom.primary": "Primärakzent: %s°",
+  "screen.forever_production_monitor.settings.custom.secondary": "Sekundärakzent: %s°",
+  "screen.forever_production_monitor.settings.custom.brightness": "Flächenhelligkeit: %s",
+  "screen.forever_production_monitor.settings.interface.opacity": "Fensterdeckkraft: %s",
+  "screen.forever_production_monitor.settings.animations.update_pulse": "Aktualisierungspuls: %s",
+  "screen.forever_production_monitor.settings.animations.pulse_intensity": "Pulsstärke: %s",
+  "screen.forever_production_monitor.settings.animations.pulse_duration": "Pulsdauer: %s s",
+  "screen.forever_production_monitor.settings.animations.ambient_motion": "Ambient-Bewegung: %s",
+  "screen.forever_production_monitor.settings.animations.ambient_intensity": "Ambient-Stärke: %s",
+  "screen.forever_production_monitor.settings.map.default_view": "Startansicht: %s",
+  "screen.forever_production_monitor.settings.map.view.iso": "Isometrisch",
+  "screen.forever_production_monitor.settings.map.view.top": "Oben",
+  "screen.forever_production_monitor.settings.map.view.front": "Vorne",
+  "screen.forever_production_monitor.settings.map.remember": "Kamera merken: %s",
+  "screen.forever_production_monitor.settings.map.rotation": "Dreh-Empfindlichkeit: %s",
+  "screen.forever_production_monitor.settings.map.pan": "Bewegen-Empfindlichkeit: %s",
+  "screen.forever_production_monitor.settings.map.zoom": "Zoom-Empfindlichkeit: %s",
+  "screen.forever_production_monitor.settings.map.focus_zoom": "Fokus-Zoom: %s",
+  "screen.forever_production_monitor.settings.map.invert_horizontal": "Horizontal invertieren: %s",
+  "screen.forever_production_monitor.settings.map.invert_vertical": "Vertikal invertieren: %s",
+  "screen.forever_production_monitor.settings.map.cables": "Kabel anzeigen: %s",
+  "screen.forever_production_monitor.settings.map.parts": "Busse und Parts anzeigen: %s",
+  "screen.forever_production_monitor.settings.map.inactive": "Inaktive Knoten anzeigen: %s",
+  "screen.forever_production_monitor.settings.map.controls": "Steuerungshilfe anzeigen: %s",
+  "screen.forever_production_monitor.settings.map.view_buttons": "Ansichtsbuttons anzeigen: %s",
+  "screen.forever_production_monitor.settings.map.details": "Detailleiste anzeigen: %s",
+  "screen.forever_production_monitor.settings.hud.enabled": "HUD aktiviert: %s",
+  "screen.forever_production_monitor.settings.hud.anchor": "Position: %s",
+  "screen.forever_production_monitor.settings.hud.mode": "Anzeige: %s",
+  "screen.forever_production_monitor.settings.hud.frame": "Rahmen: %s",
+  "screen.forever_production_monitor.settings.hud.match": "An Oberfläche koppeln: %s",
+  "screen.forever_production_monitor.settings.hud.entries": "Zeilen: %s",
+  "screen.forever_production_monitor.settings.hud.icons": "Icons: %s",
+  "screen.forever_production_monitor.settings.hud.names": "Namen: %s",
+  "screen.forever_production_monitor.settings.hud.values": "Werte: %s",
+  "screen.forever_production_monitor.settings.hud.scale": "Größe: %s",
+  "screen.forever_production_monitor.settings.hud.opacity": "Deckkraft: %s",
+  "screen.forever_production_monitor.settings.hud.hue": "Eigene Farbe: %s°",
+  "screen.forever_production_monitor.settings.hud.x": "X-Abstand: %s",
+  "screen.forever_production_monitor.settings.hud.y": "Y-Abstand: %s",
+  "screen.forever_production_monitor.settings.hud.live_preview": "Live-HUD-Vorschau",
+  "screen.forever_production_monitor.map.filter.all": "Alle",
+  "screen.forever_production_monitor.map.filter.devices": "Geräte",
+  "screen.forever_production_monitor.map.filter.cables": "Kabel",
+  "screen.forever_production_monitor.map.filter.parts": "Parts",
+  "screen.forever_production_monitor.map.filter.errors": "Fehler",
+  "screen.forever_production_monitor.map.heatmap": "Heatmap",
+  "screen.forever_production_monitor.map.events": "Ereignisse",
+  "screen.forever_production_monitor.map.bookmark_hint": "Linksklick: laden · Rechtsklick: speichern",
+  "screen.forever_production_monitor.map.event_log": "Netzwerkereignisse",
+  "screen.forever_production_monitor.map.event_log.empty": "In dieser Sitzung wurden noch keine Netzwerkänderungen erfasst.",
+  "screen.forever_production_monitor.map.event.added": "Netzwerkelement hinzugefügt",
+  "screen.forever_production_monitor.map.event.removed": "Netzwerkelement entfernt",
+  "screen.forever_production_monitor.map.event.channel_lost": "Channel verloren",
+  "screen.forever_production_monitor.map.event.channel_restored": "Channel wiederhergestellt",
+  "screen.forever_production_monitor.map.event.power_lost": "Stromversorgung verloren",
+  "screen.forever_production_monitor.map.event.power_restored": "Stromversorgung wiederhergestellt",
+  "screen.forever_production_monitor.map.event.state_changed": "Status geändert",
+  "screen.forever_production_monitor.settings.hud.theme": "HUD-Theme: %s",
+  "screen.forever_production_monitor.settings.hud.theme_matched": "HUD-Theme: %s (gekoppelt)",
+  "screen.forever_production_monitor.settings.hud.layout": "Rahmen: %s",
+  "screen.forever_production_monitor.settings.hud.layout.full": "Voll",
+  "screen.forever_production_monitor.settings.hud.layout.compact": "Kompakt",
+  "screen.forever_production_monitor.settings.hud.layout.minimal": "Minimal",
+  "screen.forever_production_monitor.settings.hud.layout.none": "Ohne",
+  "screen.forever_production_monitor.settings.hud.animations": "HUD-Animationen: %s",
+  "screen.forever_production_monitor.settings.hud.animation_intensity": "HUD-Bewegung: %s",
+  "screen.forever_production_monitor.map.quantum_bridge": "Quantum Bridge",
+  "screen.forever_production_monitor.map.wireless_connector": "Wireless Connector",
+  "screen.forever_production_monitor.map.destination": "Ziel: %s",
+  "screen.forever_production_monitor.map.follow_path": "Pfad folgen",
+  "screen.forever_production_monitor.map.open_deep_core": "Deep Core öffnen",
+  "screen.forever_production_monitor.deep_core.unnamed": "Unbenannter Deep Core",
+  "screen.forever_production_monitor.deep_core.status.online": "Online",
+  "screen.forever_production_monitor.deep_core.status.unloaded": "Nicht geladen",
+  "screen.forever_production_monitor.deep_core.status.invalid": "Ungültig",
+  "screen.forever_production_monitor.map.dimension_footer": "%s  ·  %s Netzwerkdimensionen",
+  "screen.forever_production_monitor.map.dimension_count": "· %s Netzwerkdimensionen",
+  "screen.forever_production_monitor.map.controls.navigation.minimal": "Ziehen=Drehen · Rad=Zoom",
+  "screen.forever_production_monitor.map.controls.selection.minimal": "Klick=Auswahl · R=Reset",
+  "screen.forever_production_monitor.tab.crafting": "Crafting",
+  "screen.forever_production_monitor.crafting.title": "Crafting-Diagnose",
+  "screen.forever_production_monitor.crafting.jobs": "Jobs",
+  "screen.forever_production_monitor.crafting.patterns": "Patterns",
+  "screen.forever_production_monitor.crafting.dependents": "Abhängigkeiten",
+  "screen.forever_production_monitor.crafting.providers": "Provider",
+  "screen.forever_production_monitor.crafting.search": "Crafting-Daten durchsuchen",
+  "screen.forever_production_monitor.crafting.refresh": "Aktualisieren",
+  "screen.forever_production_monitor.crafting.back": "Zurück",
+  "screen.forever_production_monitor.crafting.loading": "Diagnose wird geladen…",
+  "screen.forever_production_monitor.crafting.offline": "Monitor oder AE2-Netzwerk ist offline.",
+  "screen.forever_production_monitor.crafting.limited": "Teilsnapshot (Scanlimit)",
+  "screen.forever_production_monitor.crafting.empty": "Keine Einträge",
+  "screen.forever_production_monitor.crafting.inactive": "inaktiv",
+  "screen.forever_production_monitor.crafting.active": "aktiv",
+  "screen.forever_production_monitor.crafting.target": "Ziel",
+  "screen.forever_production_monitor.crafting.job_active": "Aktiver Crafting-Job",
+  "screen.forever_production_monitor.crafting.cpu": "Crafting-CPU",
+  "screen.forever_production_monitor.crafting.recipe_context": "Rezept-Kontext",
+  "screen.forever_production_monitor.crafting.direct_recipes": "Direkt passende Patterns",
+  "screen.forever_production_monitor.crafting.prerequisite_patterns": "Voraussetzungs-Patterns",
+  "screen.forever_production_monitor.crafting.related_providers": "Provider im Rezeptgraph",
+  "screen.forever_production_monitor.crafting.matching_patterns": "Passende Ziel-Patterns",
+  "screen.forever_production_monitor.crafting.no_matching_pattern": "Kein passendes Pattern in diesem Snapshot gefunden.",
+  "screen.forever_production_monitor.crafting.storage": "CPU-Speicher",
+  "screen.forever_production_monitor.crafting.coprocessors": "Co-Prozessoren",
+  "screen.forever_production_monitor.crafting.job_limit": "AE2 stellt offene Jobschritte und die Provider-Zuordnung eines Jobs nicht über die öffentliche API bereit.",
+  "screen.forever_production_monitor.crafting.select_job": "Laufenden Crafting-Job auswählen.",
+  "screen.forever_production_monitor.crafting.power": "Stromversorgung",
+  "screen.forever_production_monitor.crafting.channel": "Channel-Anforderung erfüllt",
+  "screen.forever_production_monitor.crafting.booted": "Netzwerk gestartet",
+  "screen.forever_production_monitor.crafting.priority": "Pattern-Priorität",
+  "screen.forever_production_monitor.crafting.provider_status": "Provider-Status",
+  "screen.forever_production_monitor.crafting.provider_patterns": "Pattern-Inventar",
+  "screen.forever_production_monitor.crafting.crafting_patterns": "Crafting-Patterns",
+  "screen.forever_production_monitor.crafting.processing_patterns": "Processing-Patterns",
+  "screen.forever_production_monitor.crafting.hosted_patterns": "Enthaltene Patterns",
+  "screen.forever_production_monitor.crafting.no_location": "Keine physische Node-Position verfügbar.",
+  "screen.forever_production_monitor.crafting.locate": "In Netzwerk-Karte lokalisieren ↗",
+  "screen.forever_production_monitor.crafting.select_provider": "Provider auswählen.",
+  "screen.forever_production_monitor.crafting.select_pattern": "Pattern auswählen.",
+  "screen.forever_production_monitor.crafting.inputs": "Inputs",
+  "screen.forever_production_monitor.crafting.outputs": "Outputs",
+  "screen.forever_production_monitor.crafting.provider_trace": "Pattern Provider",
+  "screen.forever_production_monitor.crafting.multiple_providers": "Identisches Pattern auf mehreren Providern (Information).",
+  "screen.forever_production_monitor.crafting.output_variants": "Gleicher Output mit unterschiedlichen Inputs (Information).",
+  "screen.forever_production_monitor.crafting.dependencies": "Abhängigkeiten",
+  "screen.forever_production_monitor.crafting.details": "Details",
+  "screen.forever_production_monitor.crafting.crafting_tree": "Crafting Tree",
+  "screen.forever_production_monitor.crafting.fit": "Fit",
+  "screen.forever_production_monitor.crafting.select_pattern_tree": "Pattern auswählen, um den Crafting Tree anzuzeigen.",
+  "screen.forever_production_monitor.crafting.tree_unavailable": "Für dieses Pattern ist kein Crafting Tree verfügbar.",
+  "screen.forever_production_monitor.crafting.tree_controls": "Ziehen zum Verschieben · Strg+Mausrad zoomt · Mausrad scrollt · Shift+Mausrad horizontal",
+  "screen.forever_production_monitor.crafting.tree_limited": "Tree-Ansicht aus Performancegründen begrenzt.",
+  "screen.forever_production_monitor.crafting.recipe_options": "Rezeptoptionen",
+  "screen.forever_production_monitor.crafting.craft": "Craft starten",
+  "screen.forever_production_monitor.crafting.amount_title": "Craft starten",
+  "screen.forever_production_monitor.crafting.amount": "Menge",
+  "screen.forever_production_monitor.crafting.start": "Craft starten",
+  "screen.forever_production_monitor.crafting.craft_planning": "Craft für %s wird geplant...",
+  "screen.forever_production_monitor.crafting.craft_started": "Craft gestartet: %s angefordert.",
+  "screen.forever_production_monitor.crafting.craft_invalid_amount": "Craft nicht gestartet: ungültige Menge.",
+  "screen.forever_production_monitor.crafting.craft_invalid_link": "Craft nicht gestartet: Monitor-Verknüpfung ist nicht mehr gültig.",
+  "screen.forever_production_monitor.crafting.craft_network_offline": "Craft nicht gestartet: AE2-Netzwerk ist offline.",
+  "screen.forever_production_monitor.crafting.craft_not_craftable": "Craft nicht gestartet: Ziel ist nicht craftbar.",
+  "screen.forever_production_monitor.crafting.craft_missing": "Craft nicht gestartet: benötigte Zutaten fehlen.",
+  "screen.forever_production_monitor.crafting.craft_submit_failed": "Craft konnte nicht gestartet werden (%s): %s.",
+  "screen.forever_production_monitor.crafting.craft_error": "Craft fehlgeschlagen (%s): %s.",
+  "screen.forever_production_monitor.crafting.requires": "Pattern-Voraussetzungen",
+  "screen.forever_production_monitor.crafting.cycle": "Zyklus im sichtbaren Pattern-Graph erkannt.",
+  "screen.forever_production_monitor.crafting.partial": "Ergebnisse können wegen des Scanlimits unvollständig sein.",
+  "screen.forever_production_monitor.crafting.yes": "ja",
+  "screen.forever_production_monitor.crafting.no": "nein",
+  "screen.forever_production_monitor.crafting.pattern_count": "Patterns",
+  "screen.forever_production_monitor.crafting.reverse_dependencies": "Reverse Dependencies",
+  "screen.forever_production_monitor.crafting.identical_copies": "Identische Pattern-Kopien (Information)",
+  "screen.forever_production_monitor.crafting.hint_jobs": "Crafting-Job auswählen, um CPU und Rezept-Kontext zu untersuchen.",
+  "screen.forever_production_monitor.crafting.hint_patterns": "Pattern auswählen, um Inputs, Outputs, Provider und Abhängigkeiten zu untersuchen.",
+  "screen.forever_production_monitor.crafting.hint_dependents": "Pattern auswählen, um Voraussetzungen und Abhängigkeiten zu sehen.",
+  "screen.forever_production_monitor.crafting.hint_providers": "Provider auswählen, um Status und enthaltene Patterns zu untersuchen; Lokalisieren öffnet die Netzwerk-Karte.",
+  "screen.forever_production_monitor.settings.custom.open_designer": "Custom-Theme-Designer öffnen",
+  "screen.forever_production_monitor.settings.animations.interactions": "Theme-Interaktionen: %s",
+  "screen.forever_production_monitor.custom_theme.title": "Custom-Theme-Designer",
+  "screen.forever_production_monitor.custom_theme.controls": "Theme-Einstellungen",
+  "screen.forever_production_monitor.custom_theme.preview": "Live-Vorschau",
+  "screen.forever_production_monitor.custom_theme.preview_title": "Custom Theme",
+  "screen.forever_production_monitor.custom_theme.accents": "Akzentfarben",
+  "screen.forever_production_monitor.custom_theme.primary_hue": "Primärfarbton: %s",
+  "screen.forever_production_monitor.custom_theme.secondary_hue": "Sekundärfarbton: %s",
+  "screen.forever_production_monitor.custom_theme.primary_saturation": "Primärsättigung: %s",
+  "screen.forever_production_monitor.custom_theme.secondary_saturation": "Sekundärsättigung: %s",
+  "screen.forever_production_monitor.custom_theme.surface_saturation": "Flächensättigung: %s",
+  "screen.forever_production_monitor.custom_theme.brightness": "Flächenhelligkeit: %s",
+  "screen.forever_production_monitor.custom_theme.contrast": "Kontrast: %s",
+  "screen.forever_production_monitor.custom_theme.header_strength": "Header-Stärke: %s",
+  "screen.forever_production_monitor.custom_theme.border_strength": "Rahmen-Stärke: %s",
+  "screen.forever_production_monitor.custom_theme.accent_brightness": "Akzenthelligkeit: %s",
+  "screen.forever_production_monitor.custom_theme.opacity": "Interface-Deckkraft: %s",
+  "screen.forever_production_monitor.custom_theme.category.colors": "Farben",
+  "screen.forever_production_monitor.custom_theme.category.background": "Hintergrund",
+  "screen.forever_production_monitor.custom_theme.category.particles": "Partikel",
+  "screen.forever_production_monitor.custom_theme.category.components": "Komponenten",
+  "screen.forever_production_monitor.custom_theme.background_style": "Hintergrund: %s",
+  "screen.forever_production_monitor.custom_theme.background.none": "Keiner",
+  "screen.forever_production_monitor.custom_theme.background.grid": "Raster",
+  "screen.forever_production_monitor.custom_theme.background.circuit": "Schaltkreis",
+  "screen.forever_production_monitor.custom_theme.background.starfield": "Sternenfeld",
+  "screen.forever_production_monitor.custom_theme.background.scan_lines": "Scanlinien",
+  "screen.forever_production_monitor.custom_theme.background.energy_waves": "Energiewellen",
+  "screen.forever_production_monitor.custom_theme.background_density": "Hintergrunddichte: %s",
+  "screen.forever_production_monitor.custom_theme.background_speed": "Hintergrundtempo: %s",
+  "screen.forever_production_monitor.custom_theme.background_opacity": "Hintergrunddeckkraft: %s",
+  "screen.forever_production_monitor.custom_theme.background_scale": "Hintergrundskalierung: %s",
+  "screen.forever_production_monitor.custom_theme.particle_style": "Partikel: %s",
+  "screen.forever_production_monitor.custom_theme.particle.none": "Keine",
+  "screen.forever_production_monitor.custom_theme.particle.pixels": "Pixel",
+  "screen.forever_production_monitor.custom_theme.particle.sparks": "Funken",
+  "screen.forever_production_monitor.custom_theme.particle.data_packets": "Datenpakete",
+  "screen.forever_production_monitor.custom_theme.particle.stars": "Sterne",
+  "screen.forever_production_monitor.custom_theme.particle_color": "Partikelfarbe: %s",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.primary": "Primär",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.secondary": "Sekundär",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.mixed": "Gemischt",
+  "screen.forever_production_monitor.custom_theme.particle_color_mode.white": "Weiß",
+  "screen.forever_production_monitor.custom_theme.particle_amount": "Partikelmenge: %s",
+  "screen.forever_production_monitor.custom_theme.particle_speed": "Partikeltempo: %s",
+  "screen.forever_production_monitor.custom_theme.particle_size": "Partikelgröße: %s",
+  "screen.forever_production_monitor.custom_theme.particle_opacity": "Partikeldeckkraft: %s",
+  "screen.forever_production_monitor.custom_theme.tab_style": "Tab-Stil: %s",
+  "screen.forever_production_monitor.custom_theme.tab.flat": "Flach",
+  "screen.forever_production_monitor.custom_theme.tab.filled": "Gefüllt",
+  "screen.forever_production_monitor.custom_theme.tab.underline": "Unterstrich",
+  "screen.forever_production_monitor.custom_theme.tab.framed": "Gerahmt",
+  "screen.forever_production_monitor.custom_theme.tab.segmented": "Segmentiert",
+  "screen.forever_production_monitor.custom_theme.tab_accent_strength": "Aktiver Tab-Akzent: %s",
+  "screen.forever_production_monitor.custom_theme.button_style": "Button-Stil: %s",
+  "screen.forever_production_monitor.custom_theme.button.flat": "Flach",
+  "screen.forever_production_monitor.custom_theme.button.filled": "Gefüllt",
+  "screen.forever_production_monitor.custom_theme.button.outline": "Kontur",
+  "screen.forever_production_monitor.custom_theme.button.underline": "Unterstrich",
+  "screen.forever_production_monitor.custom_theme.button.segmented": "Segmentiert",
+  "screen.forever_production_monitor.custom_theme.button_hover_strength": "Button-Hover-Stärke: %s",
+  "screen.forever_production_monitor.settings.hud.open_custom_designer": "Custom-Mini-HUD-Designer öffnen",
+  "screen.forever_production_monitor.custom_hud.title": "Custom-Mini-HUD-Designer",
+  "screen.forever_production_monitor.custom_hud.preview": "Live-Mini-HUD-Vorschau",
+  "screen.forever_production_monitor.custom_hud.preview_title": "Custom Mini HUD",
+  "screen.forever_production_monitor.custom_hud.category.colors": "Farben",
+  "screen.forever_production_monitor.custom_hud.category.structure": "Struktur",
+  "screen.forever_production_monitor.custom_hud.primary_hue": "Primärfarbton: %s",
+  "screen.forever_production_monitor.custom_hud.secondary_hue": "Sekundärfarbton: %s",
+  "screen.forever_production_monitor.custom_hud.primary_saturation": "Primärsättigung: %s",
+  "screen.forever_production_monitor.custom_hud.secondary_saturation": "Sekundärsättigung: %s",
+  "screen.forever_production_monitor.custom_hud.surface_saturation": "Flächensättigung: %s",
+  "screen.forever_production_monitor.custom_hud.brightness": "Flächenhelligkeit: %s",
+  "screen.forever_production_monitor.custom_hud.contrast": "Kontrast: %s",
+  "screen.forever_production_monitor.custom_hud.accent_brightness": "Akzenthelligkeit: %s",
+  "screen.forever_production_monitor.custom_hud.header_strength": "Header-Stärke: %s",
+  "screen.forever_production_monitor.custom_hud.row_contrast": "Zeilenkontrast: %s",
+  "screen.forever_production_monitor.custom_hud.border_strength": "Rahmen-Stärke: %s",
+  "screen.forever_production_monitor.custom_hud.decoration": "Dekoration: %s",
+  "screen.forever_production_monitor.custom_hud.decoration.clean": "Clean",
+  "screen.forever_production_monitor.custom_hud.decoration.split": "Geteilte Akzente",
+  "screen.forever_production_monitor.custom_hud.decoration.corners": "Ecken",
+  "screen.forever_production_monitor.custom_hud.decoration.circuit": "Schaltkreis",
+  "screen.forever_production_monitor.custom_hud.opacity": "HUD-Deckkraft: %s",
+  "screen.forever_production_monitor.custom_hud.animation_intensity": "Animationsstärke: %s",
+  "screen.forever_production_monitor.settings.hud.include_items": "Items: %s",
+  "screen.forever_production_monitor.settings.hud.include_fluids": "Flüssigkeiten: %s",
+  "screen.forever_production_monitor.settings.hud.include_energy": "Energie: %s",
+  "screen.forever_production_monitor.settings.hud.include_infinite": "Infinite Speicher: %s",
+  "screen.forever_production_monitor.settings.hud.stored_sort": "Speicher-Sortierung: %s",
+  "settings.forever_production_monitor.hud.stored_sort.highest": "Höchste zuerst",
+  "settings.forever_production_monitor.hud.stored_sort.lowest": "Niedrigste zuerst",
+  "screen.forever_production_monitor.settings.hud.section.general": "Allgemein",
+  "screen.forever_production_monitor.settings.hud.section.content": "Inhalt",
+  "screen.forever_production_monitor.settings.hud.section.layout": "Layout",
+  "screen.forever_production_monitor.settings.hud.section.appearance": "Aussehen",
+  "screen.forever_production_monitor.settings.hud.preview_zoom": "Vorschau-Zoom: %s",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.fit": "Einpassen",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.one": "1x",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.one_half": "1,5x",
+  "screen.forever_production_monitor.settings.hud.preview_zoom.two": "2x",
+  "screen.forever_production_monitor.crafting.deepcore_build": "DeepCore-Bau",
+  "screen.forever_production_monitor.deepcore_build.title": "DeepCore-Konstruktionsplaner",
+  "screen.forever_production_monitor.deepcore_build.tier": "Tier %s",
+  "screen.forever_production_monitor.deepcore_build.refresh": "Aktualisieren",
+  "screen.forever_production_monitor.deepcore_build.back": "Zurück",
+  "screen.forever_production_monitor.deepcore_build.craft_missing": "Fehlende Komponenten craften",
+  "screen.forever_production_monitor.deepcore_build.loading": "DeepCore-Bauplan wird gelesen...",
+  "screen.forever_production_monitor.deepcore_build.preflight": "AE2 prüft alle fehlenden Komponenten...",
+  "screen.forever_production_monitor.deepcore_build.ready": "Für alle fehlenden Komponenten sind AE2-Crafting-Patterns vorhanden.",
+  "screen.forever_production_monitor.deepcore_build.complete": "Alle benötigten Komponenten liegen bereits im ME-Netz.",
+  "screen.forever_production_monitor.deepcore_build.pattern_missing": "Für mindestens eine fehlende Komponente existiert kein AE2-Crafting-Pattern.",
+  "screen.forever_production_monitor.deepcore_build.mod_missing": "ForeverDeepCore ist nicht installiert oder die Bauplan-API ist nicht verfügbar.",
+  "screen.forever_production_monitor.deepcore_build.invalid_tier": "Ungültiger DeepCore-Tier.",
+  "screen.forever_production_monitor.deepcore_build.invalid_link": "Der verknüpfte Production Monitor ist nicht verfügbar.",
+  "screen.forever_production_monitor.deepcore_build.offline": "Das verknüpfte AE2-Netzwerk ist offline.",
+  "screen.forever_production_monitor.deepcore_build.plan_error": "Der DeepCore-Bauplan konnte nicht gelesen werden.",
+  "screen.forever_production_monitor.deepcore_build.batch_started": "%s AE2-Crafting-Jobs wurden gestartet.",
+  "screen.forever_production_monitor.deepcore_build.batch_nothing": "Kein Crafting nötig; alle Komponenten sind bereits vorhanden.",
+  "screen.forever_production_monitor.deepcore_build.batch_not_craftable": "Fehlendes AE2-Crafting-Pattern: %s",
+  "screen.forever_production_monitor.deepcore_build.batch_missing": "AE2 meldet fehlende Zutaten für: %s",
+  "screen.forever_production_monitor.deepcore_build.batch_submit_failed": "Crafting-Job konnte nicht eingereicht werden: %s",
+  "screen.forever_production_monitor.deepcore_build.batch_partial": "%s/%s Jobs gestartet; danach schlug das Einreichen bei %s fehl.",
+  "screen.forever_production_monitor.deepcore_build.batch_error": "Konstruktionsauftrag fehlgeschlagen: %s",
+  "screen.forever_production_monitor.deepcore_build.subtitle": "Vollständiger DeepCore Tier %s",
+  "screen.forever_production_monitor.deepcore_build.component": "Komponente",
+  "screen.forever_production_monitor.deepcore_build.required": "Benötigt",
+  "screen.forever_production_monitor.deepcore_build.stored": "Vorhanden",
+  "screen.forever_production_monitor.deepcore_build.missing": "Fehlt",
+  "screen.forever_production_monitor.deepcore_build.state": "Status",
+  "screen.forever_production_monitor.deepcore_build.state_stored": "Vorhanden",
+  "screen.forever_production_monitor.deepcore_build.state_craftable": "Craftbar",
+  "screen.forever_production_monitor.deepcore_build.state_no_pattern": "Kein Pattern"
 }
