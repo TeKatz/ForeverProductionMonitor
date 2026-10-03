@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "FEF",
+    "PTP",
+    "FEF"
+  ],
+  "key": {
+    "F": { "item": "ae2:fluix_crystal" },
+    "E": { "item": "ae2:engineering_processor" },
+    "P": { "item": "ae2:formation_core" },
+    "T": { "item": "forever_production_monitor:production_tablet" }
+  },
+  "result": {
+    "id": "forever_production_monitor:multiblock_constructor",
+    "count": 1
+  }
+}
