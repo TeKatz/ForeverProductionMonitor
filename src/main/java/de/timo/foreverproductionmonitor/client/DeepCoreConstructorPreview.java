@@ -36,6 +36,8 @@ public final class DeepCoreConstructorPreview {
         ItemStack stack = constructorStack(minecraft.player.getMainHandItem(),
                 minecraft.player.getOffhandItem());
         if (stack.isEmpty()) return;
+        if (MultiblockConstructorItem.getMode(stack)
+                == MultiblockConstructorItem.Mode.DISMANTLE) return;
 
         var target = MultiblockConstructorItem.getTarget(stack).orElse(null);
         if (target == null || !minecraft.level.dimension().location().equals(target.dimension())) return;
