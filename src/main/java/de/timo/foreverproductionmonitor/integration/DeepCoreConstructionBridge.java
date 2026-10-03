@@ -7,6 +7,8 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Reflection-only bridge to ForeverDeepCore's optional construction API.
@@ -14,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class DeepCoreConstructionBridge {
     private static final String API = "de.timo.foreverdeepcore.api.DeepCoreConstructionPlans";
+    private static final String DISMANTLE_API = "de.timo.foreverdeepcore.api.DeepCoreDismantling";
     private static final Map<String, List<Placement>> CACHE = new LinkedHashMap<>();
 
     public record Placement(BlockPos offset, ResourceLocation blockId, ResourceLocation itemId) {}
@@ -54,6 +57,18 @@ public final class DeepCoreConstructionBridge {
         List<Placement> immutable = List.copyOf(result);
         CACHE.put(cacheKey, immutable);
         return immutable;
+    }
+
+
+    public static int dismantleAt(ServerPlayer player, BlockPos clickedPos, ItemStack tool)
+            throws ReflectiveOperationException {
+        Class<?> api = Class.forName(DISMANTLE_API);
+        Method method = api.getMethod("dismantleAt", ServerPlayer.class, BlockPos.class, ItemStack.class);
+        Object result = method.invoke(null, player, clickedPos, tool);
+        if (!(result instanceof Number count)) {
+            throw new IllegalStateException("Deep Core dismantle API returned no count");
+        }
+        return count.intValue();
     }
 
     private DeepCoreConstructionBridge() {}
