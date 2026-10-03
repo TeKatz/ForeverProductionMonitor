@@ -27,7 +27,8 @@ package de.timo.foreverproductionmonitor;
 import appeng.api.AECapabilities;
 import de.timo.foreverproductionmonitor.block.ProductionMonitorBlock;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
-import de.timo.foreverproductionmonitor.item.MultiblockConstructorItem;\nimport de.timo.foreverproductionmonitor.item.ProductionTabletItem;
+import de.timo.foreverproductionmonitor.item.MultiblockConstructorItem;
+import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
@@ -73,7 +74,8 @@ public final class ModContent {
             event.accept((ItemLike)PRODUCTION_MONITOR_ITEM.get());
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
-            event.accept((ItemLike)PRODUCTION_TABLET.get());\n            event.accept((ItemLike)MULTIBLOCK_CONSTRUCTOR.get());
+            event.accept((ItemLike)PRODUCTION_TABLET.get());
+            event.accept((ItemLike)MULTIBLOCK_CONSTRUCTOR.get());
         }
     }
 }
