@@ -104,7 +104,9 @@ public final class DeepCoreConstructionNetwork {
                 }
                 AEItemKey key = AEItemKey.of(item);
                 long required = entry.getValue();
-                long available = Math.max(0L, stored.getOrDefault(key, 0L));
+                long available = saturatingAdd(
+                        Math.max(0L, stored.getOrDefault(key, 0L)),
+                        inventoryCount(player, item));
                 long missing = Math.max(0L, required - available);
                 boolean craftable = missing == 0L || grid.getCraftingService().isCraftable(key);
                 entries.add(new PlanEntry(key, required, available, missing, craftable));
@@ -154,7 +156,9 @@ public final class DeepCoreConstructionNetwork {
                     }
 
                     AEItemKey key = AEItemKey.of(item);
-                    long available = Math.max(0L, stored.getOrDefault(key, 0L));
+                    long available = saturatingAdd(
+                            Math.max(0L, stored.getOrDefault(key, 0L)),
+                            inventoryCount(player, item));
                     long missing = Math.max(0L, (long) entry.getValue() - available);
                     if (missing == 0L) continue;
                     if (!crafting.isCraftable(key)) {
@@ -262,6 +266,17 @@ public final class DeepCoreConstructionNetwork {
             result.put(id, count);
         }
         return result;
+    }
+
+    private static long inventoryCount(ServerPlayer player, Item item) {
+        long total = 0L;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (!stack.isEmpty() && stack.is(item)) {
+                total = saturatingAdd(total, stack.getCount());
+            }
+        }
+        return total;
     }
 
     private static Map<AEItemKey, Long> storedItems(Iterable<? extends Object2LongMap.Entry<AEKey>> inventory) {
