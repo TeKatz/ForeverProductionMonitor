@@ -26,7 +26,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.client.ClientMonitorState;
 import de.timo.foreverproductionmonitor.client.ClientTabletHooks;
-import de.timo.foreverproductionmonitor.client.DeviceLocator;
+import de.timo.foreverproductionmonitor.client.DeviceLocator;\nimport de.timo.foreverproductionmonitor.client.DeepCoreConstructorPreview;
 import de.timo.foreverproductionmonitor.client.ProductionHud;
 import de.timo.foreverproductionmonitor.client.screen.ProductionMonitorThemeScreen;
 import de.timo.foreverproductionmonitor.integration.TabletCurios;
@@ -60,7 +60,7 @@ public final class ForeverProductionMonitorClient {
         iEventBus.addListener(ForeverProductionMonitorClient::registerKeys);
         iEventBus.addListener(ForeverProductionMonitorClient::registerGuiLayers);
         NeoForge.EVENT_BUS.addListener(ForeverProductionMonitorClient::clientTick);
-        NeoForge.EVENT_BUS.addListener(DeviceLocator::render);
+        NeoForge.EVENT_BUS.addListener(DeviceLocator::render);\n        NeoForge.EVENT_BUS.addListener(DeepCoreConstructorPreview::render);
         modContainer2.registerExtensionPoint(IConfigScreenFactory.class, (modContainer, screen) -> new ProductionMonitorThemeScreen(screen));
     }
 
