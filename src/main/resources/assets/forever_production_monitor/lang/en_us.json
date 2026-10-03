@@ -1,97 +1,97 @@
 {
-  "block.forever_production_monitor.production_monitor": "ME Production Monitor"
-  ,"item.forever_production_monitor.production_tablet": "Production Tablet"
-  ,"message.forever_production_monitor.linked": "Tablet linked to monitor at %s"
-  ,"message.forever_production_monitor.not_linked": "This tablet is not linked. Use it on an ME Production Monitor."
-  ,"message.forever_production_monitor.no_equipped_tablet": "Equip a linked Production Tablet in its Curios slot first."
-  ,"message.forever_production_monitor.use_tablet": "Use a Production Tablet on this monitor to link it."
-  ,"tooltip.forever_production_monitor.linked_dimension": "Network: %s"
-  ,"tooltip.forever_production_monitor.linked_position": "Monitor: %s"
-  ,"tooltip.forever_production_monitor.unlinked": "Unlinked — use on an ME Production Monitor"
-  ,"screen.forever_production_monitor.title": "Forever Production Monitor"
-  ,"screen.forever_production_monitor.search": "Search items, fluids and energy…"
-  ,"screen.forever_production_monitor.search.components": "Search NBT items…"
-  ,"screen.forever_production_monitor.search.map": "Search devices and blocks…"
-  ,"screen.forever_production_monitor.search.devices": "Search channel devices…"
-  ,"screen.forever_production_monitor.sort.activity": "Sort: Activity"
-  ,"screen.forever_production_monitor.sort.stored": "Sort: Stored"
-  ,"screen.forever_production_monitor.sort.name": "Sort: Name"
-  ,"screen.forever_production_monitor.sort.fluids": "Sort: Fluids only"
-  ,"screen.forever_production_monitor.item": "Item / Fluid / Energy"
-  ,"screen.forever_production_monitor.energy": "FE Energy"
-  ,"screen.forever_production_monitor.energy_tooltip": "Stored AE network power converted to FE"
-  ,"screen.forever_production_monitor.stored": "Stored"
-  ,"screen.forever_production_monitor.rate": "Now"
-  ,"screen.forever_production_monitor.average": "1 min average"
-  ,"screen.forever_production_monitor.entries": "%s matching entries"
-  ,"screen.forever_production_monitor.infinite": "∞ Infinite"
-  ,"screen.forever_production_monitor.summary.items": "Items"
-  ,"screen.forever_production_monitor.summary.types": "Types"
-  ,"screen.forever_production_monitor.summary.incoming": "In"
-  ,"screen.forever_production_monitor.summary.outgoing": "Out"
-  ,"screen.forever_production_monitor.summary.net": "Net"
-  ,"screen.forever_production_monitor.loading": "Requesting network snapshot…"
-  ,"screen.forever_production_monitor.tab.production": "Production"
-  ,"screen.forever_production_monitor.tab.storage": "Storage Capacity"
-  ,"screen.forever_production_monitor.tab.components": "Component Items"
-  ,"screen.forever_production_monitor.tab.devices": "Channel Devices"
-  ,"screen.forever_production_monitor.storage.subtitle": "Physical AE cell capacity — external and infinite storage is listed separately"
-  ,"screen.forever_production_monitor.storage.bytes": "Cell byte utilization"
-  ,"screen.forever_production_monitor.storage.used": "Used bytes"
-  ,"screen.forever_production_monitor.storage.free": "Free bytes"
-  ,"screen.forever_production_monitor.storage.capacity": "Total capacity"
-  ,"screen.forever_production_monitor.storage.utilization": "Utilization"
-  ,"screen.forever_production_monitor.storage.types": "Type-slot utilization"
-  ,"screen.forever_production_monitor.storage.sources": "Storage sources"
-  ,"screen.forever_production_monitor.storage.finite_cells": "Measurable cells"
-  ,"screen.forever_production_monitor.storage.infinite_cells": "Creative / infinite"
-  ,"screen.forever_production_monitor.storage.other_cells": "Other cells"
-  ,"screen.forever_production_monitor.storage.external": "External buses"
-  ,"screen.forever_production_monitor.storage.note": "Capacity bars include measurable finite cells only."
-  ,"screen.forever_production_monitor.components.item": "NBT item"
-  ,"screen.forever_production_monitor.storage.section.capacity": "Capacity"
-  ,"screen.forever_production_monitor.storage.section.nbt_items": "NBT Items"
-  ,"screen.forever_production_monitor.components.variants": "Variants"
-  ,"screen.forever_production_monitor.components.entries": "%s NBT item groups"
-  ,"screen.forever_production_monitor.components.grouped_hint": "%s groups — NBT/Data Component variants are combined by base item"
-  ,"screen.forever_production_monitor.components.tooltip.variants": "%s stored NBT variants"
-  ,"screen.forever_production_monitor.components.tooltip.grouped": "Representative variant shown; amounts are grouped by base item"
-  ,"screen.forever_production_monitor.device_sort.power": "Sort: Power"
-  ,"screen.forever_production_monitor.device_sort.count": "Sort: Count"
-  ,"screen.forever_production_monitor.device_sort.name": "Sort: Name"
-  ,"screen.forever_production_monitor.device_sort.problems": "Sort: Problems"
-  ,"screen.forever_production_monitor.device_filter.all": "Filter: All"
-  ,"screen.forever_production_monitor.device_filter.active": "Filter: Active"
-  ,"screen.forever_production_monitor.device_filter.missing_channel": "Filter: No Channel"
-  ,"screen.forever_production_monitor.device_filter.unpowered": "Filter: Unpowered"
-  ,"screen.forever_production_monitor.devices.device": "Channel device"
-  ,"screen.forever_production_monitor.devices.count": "Count"
-  ,"screen.forever_production_monitor.devices.channels": "Channels"
-  ,"screen.forever_production_monitor.devices.idle_power": "Idle power"
-  ,"screen.forever_production_monitor.devices.status": "Status"
-  ,"screen.forever_production_monitor.devices.entries": "%s matching device groups"
-  ,"screen.forever_production_monitor.devices.unresolved": "· %s channel node not grouped"
-  ,"screen.forever_production_monitor.devices.locate": "Locate missing-channel device (%s)"
-  ,"screen.forever_production_monitor.devices.status.active": "%s Active"
-  ,"screen.forever_production_monitor.devices.status.missing": "%s No channel"
-  ,"screen.forever_production_monitor.devices.status.unpowered": "%s Unpowered"
-  ,"screen.forever_production_monitor.devices.status.booting": "%s Booting"
-  ,"screen.forever_production_monitor.devices.tooltip.count": "%s devices in this group"
-  ,"screen.forever_production_monitor.devices.tooltip.channels": "%s channels assigned"
-  ,"screen.forever_production_monitor.devices.tooltip.power": "%s total passive power"
-  ,"screen.forever_production_monitor.devices.tooltip.per_device": "%s average per device"
-  ,"screen.forever_production_monitor.devices.tooltip.states": "Active %s · No channel %s · Unpowered %s · Booting %s"
-  ,"screen.forever_production_monitor.devices.summary.devices": "Devices"
-  ,"screen.forever_production_monitor.devices.summary.channels": "Channels"
-  ,"screen.forever_production_monitor.devices.summary.idle": "Idle"
-  ,"screen.forever_production_monitor.devices.summary.missing": "Missing"
-  ,"screen.forever_production_monitor.devices.summary.unpowered": "No power"
-  ,"screen.forever_production_monitor.status.online": "● Online"
-  ,"screen.forever_production_monitor.status.warming_up": "● Warming up"
-  ,"screen.forever_production_monitor.status.network_offline": "● Network offline"
-  ,"screen.forever_production_monitor.status.chunk_unloaded": "● Monitor chunk unloaded"
-  ,"screen.forever_production_monitor.status.monitor_missing": "● Monitor missing"
-  ,"screen.forever_production_monitor.status.invalid_link": "● Invalid tablet link"
+  "block.forever_production_monitor.production_monitor": "ME Production Monitor",
+  "item.forever_production_monitor.production_tablet": "Production Tablet",
+  "message.forever_production_monitor.linked": "Tablet linked to monitor at %s",
+  "message.forever_production_monitor.not_linked": "This tablet is not linked. Use it on an ME Production Monitor.",
+  "message.forever_production_monitor.no_equipped_tablet": "Equip a linked Production Tablet in its Curios slot first.",
+  "message.forever_production_monitor.use_tablet": "Use a Production Tablet on this monitor to link it.",
+  "tooltip.forever_production_monitor.linked_dimension": "Network: %s",
+  "tooltip.forever_production_monitor.linked_position": "Monitor: %s",
+  "tooltip.forever_production_monitor.unlinked": "Unlinked — use on an ME Production Monitor",
+  "screen.forever_production_monitor.title": "Forever Production Monitor",
+  "screen.forever_production_monitor.search": "Search items, fluids and energy…",
+  "screen.forever_production_monitor.search.components": "Search NBT items…",
+  "screen.forever_production_monitor.search.map": "Search devices and blocks…",
+  "screen.forever_production_monitor.search.devices": "Search channel devices…",
+  "screen.forever_production_monitor.sort.activity": "Sort: Activity",
+  "screen.forever_production_monitor.sort.stored": "Sort: Stored",
+  "screen.forever_production_monitor.sort.name": "Sort: Name",
+  "screen.forever_production_monitor.sort.fluids": "Sort: Fluids only",
+  "screen.forever_production_monitor.item": "Item / Fluid / Energy",
+  "screen.forever_production_monitor.energy": "FE Energy",
+  "screen.forever_production_monitor.energy_tooltip": "Stored AE network power converted to FE",
+  "screen.forever_production_monitor.stored": "Stored",
+  "screen.forever_production_monitor.rate": "Now",
+  "screen.forever_production_monitor.average": "1 min average",
+  "screen.forever_production_monitor.entries": "%s matching entries",
+  "screen.forever_production_monitor.infinite": "∞ Infinite",
+  "screen.forever_production_monitor.summary.items": "Items",
+  "screen.forever_production_monitor.summary.types": "Types",
+  "screen.forever_production_monitor.summary.incoming": "In",
+  "screen.forever_production_monitor.summary.outgoing": "Out",
+  "screen.forever_production_monitor.summary.net": "Net",
+  "screen.forever_production_monitor.loading": "Requesting network snapshot…",
+  "screen.forever_production_monitor.tab.production": "Production",
+  "screen.forever_production_monitor.tab.storage": "Storage Capacity",
+  "screen.forever_production_monitor.tab.components": "Component Items",
+  "screen.forever_production_monitor.tab.devices": "Channel Devices",
+  "screen.forever_production_monitor.storage.subtitle": "Physical AE cell capacity — external and infinite storage is listed separately",
+  "screen.forever_production_monitor.storage.bytes": "Cell byte utilization",
+  "screen.forever_production_monitor.storage.used": "Used bytes",
+  "screen.forever_production_monitor.storage.free": "Free bytes",
+  "screen.forever_production_monitor.storage.capacity": "Total capacity",
+  "screen.forever_production_monitor.storage.utilization": "Utilization",
+  "screen.forever_production_monitor.storage.types": "Type-slot utilization",
+  "screen.forever_production_monitor.storage.sources": "Storage sources",
+  "screen.forever_production_monitor.storage.finite_cells": "Measurable cells",
+  "screen.forever_production_monitor.storage.infinite_cells": "Creative / infinite",
+  "screen.forever_production_monitor.storage.other_cells": "Other cells",
+  "screen.forever_production_monitor.storage.external": "External buses",
+  "screen.forever_production_monitor.storage.note": "Capacity bars include measurable finite cells only.",
+  "screen.forever_production_monitor.components.item": "NBT item",
+  "screen.forever_production_monitor.storage.section.capacity": "Capacity",
+  "screen.forever_production_monitor.storage.section.nbt_items": "NBT Items",
+  "screen.forever_production_monitor.components.variants": "Variants",
+  "screen.forever_production_monitor.components.entries": "%s NBT item groups",
+  "screen.forever_production_monitor.components.grouped_hint": "%s groups — NBT/Data Component variants are combined by base item",
+  "screen.forever_production_monitor.components.tooltip.variants": "%s stored NBT variants",
+  "screen.forever_production_monitor.components.tooltip.grouped": "Representative variant shown; amounts are grouped by base item",
+  "screen.forever_production_monitor.device_sort.power": "Sort: Power",
+  "screen.forever_production_monitor.device_sort.count": "Sort: Count",
+  "screen.forever_production_monitor.device_sort.name": "Sort: Name",
+  "screen.forever_production_monitor.device_sort.problems": "Sort: Problems",
+  "screen.forever_production_monitor.device_filter.all": "Filter: All",
+  "screen.forever_production_monitor.device_filter.active": "Filter: Active",
+  "screen.forever_production_monitor.device_filter.missing_channel": "Filter: No Channel",
+  "screen.forever_production_monitor.device_filter.unpowered": "Filter: Unpowered",
+  "screen.forever_production_monitor.devices.device": "Channel device",
+  "screen.forever_production_monitor.devices.count": "Count",
+  "screen.forever_production_monitor.devices.channels": "Channels",
+  "screen.forever_production_monitor.devices.idle_power": "Idle power",
+  "screen.forever_production_monitor.devices.status": "Status",
+  "screen.forever_production_monitor.devices.entries": "%s matching device groups",
+  "screen.forever_production_monitor.devices.unresolved": "· %s channel node not grouped",
+  "screen.forever_production_monitor.devices.locate": "Locate missing-channel device (%s)",
+  "screen.forever_production_monitor.devices.status.active": "%s Active",
+  "screen.forever_production_monitor.devices.status.missing": "%s No channel",
+  "screen.forever_production_monitor.devices.status.unpowered": "%s Unpowered",
+  "screen.forever_production_monitor.devices.status.booting": "%s Booting",
+  "screen.forever_production_monitor.devices.tooltip.count": "%s devices in this group",
+  "screen.forever_production_monitor.devices.tooltip.channels": "%s channels assigned",
+  "screen.forever_production_monitor.devices.tooltip.power": "%s total passive power",
+  "screen.forever_production_monitor.devices.tooltip.per_device": "%s average per device",
+  "screen.forever_production_monitor.devices.tooltip.states": "Active %s · No channel %s · Unpowered %s · Booting %s",
+  "screen.forever_production_monitor.devices.summary.devices": "Devices",
+  "screen.forever_production_monitor.devices.summary.channels": "Channels",
+  "screen.forever_production_monitor.devices.summary.idle": "Idle",
+  "screen.forever_production_monitor.devices.summary.missing": "Missing",
+  "screen.forever_production_monitor.devices.summary.unpowered": "No power",
+  "screen.forever_production_monitor.status.online": "● Online",
+  "screen.forever_production_monitor.status.warming_up": "● Warming up",
+  "screen.forever_production_monitor.status.network_offline": "● Network offline",
+  "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor chunk unloaded",
+  "screen.forever_production_monitor.status.monitor_missing": "● Monitor missing",
+  "screen.forever_production_monitor.status.invalid_link": "● Invalid tablet link"
   ,"message.forever_production_monitor.locator.found": "%s marked at %s, %s, %s (%s/%s)"
   ,"message.forever_production_monitor.locator.unavailable": "No loaded location found for %s"
   ,"message.forever_production_monitor.locator.wrong_dimension": "%s is in %s at %s, %s, %s. Travel to that dimension to locate it."
@@ -209,6 +209,10 @@
   ,"screen.forever_production_monitor.theme.map_rotation": "Map rotation: %s"
   ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
   ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Inverted"
+  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
+  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
+  ,"screen.forever_production_monitor.theme.holographic": "Holographic"
+  ,"screen.forever_production_monitor.theme.monochrome": "Monochrome"
   ,"screen.forever_production_monitor.settings.title": "Production Monitor Settings"
   ,"screen.forever_production_monitor.settings.category.general": "General"
   ,"screen.forever_production_monitor.settings.category.interface": "Interface"
