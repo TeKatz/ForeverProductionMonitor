@@ -12,6 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -23,13 +24,7 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-/**
- * AE-linked multiblock construction tool.
- *
- * <p>Use on a Production Monitor to bind it to that AE2 grid. Use on a world
- * position to move/rotate the Deep Core ghost. Sneak-use in air cycles tiers;
- * normal use in air starts construction for the current preview.</p>
- */
+/** AE-linked Deep Core construction and dismantling tool. */
 public final class MultiblockConstructorItem extends Item {
     private static final String ROOT_TAG = "ForeverMultiblockConstructor";
     private static final String LINK_DIM = "link_dimension";
@@ -38,6 +33,22 @@ public final class MultiblockConstructorItem extends Item {
     private static final String TARGET_POS = "target_pos";
     private static final String TARGET_FRONT = "target_front";
     private static final String TIER = "tier";
+    private static final String MODE = "mode";
+
+    public enum Mode {
+        PREVIEW,
+        BUILD,
+        DISMANTLE;
+
+        public Mode next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+
+        public String translationKey() {
+            return "mode.forever_production_monitor.constructor."
+                    + name().toLowerCase(java.util.Locale.ROOT);
+        }
+    }
 
     public MultiblockConstructorItem(Properties properties) {
         super(properties);
@@ -58,6 +69,14 @@ public final class MultiblockConstructorItem extends Item {
                             "message.forever_production_monitor.constructor.linked",
                             context.getClickedPos().toShortString()), true);
                 }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        if (getMode(stack) == Mode.DISMANTLE) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                DeepCoreConstructorNetwork.dismantle(
+                        serverPlayer, stack, context.getClickedPos());
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -87,7 +106,20 @@ public final class MultiblockConstructorItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+
         if (player.isShiftKeyDown()) {
+            if (!level.isClientSide) {
+                Mode mode = getMode(stack).next();
+                setMode(stack, mode);
+                player.displayClientMessage(Component.translatable(
+                        "message.forever_production_monitor.constructor.mode",
+                        Component.translatable(mode.translationKey())), true);
+            }
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
+
+        Mode mode = getMode(stack);
+        if (mode == Mode.PREVIEW) {
             if (!level.isClientSide) {
                 int tier = getTier(stack) % 3 + 1;
                 setTier(stack, tier);
@@ -97,16 +129,24 @@ public final class MultiblockConstructorItem extends Item {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
 
-        if (level.isClientSide) {
-            if (getLink(stack).isEmpty()) {
-                player.displayClientMessage(Component.translatable(
-                        "message.forever_production_monitor.constructor.not_linked"), true);
-            } else if (getTarget(stack).isEmpty()) {
-                player.displayClientMessage(Component.translatable(
-                        "message.forever_production_monitor.constructor.no_target"), true);
-            } else {
-                DeepCoreConstructorNetwork.requestBuild(stack);
+        if (mode == Mode.BUILD) {
+            if (level.isClientSide) {
+                if (getLink(stack).isEmpty()) {
+                    player.displayClientMessage(Component.translatable(
+                            "message.forever_production_monitor.constructor.not_linked"), true);
+                } else if (getTarget(stack).isEmpty()) {
+                    player.displayClientMessage(Component.translatable(
+                            "message.forever_production_monitor.constructor.no_target"), true);
+                } else {
+                    DeepCoreConstructorNetwork.requestBuild(stack);
+                }
             }
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
+
+        if (!level.isClientSide) {
+            player.displayClientMessage(Component.translatable(
+                    "message.forever_production_monitor.constructor.dismantle_target"), true);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
@@ -114,6 +154,9 @@ public final class MultiblockConstructorItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context,
                                 List<Component> tooltip, TooltipFlag flag) {
+        tooltip.add(Component.translatable(
+                "tooltip.forever_production_monitor.constructor.mode",
+                Component.translatable(getMode(stack).translationKey())).withColor(0xD9C46A));
         tooltip.add(Component.translatable(
                 "tooltip.forever_production_monitor.constructor.tier", roman(getTier(stack)))
                 .withColor(0xB58BFF));
@@ -137,6 +180,7 @@ public final class MultiblockConstructorItem extends Item {
             tag.putString(LINK_DIM, link.dimension().toString());
             tag.putLong(LINK_POS, link.pos().asLong());
             if (!tag.contains(TIER)) tag.putInt(TIER, 1);
+            if (!tag.contains(MODE)) tag.putString(MODE, Mode.PREVIEW.name());
             root.put(ROOT_TAG, tag);
         });
     }
@@ -165,6 +209,24 @@ public final class MultiblockConstructorItem extends Item {
         });
     }
 
+    public static Mode getMode(ItemStack stack) {
+        CompoundTag tag = data(stack);
+        if (tag == null || !tag.contains(MODE)) return Mode.PREVIEW;
+        try {
+            return Mode.valueOf(tag.getString(MODE));
+        } catch (IllegalArgumentException ignored) {
+            return Mode.PREVIEW;
+        }
+    }
+
+    public static void setMode(ItemStack stack, Mode mode) {
+        CustomData.update((DataComponentType) DataComponents.CUSTOM_DATA, stack, root -> {
+            CompoundTag tag = getOrCreate(root);
+            tag.putString(MODE, mode.name());
+            root.put(ROOT_TAG, tag);
+        });
+    }
+
     public static Optional<PreviewTarget> getTarget(ItemStack stack) {
         if (!(stack.getItem() instanceof MultiblockConstructorItem)) return Optional.empty();
         CompoundTag tag = data(stack);
@@ -185,6 +247,7 @@ public final class MultiblockConstructorItem extends Item {
             tag.putLong(TARGET_POS, target.corePos().asLong());
             tag.putString(TARGET_FRONT, target.front().getName());
             if (!tag.contains(TIER)) tag.putInt(TIER, 1);
+            if (!tag.contains(MODE)) tag.putString(MODE, Mode.PREVIEW.name());
             root.put(ROOT_TAG, tag);
         });
     }
