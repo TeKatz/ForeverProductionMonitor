@@ -1,97 +1,97 @@
 {
-  "block.forever_production_monitor.production_monitor": "ME-Produktionsmonitor",
-  "item.forever_production_monitor.production_tablet": "Produktionstablet",
-  "message.forever_production_monitor.linked": "Tablet mit dem Monitor bei %s verbunden",
-  "message.forever_production_monitor.not_linked": "Dieses Tablet ist nicht verbunden. Benutze es an einem ME-Produktionsmonitor.",
-  "message.forever_production_monitor.no_equipped_tablet": "Rüste zuerst ein verbundenes Produktionstablet im Curios-Slot aus.",
-  "message.forever_production_monitor.use_tablet": "Benutze ein Produktionstablet an diesem Monitor, um es zu verbinden.",
-  "tooltip.forever_production_monitor.linked_dimension": "Netzwerk: %s",
-  "tooltip.forever_production_monitor.linked_position": "Monitor: %s",
-  "tooltip.forever_production_monitor.unlinked": "Nicht verbunden — an einem ME-Produktionsmonitor benutzen",
-  "screen.forever_production_monitor.title": "Forever Produktionsmonitor",
-  "screen.forever_production_monitor.search": "Items, Fluids und Energie suchen…",
-  "screen.forever_production_monitor.search.components": "NBT-Items suchen…",
-  "screen.forever_production_monitor.search.map": "Geräte und Blöcke suchen…",
-  "screen.forever_production_monitor.search.devices": "Channel-Geräte suchen…",
-  "screen.forever_production_monitor.sort.activity": "Sortierung: Aktivität",
-  "screen.forever_production_monitor.sort.stored": "Sortierung: Bestand",
-  "screen.forever_production_monitor.sort.name": "Sortierung: Name",
-  "screen.forever_production_monitor.sort.fluids": "Sortierung: Nur Fluids",
-  "screen.forever_production_monitor.item": "Item / Fluid / Energie",
-  "screen.forever_production_monitor.energy": "FE-Energie",
-  "screen.forever_production_monitor.energy_tooltip": "Gespeicherte AE-Netzwerkenergie, umgerechnet in FE",
-  "screen.forever_production_monitor.stored": "Bestand",
-  "screen.forever_production_monitor.rate": "Aktuell",
-  "screen.forever_production_monitor.average": "Ø 1 Minute",
-  "screen.forever_production_monitor.entries": "%s passende Einträge",
-  "screen.forever_production_monitor.infinite": "∞ Unendlich",
-  "screen.forever_production_monitor.summary.items": "Items",
-  "screen.forever_production_monitor.summary.types": "Typen",
-  "screen.forever_production_monitor.summary.incoming": "Eingang",
-  "screen.forever_production_monitor.summary.outgoing": "Ausgang",
-  "screen.forever_production_monitor.summary.net": "Netto",
-  "screen.forever_production_monitor.loading": "Netzwerkdaten werden abgerufen…",
-  "screen.forever_production_monitor.tab.production": "Produktion",
-  "screen.forever_production_monitor.tab.storage": "Speicherkapazität",
-  "screen.forever_production_monitor.tab.components": "Komponenten-Items",
-  "screen.forever_production_monitor.tab.devices": "Channel-Geräte",
-  "screen.forever_production_monitor.storage.subtitle": "Physische AE-Zellkapazität — externe und unendliche Speicher werden separat aufgeführt",
-  "screen.forever_production_monitor.storage.bytes": "Auslastung der Zell-Bytes",
-  "screen.forever_production_monitor.storage.used": "Belegte Bytes",
-  "screen.forever_production_monitor.storage.free": "Freie Bytes",
-  "screen.forever_production_monitor.storage.capacity": "Gesamtkapazität",
-  "screen.forever_production_monitor.storage.utilization": "Auslastung",
-  "screen.forever_production_monitor.storage.types": "Auslastung der Typ-Slots",
-  "screen.forever_production_monitor.storage.sources": "Speicherquellen",
-  "screen.forever_production_monitor.storage.finite_cells": "Messbare Zellen",
-  "screen.forever_production_monitor.storage.infinite_cells": "Kreativ / unendlich",
-  "screen.forever_production_monitor.storage.other_cells": "Andere Zellen",
-  "screen.forever_production_monitor.storage.external": "Externe Busse",
-  "screen.forever_production_monitor.storage.note": "Die Balken enthalten ausschließlich messbare endliche Zellen.",
-  "screen.forever_production_monitor.components.item": "NBT-Item",
-  "screen.forever_production_monitor.storage.section.capacity": "Kapazität",
-  "screen.forever_production_monitor.storage.section.nbt_items": "NBT-Items",
-  "screen.forever_production_monitor.components.variants": "Varianten",
-  "screen.forever_production_monitor.components.entries": "%s NBT-Item-Gruppen",
-  "screen.forever_production_monitor.components.grouped_hint": "%s Gruppen — NBT-/Data-Component-Varianten werden nach Basis-Item zusammengefasst",
-  "screen.forever_production_monitor.components.tooltip.variants": "%s gespeicherte NBT-Varianten",
-  "screen.forever_production_monitor.components.tooltip.grouped": "Repräsentative Variante; Mengen sind nach Basis-Item gruppiert",
-  "screen.forever_production_monitor.device_sort.power": "Sortierung: Energie",
-  "screen.forever_production_monitor.device_sort.count": "Sortierung: Anzahl",
-  "screen.forever_production_monitor.device_sort.name": "Sortierung: Name",
-  "screen.forever_production_monitor.device_sort.problems": "Sortierung: Probleme",
-  "screen.forever_production_monitor.device_filter.all": "Filter: Alle",
-  "screen.forever_production_monitor.device_filter.active": "Filter: Aktiv",
-  "screen.forever_production_monitor.device_filter.missing_channel": "Filter: Kein Channel",
-  "screen.forever_production_monitor.device_filter.unpowered": "Filter: Ohne Strom",
-  "screen.forever_production_monitor.devices.device": "Channel-Gerät",
-  "screen.forever_production_monitor.devices.count": "Anzahl",
-  "screen.forever_production_monitor.devices.channels": "Channels",
-  "screen.forever_production_monitor.devices.idle_power": "Leerlauf",
-  "screen.forever_production_monitor.devices.status": "Status",
-  "screen.forever_production_monitor.devices.entries": "%s passende Gerätegruppen",
-  "screen.forever_production_monitor.devices.unresolved": "· %s Channel-Knoten nicht gruppiert",
-  "screen.forever_production_monitor.devices.locate": "Gerät ohne Channel markieren (%s)",
-  "screen.forever_production_monitor.devices.status.active": "%s Aktiv",
-  "screen.forever_production_monitor.devices.status.missing": "%s Ohne Channel",
-  "screen.forever_production_monitor.devices.status.unpowered": "%s Ohne Strom",
-  "screen.forever_production_monitor.devices.status.booting": "%s Startet",
-  "screen.forever_production_monitor.devices.tooltip.count": "%s Geräte in dieser Gruppe",
-  "screen.forever_production_monitor.devices.tooltip.channels": "%s Channels zugewiesen",
-  "screen.forever_production_monitor.devices.tooltip.power": "%s gesamter passiver Verbrauch",
-  "screen.forever_production_monitor.devices.tooltip.per_device": "%s durchschnittlich pro Gerät",
-  "screen.forever_production_monitor.devices.tooltip.states": "Aktiv %s · Ohne Channel %s · Ohne Strom %s · Startet %s",
-  "screen.forever_production_monitor.devices.summary.devices": "Geräte",
-  "screen.forever_production_monitor.devices.summary.channels": "Channels",
-  "screen.forever_production_monitor.devices.summary.idle": "Leerlauf",
-  "screen.forever_production_monitor.devices.summary.missing": "Fehlend",
-  "screen.forever_production_monitor.devices.summary.unpowered": "Ohne Strom",
-  "screen.forever_production_monitor.status.online": "● Online",
-  "screen.forever_production_monitor.status.warming_up": "● Messung startet",
-  "screen.forever_production_monitor.status.network_offline": "● Netzwerk offline",
-  "screen.forever_production_monitor.status.chunk_unloaded": "● Monitor-Chunk nicht geladen",
-  "screen.forever_production_monitor.status.monitor_missing": "● Monitor fehlt",
-  "screen.forever_production_monitor.status.invalid_link": "● Ungültige Tablet-Verbindung"
+  "block.forever_production_monitor.production_monitor": "ME-Produktionsmonitor"
+  ,"item.forever_production_monitor.production_tablet": "Produktionstablet"
+  ,"message.forever_production_monitor.linked": "Tablet mit dem Monitor bei %s verbunden"
+  ,"message.forever_production_monitor.not_linked": "Dieses Tablet ist nicht verbunden. Benutze es an einem ME-Produktionsmonitor."
+  ,"message.forever_production_monitor.no_equipped_tablet": "Rüste zuerst ein verbundenes Produktionstablet im Curios-Slot aus."
+  ,"message.forever_production_monitor.use_tablet": "Benutze ein Produktionstablet an diesem Monitor, um es zu verbinden."
+  ,"tooltip.forever_production_monitor.linked_dimension": "Netzwerk: %s"
+  ,"tooltip.forever_production_monitor.linked_position": "Monitor: %s"
+  ,"tooltip.forever_production_monitor.unlinked": "Nicht verbunden — an einem ME-Produktionsmonitor benutzen"
+  ,"screen.forever_production_monitor.title": "Forever Produktionsmonitor"
+  ,"screen.forever_production_monitor.search": "Items, Fluids und Energie suchen…"
+  ,"screen.forever_production_monitor.search.components": "NBT-Items suchen…"
+  ,"screen.forever_production_monitor.search.map": "Geräte und Blöcke suchen…"
+  ,"screen.forever_production_monitor.search.devices": "Channel-Geräte suchen…"
+  ,"screen.forever_production_monitor.sort.activity": "Sortierung: Aktivität"
+  ,"screen.forever_production_monitor.sort.stored": "Sortierung: Bestand"
+  ,"screen.forever_production_monitor.sort.name": "Sortierung: Name"
+  ,"screen.forever_production_monitor.sort.fluids": "Sortierung: Nur Fluids"
+  ,"screen.forever_production_monitor.item": "Item / Fluid / Energie"
+  ,"screen.forever_production_monitor.energy": "FE-Energie"
+  ,"screen.forever_production_monitor.energy_tooltip": "Gespeicherte AE-Netzwerkenergie, umgerechnet in FE"
+  ,"screen.forever_production_monitor.stored": "Bestand"
+  ,"screen.forever_production_monitor.rate": "Aktuell"
+  ,"screen.forever_production_monitor.average": "Ø 1 Minute"
+  ,"screen.forever_production_monitor.entries": "%s passende Einträge"
+  ,"screen.forever_production_monitor.infinite": "∞ Unendlich"
+  ,"screen.forever_production_monitor.summary.items": "Items"
+  ,"screen.forever_production_monitor.summary.types": "Typen"
+  ,"screen.forever_production_monitor.summary.incoming": "Eingang"
+  ,"screen.forever_production_monitor.summary.outgoing": "Ausgang"
+  ,"screen.forever_production_monitor.summary.net": "Netto"
+  ,"screen.forever_production_monitor.loading": "Netzwerkdaten werden abgerufen…"
+  ,"screen.forever_production_monitor.tab.production": "Produktion"
+  ,"screen.forever_production_monitor.tab.storage": "Speicherkapazität"
+  ,"screen.forever_production_monitor.tab.components": "Komponenten-Items"
+  ,"screen.forever_production_monitor.tab.devices": "Channel-Geräte"
+  ,"screen.forever_production_monitor.storage.subtitle": "Physische AE-Zellkapazität — externe und unendliche Speicher werden separat aufgeführt"
+  ,"screen.forever_production_monitor.storage.bytes": "Auslastung der Zell-Bytes"
+  ,"screen.forever_production_monitor.storage.used": "Belegte Bytes"
+  ,"screen.forever_production_monitor.storage.free": "Freie Bytes"
+  ,"screen.forever_production_monitor.storage.capacity": "Gesamtkapazität"
+  ,"screen.forever_production_monitor.storage.utilization": "Auslastung"
+  ,"screen.forever_production_monitor.storage.types": "Auslastung der Typ-Slots"
+  ,"screen.forever_production_monitor.storage.sources": "Speicherquellen"
+  ,"screen.forever_production_monitor.storage.finite_cells": "Messbare Zellen"
+  ,"screen.forever_production_monitor.storage.infinite_cells": "Kreativ / unendlich"
+  ,"screen.forever_production_monitor.storage.other_cells": "Andere Zellen"
+  ,"screen.forever_production_monitor.storage.external": "Externe Busse"
+  ,"screen.forever_production_monitor.storage.note": "Die Balken enthalten ausschließlich messbare endliche Zellen."
+  ,"screen.forever_production_monitor.components.item": "NBT-Item"
+  ,"screen.forever_production_monitor.storage.section.capacity": "Kapazität"
+  ,"screen.forever_production_monitor.storage.section.nbt_items": "NBT-Items"
+  ,"screen.forever_production_monitor.components.variants": "Varianten"
+  ,"screen.forever_production_monitor.components.entries": "%s NBT-Item-Gruppen"
+  ,"screen.forever_production_monitor.components.grouped_hint": "%s Gruppen — NBT-/Data-Component-Varianten werden nach Basis-Item zusammengefasst"
+  ,"screen.forever_production_monitor.components.tooltip.variants": "%s gespeicherte NBT-Varianten"
+  ,"screen.forever_production_monitor.components.tooltip.grouped": "Repräsentative Variante; Mengen sind nach Basis-Item gruppiert"
+  ,"screen.forever_production_monitor.device_sort.power": "Sortierung: Energie"
+  ,"screen.forever_production_monitor.device_sort.count": "Sortierung: Anzahl"
+  ,"screen.forever_production_monitor.device_sort.name": "Sortierung: Name"
+  ,"screen.forever_production_monitor.device_sort.problems": "Sortierung: Probleme"
+  ,"screen.forever_production_monitor.device_filter.all": "Filter: Alle"
+  ,"screen.forever_production_monitor.device_filter.active": "Filter: Aktiv"
+  ,"screen.forever_production_monitor.device_filter.missing_channel": "Filter: Kein Channel"
+  ,"screen.forever_production_monitor.device_filter.unpowered": "Filter: Ohne Strom"
+  ,"screen.forever_production_monitor.devices.device": "Channel-Gerät"
+  ,"screen.forever_production_monitor.devices.count": "Anzahl"
+  ,"screen.forever_production_monitor.devices.channels": "Channels"
+  ,"screen.forever_production_monitor.devices.idle_power": "Leerlauf"
+  ,"screen.forever_production_monitor.devices.status": "Status"
+  ,"screen.forever_production_monitor.devices.entries": "%s passende Gerätegruppen"
+  ,"screen.forever_production_monitor.devices.unresolved": "· %s Channel-Knoten nicht gruppiert"
+  ,"screen.forever_production_monitor.devices.locate": "Gerät ohne Channel markieren (%s)"
+  ,"screen.forever_production_monitor.devices.status.active": "%s Aktiv"
+  ,"screen.forever_production_monitor.devices.status.missing": "%s Ohne Channel"
+  ,"screen.forever_production_monitor.devices.status.unpowered": "%s Ohne Strom"
+  ,"screen.forever_production_monitor.devices.status.booting": "%s Startet"
+  ,"screen.forever_production_monitor.devices.tooltip.count": "%s Geräte in dieser Gruppe"
+  ,"screen.forever_production_monitor.devices.tooltip.channels": "%s Channels zugewiesen"
+  ,"screen.forever_production_monitor.devices.tooltip.power": "%s gesamter passiver Verbrauch"
+  ,"screen.forever_production_monitor.devices.tooltip.per_device": "%s durchschnittlich pro Gerät"
+  ,"screen.forever_production_monitor.devices.tooltip.states": "Aktiv %s · Ohne Channel %s · Ohne Strom %s · Startet %s"
+  ,"screen.forever_production_monitor.devices.summary.devices": "Geräte"
+  ,"screen.forever_production_monitor.devices.summary.channels": "Channels"
+  ,"screen.forever_production_monitor.devices.summary.idle": "Leerlauf"
+  ,"screen.forever_production_monitor.devices.summary.missing": "Fehlend"
+  ,"screen.forever_production_monitor.devices.summary.unpowered": "Ohne Strom"
+  ,"screen.forever_production_monitor.status.online": "● Online"
+  ,"screen.forever_production_monitor.status.warming_up": "● Messung startet"
+  ,"screen.forever_production_monitor.status.network_offline": "● Netzwerk offline"
+  ,"screen.forever_production_monitor.status.chunk_unloaded": "● Monitor-Chunk nicht geladen"
+  ,"screen.forever_production_monitor.status.monitor_missing": "● Monitor fehlt"
+  ,"screen.forever_production_monitor.status.invalid_link": "● Ungültige Tablet-Verbindung"
   ,"message.forever_production_monitor.locator.found": "%s bei %s, %s, %s markiert (%s/%s)"
   ,"message.forever_production_monitor.locator.unavailable": "Kein geladener Standort für %s gefunden"
   ,"message.forever_production_monitor.locator.wrong_dimension": "%s befindet sich in %s bei %s, %s, %s. Wechsle zum Markieren in diese Dimension."
@@ -209,10 +209,6 @@
   ,"screen.forever_production_monitor.theme.map_rotation": "Kartendrehung: %s"
   ,"screen.forever_production_monitor.theme.map_rotation.normal": "Normal"
   ,"screen.forever_production_monitor.theme.map_rotation.inverted": "Invertiert"
-  ,"screen.forever_production_monitor.theme.mekanism": "Mekanism"
-  ,"screen.forever_production_monitor.theme.quantum": "Quantum"
-  ,"screen.forever_production_monitor.theme.holographic": "Holografisch"
-  ,"screen.forever_production_monitor.theme.monochrome": "Monochrom"
   ,"screen.forever_production_monitor.settings.title": "Produktionsmonitor-Einstellungen"
   ,"screen.forever_production_monitor.settings.category.general": "Allgemein"
   ,"screen.forever_production_monitor.settings.category.interface": "Oberfläche"
@@ -511,7 +507,7 @@
   ,"screen.forever_production_monitor.deepcore_build.subtitle": "Vollständiger DeepCore Tier %s"
   ,"screen.forever_production_monitor.deepcore_build.component": "Komponente"
   ,"screen.forever_production_monitor.deepcore_build.required": "Benötigt"
-  ,"screen.forever_production_monitor.deepcore_build.stored": "Vorhanden"
+  ,"screen.forever_production_monitor.deepcore_build.stored": "Verfügbar"
   ,"screen.forever_production_monitor.deepcore_build.missing": "Fehlt"
   ,"screen.forever_production_monitor.deepcore_build.state": "Status"
   ,"screen.forever_production_monitor.deepcore_build.state_stored": "Vorhanden"
@@ -533,7 +529,7 @@
   ,"message.forever_production_monitor.constructor.offline": "Das verknüpfte AE2-Netzwerk ist offline."
   ,"message.forever_production_monitor.constructor.unloaded": "Die Bauposition %s ist nicht geladen."
   ,"message.forever_production_monitor.constructor.blocked": "Bau bei %s blockiert. Fremde Blöcke werden niemals automatisch entfernt."
-  ,"message.forever_production_monitor.constructor.missing": "Im ME-Speicher fehlen: %s × %s. Crafte zuerst die fehlenden Komponenten."
+  ,"message.forever_production_monitor.constructor.missing": "In Spielerinventar + ME-Speicher fehlen: %s × %s."
   ,"message.forever_production_monitor.constructor.already_complete": "Alle benötigten DeepCore-Blöcke stehen bereits korrekt."
   ,"message.forever_production_monitor.constructor.started": "Bau gestartet: %s Blöcke · DeepCore Tier %s"
   ,"message.forever_production_monitor.constructor.aborted_network": "Bau gestoppt, weil das verknüpfte ME-Netz nicht mehr verfügbar ist."
@@ -545,5 +541,14 @@
   ,"tooltip.forever_production_monitor.constructor.linked": "ME-Verknüpfung: %s · %s"
   ,"tooltip.forever_production_monitor.constructor.unlinked": "Nicht verbunden — auf einem ME-Produktionsmonitor benutzen"
   ,"tooltip.forever_production_monitor.constructor.target": "Ghost: %s · %s · Richtung %s"
-  ,"tooltip.forever_production_monitor.constructor.controls": "Auf Block benutzen: Ghost verschieben/drehen · Schleichen + Luft: Tier wechseln · Luft: bauen"
+  ,"tooltip.forever_production_monitor.constructor.controls": "Schleichen + Luft: Modus wechseln · Vorschau + Luft: Tier wechseln · Bauen + Luft: bauen · Abbauen + DeepCore-Block: alles abbauen"
+  ,"mode.forever_production_monitor.constructor.preview": "Vorschau"
+  ,"mode.forever_production_monitor.constructor.build": "Bauen"
+  ,"mode.forever_production_monitor.constructor.dismantle": "Abbauen"
+  ,"message.forever_production_monitor.constructor.mode": "Konstruktor-Modus: %s"
+  ,"message.forever_production_monitor.constructor.dismantle_target": "Abbau-Modus: Benutze den Konstruktor auf einem beliebigen Block des DeepCore."
+  ,"message.forever_production_monitor.constructor.dismantle_not_found": "Für diesen Block wurde kein DeepCore-Multiblock gefunden."
+  ,"message.forever_production_monitor.constructor.dismantle_complete": "DeepCore abgebaut: %s Blöcke wurden ins Inventar zurückgegeben."
+  ,"message.forever_production_monitor.constructor.dismantle_error": "DeepCore-Abbau fehlgeschlagen: %s"
+  ,"tooltip.forever_production_monitor.constructor.mode": "Modus: %s"
 }
