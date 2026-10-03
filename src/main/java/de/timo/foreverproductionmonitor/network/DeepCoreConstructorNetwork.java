@@ -47,9 +47,9 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * Server-authoritative placement pipeline for the Multiblock Constructor.
  *
- * <p>V1 intentionally builds only from components already stored in the linked
- * ME network. Existing correct blocks are reused, foreign blocks are never
- * broken, and placement is spread across server ticks.</p>
+ * <p>Construction can consume matching block items from the player's inventory
+ * and the linked ME network. Existing correct blocks are reused, foreign blocks
+ * are never broken, and placement is spread across server ticks.</p>
  */
 public final class DeepCoreConstructorNetwork {
     private static final String DEEP_CORE_MOD_ID = "forever_deep_core";
@@ -79,6 +79,27 @@ public final class DeepCoreConstructorNetwork {
                 MultiblockConstructorItem.getTier(stack)));
     }
 
+    public static void dismantle(ServerPlayer player, ItemStack stack, BlockPos clickedPos) {
+        if (MultiblockConstructorItem.getMode(stack) != MultiblockConstructorItem.Mode.DISMANTLE) {
+            return;
+        }
+        if (!ModList.get().isLoaded(DEEP_CORE_MOD_ID)) {
+            message(player, "message.forever_production_monitor.constructor.deepcore_missing");
+            return;
+        }
+        try {
+            int removed = DeepCoreConstructionBridge.dismantleAt(player, clickedPos, stack);
+            if (removed <= 0) {
+                message(player, "message.forever_production_monitor.constructor.dismantle_not_found");
+            } else {
+                message(player, "message.forever_production_monitor.constructor.dismantle_complete", removed);
+            }
+        } catch (Throwable error) {
+            message(player, "message.forever_production_monitor.constructor.dismantle_error",
+                    error.getClass().getSimpleName());
+        }
+    }
+
     private static void handleBuildRequest(BuildRequest request, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
@@ -103,6 +124,10 @@ public final class DeepCoreConstructorNetwork {
 
         ItemStack held = matchingHeldConstructor(player, request);
         if (held.isEmpty()) {
+            message(player, "message.forever_production_monitor.constructor.invalid_tool");
+            return;
+        }
+        if (MultiblockConstructorItem.getMode(held) != MultiblockConstructorItem.Mode.BUILD) {
             message(player, "message.forever_production_monitor.constructor.invalid_tool");
             return;
         }
@@ -180,8 +205,12 @@ public final class DeepCoreConstructorNetwork {
         }
 
         for (var entry : required.entrySet()) {
-            long available = storage.extract(entry.getKey(), entry.getValue(),
-                    Actionable.SIMULATE, source);
+            Item item = entry.getKey().getItem();
+            long inventoryAvailable = inventoryCount(player, item);
+            long remaining = Math.max(0L, entry.getValue() - inventoryAvailable);
+            long meAvailable = remaining == 0L ? 0L
+                    : storage.extract(entry.getKey(), remaining, Actionable.SIMULATE, source);
+            long available = safeAdd(inventoryAvailable, meAvailable);
             if (available < entry.getValue()) {
                 long missing = entry.getValue() - available;
                 String name = entry.getKey().getDisplayName().getString();
@@ -249,15 +278,8 @@ public final class DeepCoreConstructorNetwork {
                     break;
                 }
 
-                long simulated = storage.extract(task.key(), 1L, Actionable.SIMULATE, source);
-                if (simulated < 1L) {
-                    message(player, "message.forever_production_monitor.constructor.aborted_missing",
-                            task.key().getDisplayName().getString());
-                    aborted = true;
-                    break;
-                }
-                long extracted = storage.extract(task.key(), 1L, Actionable.MODULATE, source);
-                if (extracted < 1L) {
+                MaterialSource materialSource = takeOne(player, storage, source, task.key());
+                if (materialSource == MaterialSource.NONE) {
                     message(player, "message.forever_production_monitor.constructor.aborted_missing",
                             task.key().getDisplayName().getString());
                     aborted = true;
@@ -274,7 +296,7 @@ public final class DeepCoreConstructorNetwork {
 
                 boolean placed = targetLevel.setBlock(task.pos(), state, Block.UPDATE_ALL);
                 if (!placed) {
-                    storage.insert(task.key(), 1L, Actionable.MODULATE, source);
+                    refundOne(player, storage, source, task.key(), materialSource);
                     message(player, "message.forever_production_monitor.constructor.aborted_place",
                             task.pos().toShortString());
                     aborted = true;
@@ -315,10 +337,58 @@ public final class DeepCoreConstructorNetwork {
                     || !target.dimension().equals(request.targetDimension())
                     || !target.corePos().equals(request.corePos())
                     || target.front() != request.front()
-                    || MultiblockConstructorItem.getTier(stack) != request.tier()) continue;
+                    || MultiblockConstructorItem.getTier(stack) != request.tier()
+                    || MultiblockConstructorItem.getMode(stack) != MultiblockConstructorItem.Mode.BUILD) continue;
             return stack;
         }
         return ItemStack.EMPTY;
+    }
+
+    private static long inventoryCount(ServerPlayer player, Item item) {
+        long total = 0L;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (!stack.isEmpty() && stack.is(item)) {
+                total = safeAdd(total, stack.getCount());
+            }
+        }
+        return total;
+    }
+
+    private static MaterialSource takeOne(ServerPlayer player,
+                                          appeng.api.storage.MEStorage storage,
+                                          PlayerSource source, AEItemKey key) {
+        Item item = key.getItem();
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (!stack.isEmpty() && stack.is(item)) {
+                stack.shrink(1);
+                player.getInventory().setChanged();
+                return MaterialSource.INVENTORY;
+            }
+        }
+
+        long simulated = storage.extract(key, 1L, Actionable.SIMULATE, source);
+        if (simulated < 1L) return MaterialSource.NONE;
+        long extracted = storage.extract(key, 1L, Actionable.MODULATE, source);
+        return extracted >= 1L ? MaterialSource.ME : MaterialSource.NONE;
+    }
+
+    private static void refundOne(ServerPlayer player,
+                                  appeng.api.storage.MEStorage storage,
+                                  PlayerSource source, AEItemKey key,
+                                  MaterialSource materialSource) {
+        if (materialSource == MaterialSource.INVENTORY) {
+            player.getInventory().placeItemBackInInventory(new ItemStack(key.getItem()));
+        } else if (materialSource == MaterialSource.ME) {
+            storage.insert(key, 1L, Actionable.MODULATE, source);
+        }
+    }
+
+    private enum MaterialSource {
+        INVENTORY,
+        ME,
+        NONE
     }
 
     private static void message(ServerPlayer player, String key, Object... args) {
