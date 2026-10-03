@@ -27,7 +27,7 @@ package de.timo.foreverproductionmonitor;
 import appeng.api.AECapabilities;
 import de.timo.foreverproductionmonitor.block.ProductionMonitorBlock;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
-import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
+import de.timo.foreverproductionmonitor.item.MultiblockConstructorItem;\nimport de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
@@ -51,6 +51,8 @@ public final class ModContent {
     public static final DeferredBlock<ProductionMonitorBlock> PRODUCTION_MONITOR = BLOCKS.register("production_monitor", ProductionMonitorBlock::new);
     public static final DeferredItem<BlockItem> PRODUCTION_MONITOR_ITEM = ITEMS.register("production_monitor", () -> new BlockItem((Block)PRODUCTION_MONITOR.get(), new Item.Properties()));
     public static final DeferredItem<ProductionTabletItem> PRODUCTION_TABLET = ITEMS.register("production_tablet", () -> new ProductionTabletItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<MultiblockConstructorItem> MULTIBLOCK_CONSTRUCTOR = ITEMS.register(
+            "multiblock_constructor", () -> new MultiblockConstructorItem(new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ProductionMonitorBlockEntity>> PRODUCTION_MONITOR_BLOCK_ENTITY = BLOCK_ENTITIES.register("production_monitor", () -> BlockEntityType.Builder.of(ProductionMonitorBlockEntity::new, (Block[])new Block[]{(Block)PRODUCTION_MONITOR.get()}).build(null));
 
     private ModContent() {
@@ -71,7 +73,7 @@ public final class ModContent {
             event.accept((ItemLike)PRODUCTION_MONITOR_ITEM.get());
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
-            event.accept((ItemLike)PRODUCTION_TABLET.get());
+            event.accept((ItemLike)PRODUCTION_TABLET.get());\n            event.accept((ItemLike)MULTIBLOCK_CONSTRUCTOR.get());
         }
     }
 }
