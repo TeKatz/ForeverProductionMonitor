@@ -95,7 +95,7 @@ public final class MonitorNetwork {
         payloadRegistrar.playToServer(RequestDeepCoreFacilities.TYPE, RequestDeepCoreFacilities.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesRequest);
         payloadRegistrar.playToClient(DeepCoreFacilitiesPayload.TYPE, DeepCoreFacilitiesPayload.STREAM_CODEC, MonitorNetwork::handleDeepCoreFacilitiesSnapshot);
         CraftingDiagnosticsNetwork.register(payloadRegistrar);
-        DeepCoreConstructionNetwork.register(payloadRegistrar);
+        DeepCoreConstructionNetwork.register(payloadRegistrar);\n        DeepCoreConstructorNetwork.register(payloadRegistrar);
     }
 
     public static void request(ProductionTabletItem.MonitorLink monitorLink, String string, SortMode sortMode, int n, int n2, int n3) {
