@@ -1,7 +1,9 @@
 package de.timo.foreverproductionmonitor.network;
 
 import appeng.api.config.Actionable;
+import appeng.api.orientation.IOrientationStrategy;
 import appeng.api.stacks.AEItemKey;
+import appeng.core.definitions.AEBlocks;
 import appeng.me.helpers.PlayerSource;
 import de.timo.foreverproductionmonitor.blockentity.ProductionMonitorBlockEntity;
 import de.timo.foreverproductionmonitor.integration.DeepCoreConstructionBridge;
@@ -187,7 +189,13 @@ public final class DeepCoreConstructorNetwork {
             }
 
             BlockState existing = targetLevel.getBlockState(pos);
-            if (existing.is(block)) continue;
+            if (isCorrectExisting(existing, block, request.front())) continue;
+            if (existing.is(block)) {
+                // Correct block, wrong orientation. Rotate it in place without
+                // consuming another component from inventory or ME storage.
+                tasks.addLast(new PlacementTask(pos, block, AEItemKey.of(item), true));
+                continue;
+            }
             if (!existing.isAir() && !existing.canBeReplaced()) {
                 message(player, "message.forever_production_monitor.constructor.blocked",
                         pos.toShortString());
@@ -195,7 +203,7 @@ public final class DeepCoreConstructorNetwork {
             }
 
             AEItemKey key = AEItemKey.of(item);
-            tasks.addLast(new PlacementTask(pos, block, key));
+            tasks.addLast(new PlacementTask(pos, block, key, false));
             required.merge(key, 1L, DeepCoreConstructorNetwork::safeAdd);
         }
 
@@ -267,10 +275,29 @@ public final class DeepCoreConstructorNetwork {
                 PlacementTask task = session.tasks().removeFirst();
                 BlockState existing = targetLevel.getBlockState(task.pos());
 
-                if (existing.is(task.block())) {
+                if (isCorrectExisting(existing, task.block(), session.front())) {
                     session.incrementPlaced();
                     continue;
                 }
+
+                if (task.rotateOnly()) {
+                    if (!existing.is(task.block())) {
+                        message(player, "message.forever_production_monitor.constructor.aborted_blocked",
+                                task.pos().toShortString());
+                        aborted = true;
+                        break;
+                    }
+                    BlockState rotated = orientedState(task.block(), session.front());
+                    if (!targetLevel.setBlock(task.pos(), rotated, Block.UPDATE_ALL)) {
+                        message(player, "message.forever_production_monitor.constructor.aborted_place",
+                                task.pos().toShortString());
+                        aborted = true;
+                        break;
+                    }
+                    session.incrementPlaced();
+                    continue;
+                }
+
                 if (!existing.isAir() && !existing.canBeReplaced()) {
                     message(player, "message.forever_production_monitor.constructor.aborted_blocked",
                             task.pos().toShortString());
@@ -286,13 +313,7 @@ public final class DeepCoreConstructorNetwork {
                     break;
                 }
 
-                BlockState state = task.block().defaultBlockState();
-                if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-                    state = state.setValue(BlockStateProperties.HORIZONTAL_FACING, session.front());
-                }
-                if (state.hasProperty(BlockStateProperties.LIT)) {
-                    state = state.setValue(BlockStateProperties.LIT, false);
-                }
+                BlockState state = orientedState(task.block(), session.front());
 
                 boolean placed = targetLevel.setBlock(task.pos(), state, Block.UPDATE_ALL);
                 if (!placed) {
@@ -305,8 +326,7 @@ public final class DeepCoreConstructorNetwork {
 
                 // Direct world placement must still run the normal post-placement
                 // lifecycle. AE2 uses setPlacedBy to initialize ownership/settings
-                // for block entities such as the Drive, and skipping this leaves a
-                // visually correct Deep Core with an incompletely initialized subnet.
+                // for block entities such as the Drive.
                 try {
                     BlockState placedState = targetLevel.getBlockState(task.pos());
                     task.block().setPlacedBy(targetLevel, task.pos(), placedState,
@@ -333,6 +353,32 @@ public final class DeepCoreConstructorNetwork {
                 iterator.remove();
             }
         }
+    }
+
+    private static BlockState orientedState(Block block, Direction front) {
+        BlockState state = block.defaultBlockState();
+        if (block == AEBlocks.DRIVE.block()) {
+            // The open face of the embedded Drive must face the Control Core.
+            // In DeepCoreStructure the Control Core is exactly `front` from the Drive.
+            state = IOrientationStrategy.get(state).setOrientation(state, front, Direction.UP);
+        } else if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            state = state.setValue(BlockStateProperties.HORIZONTAL_FACING, front);
+        }
+        if (state.hasProperty(BlockStateProperties.LIT)) {
+            state = state.setValue(BlockStateProperties.LIT, false);
+        }
+        return state;
+    }
+
+    private static boolean isCorrectExisting(BlockState existing, Block block, Direction front) {
+        if (!existing.is(block)) return false;
+        if (block == AEBlocks.DRIVE.block()) {
+            return IOrientationStrategy.get(existing).getFacing(existing) == front;
+        }
+        if (existing.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            return existing.getValue(BlockStateProperties.HORIZONTAL_FACING) == front;
+        }
+        return true;
     }
 
     private static ProductionMonitorBlockEntity resolveMonitor(
@@ -425,7 +471,7 @@ public final class DeepCoreConstructorNetwork {
         };
     }
 
-    private record PlacementTask(BlockPos pos, Block block, AEItemKey key) {}
+    private record PlacementTask(BlockPos pos, Block block, AEItemKey key, boolean rotateOnly) {}
 
     private static final class BuildSession {
         private final UUID playerId;
