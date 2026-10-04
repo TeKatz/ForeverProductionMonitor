@@ -302,6 +302,24 @@ public final class DeepCoreConstructorNetwork {
                     aborted = true;
                     break;
                 }
+
+                // Direct world placement must still run the normal post-placement
+                // lifecycle. AE2 uses setPlacedBy to initialize ownership/settings
+                // for block entities such as the Drive, and skipping this leaves a
+                // visually correct Deep Core with an incompletely initialized subnet.
+                try {
+                    BlockState placedState = targetLevel.getBlockState(task.pos());
+                    task.block().setPlacedBy(targetLevel, task.pos(), placedState,
+                            player, new ItemStack(task.key().getItem()));
+                } catch (Throwable error) {
+                    targetLevel.removeBlock(task.pos(), false);
+                    refundOne(player, storage, source, task.key(), materialSource);
+                    message(player, "message.forever_production_monitor.constructor.aborted_place",
+                            task.pos().toShortString());
+                    aborted = true;
+                    break;
+                }
+
                 session.incrementPlaced();
             }
 
