@@ -1,5 +1,7 @@
 package de.timo.foreverproductionmonitor.client;
 
+import appeng.api.orientation.IOrientationStrategy;
+import appeng.core.definitions.AEBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.timo.foreverproductionmonitor.integration.DeepCoreConstructionBridge;
@@ -12,6 +14,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -61,8 +64,11 @@ public final class DeepCoreConstructorPreview {
             BlockPos pos = target.corePos().offset(placement.offset());
             if (!minecraft.level.hasChunkAt(pos)) continue;
 
+            BlockState expected = orientedState(block, target.front());
             BlockState existing = minecraft.level.getBlockState(pos);
-            boolean correct = existing.is(block);
+            boolean correct = existing.is(block)
+                    && (block != AEBlocks.DRIVE.block()
+                    || IOrientationStrategy.get(existing).getFacing(existing) == target.front());
             boolean replaceable = existing.isAir() || existing.canBeReplaced();
 
             pose.pushPose();
@@ -73,20 +79,11 @@ public final class DeepCoreConstructorPreview {
                         new AABB(0.01, 0.01, 0.01, 0.99, 0.99, 0.99),
                         0.18f, 1.0f, 0.42f, 0.9f);
             } else {
-                BlockState previewState = block.defaultBlockState();
-                if (previewState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-                    previewState = previewState.setValue(
-                            BlockStateProperties.HORIZONTAL_FACING, target.front());
-                }
-                if (previewState.hasProperty(BlockStateProperties.LIT)) {
-                    previewState = previewState.setValue(BlockStateProperties.LIT, false);
-                }
-
-                boolean invalid = !replaceable;
+                boolean invalid = !replaceable && !existing.is(block);
                 MultiBufferSource ghost = type -> new GhostVertexConsumer(
                         buffers.getBuffer(RenderType.translucent()), invalid);
                 minecraft.getBlockRenderer().renderSingleBlock(
-                        previewState, pose, ghost, LightTexture.FULL_BRIGHT,
+                        expected, pose, ghost, LightTexture.FULL_BRIGHT,
                         OverlayTexture.NO_OVERLAY, ModelData.EMPTY, RenderType.translucent());
 
                 LevelRenderer.renderLineBox(pose, buffers.getBuffer(RenderType.lines()),
@@ -101,6 +98,19 @@ public final class DeepCoreConstructorPreview {
 
         buffers.endBatch(RenderType.translucent());
         buffers.endBatch(RenderType.lines());
+    }
+
+    private static BlockState orientedState(Block block, Direction front) {
+        BlockState state = block.defaultBlockState();
+        if (block == AEBlocks.DRIVE.block()) {
+            state = IOrientationStrategy.get(state).setOrientation(state, front, Direction.UP);
+        } else if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            state = state.setValue(BlockStateProperties.HORIZONTAL_FACING, front);
+        }
+        if (state.hasProperty(BlockStateProperties.LIT)) {
+            state = state.setValue(BlockStateProperties.LIT, false);
+        }
+        return state;
     }
 
     private static ItemStack constructorStack(ItemStack main, ItemStack offhand) {
