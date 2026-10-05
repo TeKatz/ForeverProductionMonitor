@@ -12,6 +12,7 @@ repositories {
     mavenCentral()
     maven { url = 'https://maven.neoforged.net/releases' }
     maven { url = 'https://maven.theillusivec4.top/' }
+    maven { url = 'https://maven.blamejared.com' }
 }
 
 neoForge {
@@ -28,6 +29,8 @@ neoForge {
 dependencies {
     implementation 'org.appliedenergistics:appliedenergistics2:19.2.17'
     compileOnly 'top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1'
+    compileOnly 'mezz.jei:jei-1.21.1-common-api:19.44.0.406'
+    compileOnly 'mezz.jei:jei-1.21.1-neoforge-api:19.44.0.406'
 }
 
 tasks.withType(JavaCompile).configureEach {
