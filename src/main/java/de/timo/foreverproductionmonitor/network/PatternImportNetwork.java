@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -18,7 +19,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class PatternImportNetwork {
     private PatternImportNetwork() {}
 
-    public static void register(PayloadRegistrar registrar) {
+    public static void register(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("2.0");
         registrar.playToServer(Request.TYPE, Request.CODEC, PatternImportNetwork::handleRequest);
         registrar.playToClient(Result.TYPE, Result.CODEC, PatternImportNetwork::handleResult);
     }
@@ -78,7 +80,9 @@ public final class PatternImportNetwork {
                     ResourceLocation id = ResourceLocation.STREAM_CODEC.decode(buf);
                     int ordinal = buf.readVarInt();
                     AssemblerMatrixPatternImporter.Result[] values = AssemblerMatrixPatternImporter.Result.values();
-                    if (ordinal < 0 || ordinal >= values.length) ordinal = AssemblerMatrixPatternImporter.Result.ENCODE_FAILED.ordinal();
+                    if (ordinal < 0 || ordinal >= values.length) {
+                        ordinal = AssemblerMatrixPatternImporter.Result.ENCODE_FAILED.ordinal();
+                    }
                     return new Result(id, values[ordinal]);
                 });
 
