@@ -6,11 +6,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-/** Client-only feedback for one-click JEI pattern uploads. */
+/** Client-only feedback for JEI pattern uploads. */
 public final class ClientPatternImportFeedback {
     private ClientPatternImportFeedback() {}
 
     public static void accept(ResourceLocation recipeId, AssemblerMatrixPatternImporter.Result result) {
+        if (ClientPatternImportQueue.acceptBatchResult(recipeId, result)) return;
+
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
 
