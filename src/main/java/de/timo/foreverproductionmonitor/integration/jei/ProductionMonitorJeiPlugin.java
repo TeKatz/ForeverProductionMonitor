@@ -13,6 +13,7 @@ import mezz.jei.api.gui.buttons.IButtonState;
 import mezz.jei.api.gui.buttons.IIconButtonController;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.inputs.IJeiUserInput;
+import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import mezz.jei.api.registration.IAdvancedRegistration;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -39,7 +40,12 @@ public final class ProductionMonitorJeiPlugin implements IModPlugin {
         IDrawable blankPattern = registration.getJeiHelpers().getGuiHelper()
                 .createDrawableIngredient(VanillaTypes.ITEM_STACK, AEItems.BLANK_PATTERN.stack());
 
-        registration.addRecipeButtonFactory(layout -> createButton(layout, blankPattern));
+        registration.addRecipeButtonFactory(new IRecipeButtonControllerFactory() {
+            @Override
+            public <T> IIconButtonController createButtonController(IRecipeLayoutDrawable<T> layout) {
+                return createButton(layout, blankPattern);
+            }
+        });
     }
 
     private static <T> IIconButtonController createButton(IRecipeLayoutDrawable<T> layout, IDrawable icon) {
