@@ -159,9 +159,6 @@ final class NetworkMapView {
                 || !this.snapshot.pos().equals(networkMapPayload.pos())
                 || !this.snapshot.viewDimension().equals(networkMapPayload.viewDimension());
 
-        // Most real map edits require closing the tablet first. Keep the last snapshot for
-        // each network/dimension outside the screen instance so reopening the tablet can still
-        // diff "before" and "after" and produce session events.
         String eventKey = this.eventKey(networkMapPayload);
         MonitorNetwork.NetworkMapPayload previousForEvents =
                 !contextChanged && this.snapshot != null
@@ -311,7 +308,6 @@ final class NetworkMapView {
 
     void render(GuiGraphics guiGraphics, int n, int n2, float f) {
         InterfaceTheme.Palette palette = InterfaceTheme.current();
-        // Follow Path is only clickable in frames where its details button is actually drawn.
         this.followTarget = null;
         int n3 = this.sceneRight();
         int detailLeft = this.detailLeft();
@@ -468,10 +464,6 @@ final class NetworkMapView {
             return;
         }
 
-        // Item/block rendering is the expensive part of very large maps. Once a map grows
-        // beyond a few hundred nodes, omit nodes whose projected centres are well outside
-        // the clipped scene. A generous margin keeps cables and large item models from
-        // visibly popping at the edge while avoiding thousands of off-screen draw calls.
         double margin = Math.max(64.0, Math.min(512.0, this.scale() * 1.75));
         double minX = this.left - margin;
         double maxX = this.sceneRight() + margin;
@@ -537,10 +529,6 @@ final class NetworkMapView {
         boolean yAxis = occupied.contains(pos.relative(Direction.UP)) || occupied.contains(pos.relative(Direction.DOWN));
         boolean zAxis = occupied.contains(pos.relative(Direction.NORTH)) || occupied.contains(pos.relative(Direction.SOUTH));
 
-        // Use AE2's own textured cable item model for every connected axis. The stock item
-        // mesh spans roughly 2..14 texels along its cable axis, so a 4/3 local-axis stretch
-        // closes the remaining quarter-block gap without adding synthetic connector boxes.
-        // Corners and T-junctions are therefore composed entirely from the same AE2 artwork.
         if (!xAxis && !yAxis && !zAxis) {
             zAxis = true;
         }
@@ -586,8 +574,6 @@ final class NetworkMapView {
         }
 
         if (!this.heatmap) {
-            // Normal map mode is now 100% AE2 cable-model geometry. Synthetic connector
-            // boxes were the source of the thick purple junction bands in 3.3.1.
             return;
         }
 
@@ -597,7 +583,6 @@ final class NetworkMapView {
         double radius = dense ? 0.25 : (glass ? 0.125 : (covered ? 0.21875 : 0.1875));
         BlockPos pos = mapNode.pos();
 
-        // Heatmap intentionally uses plain diagnostic geometry so its status color remains unambiguous.
         AABB core = new AABB(
                 (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
                 (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
@@ -922,12 +907,23 @@ final class NetworkMapView {
         guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barTop + 1,
                 NetworkMapView.withAlpha(palette.border(), 112));
 
-        if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
-            // The search widget owns the left side of the bar. The help gets two dedicated
-            // rows on the right; switch to compact labels rather than ever clipping text.
-            int textLeft = this.left + 216;
-            int textRight = sceneRight - 8;
-            int available = textRight - textLeft;
+        int textLeft = this.left + 216;
+        int textRight = sceneRight - 8;
+        int available = textRight - textLeft;
+        boolean truncated = this.snapshot != null && this.snapshot.truncated();
+
+        if (truncated) {
+            if (available >= 40) {
+                String warning = Component.translatable("screen.forever_production_monitor.map.truncated").getString();
+                int center = textLeft + available / 2;
+                guiGraphics.drawCenteredString(
+                        this.font,
+                        this.ellipsize(warning, available),
+                        center,
+                        barTop + 10,
+                        -14740);
+            }
+        } else if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
             if (available >= 88) {
                 String navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
                 String selection = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
@@ -946,12 +942,6 @@ final class NetworkMapView {
                     guiGraphics.drawCenteredString(this.font, selection, center, barTop + 15, palette.muted());
                 }
             }
-        }
-
-        if (this.snapshot != null && this.snapshot.truncated()) {
-            guiGraphics.drawString(this.font,
-                    Component.translatable("screen.forever_production_monitor.map.truncated"),
-                    this.left + 7, this.top + 7, -14740, false);
         }
     }
 
@@ -1041,8 +1031,7 @@ final class NetworkMapView {
                 NetworkMapView.formatPower(selected.idlePower()), -14740);
 
         int registryY = lineY + 24;
-        NetworkMapPathResolver.Target pathTarget =
-                NetworkMapPathResolver.resolve(this.snapshot, selected);
+        NetworkMapPathResolver.Target pathTarget = NetworkMapPathResolver.resolve(this.snapshot, selected);
         if (pathTarget != null) {
             int pathY = lineY + 25;
             Component linkTitle = Component.translatable(
@@ -1531,8 +1520,6 @@ final class NetworkMapView {
     }
 
     private int sceneContentBottom() {
-        // Reserve one compact bottom bar for search + controls. The 3D renderer and hit
-        // testing stop above it, so no blocks, selection boxes or camera drag can overlap GUI.
         return this.top + this.height - CONTROL_BAR_HEIGHT;
     }
 
@@ -1623,11 +1610,6 @@ final class NetworkMapView {
         if (encoded == null) {
             encoded = "";
         }
-
-        // Client configs can finish loading after this screen class has already been
-        // initialized. The old one-shot boolean permanently cached the default empty value
-        // in that case, which made all three bookmark slots look erased after a restart.
-        // Re-sync whenever the actual config value changes instead.
         if (Objects.equals(encoded, loadedBookmarksEncoded)) {
             return;
         }
@@ -1658,7 +1640,6 @@ final class NetworkMapView {
                         Boolean.parseBoolean(parts[10]));
                 CAMERA_BOOKMARKS.computeIfAbsent(key, ignored -> new CameraState[3])[slot] = state;
             } catch (RuntimeException ignored) {
-                // Ignore one malformed bookmark and keep loading the remaining slots.
             }
         }
     }
@@ -1713,9 +1694,6 @@ final class NetworkMapView {
     private String eventKey(MonitorNetwork.NetworkMapPayload payload) {
         Object currentConnection = this.minecraft == null ? null : this.minecraft.getConnection();
         if (currentConnection != eventConnection) {
-            // Events and their comparison baselines are session-only by design. Clearing them
-            // when the client connection changes prevents stale world/server snapshots from
-            // accumulating for the lifetime of the Minecraft process.
             EVENT_LOGS.clear();
             LAST_EVENT_SNAPSHOTS.clear();
             REMEMBERED_CAMERAS.clear();
@@ -1741,10 +1719,6 @@ final class NetworkMapView {
         for (Map.Entry<NodeKey, MonitorNetwork.MapNode> entry : hashMap2.entrySet()) {
             MonitorNetwork.MapNode mapNode = (MonitorNetwork.MapNode)hashMap.get(entry.getKey());
             MonitorNetwork.MapNode mapNode2 = (MonitorNetwork.MapNode)entry.getValue();
-
-            // Topology changes are network events too. The old implementation only recorded
-            // additions/removals for nodes marked as channel-requiring "devices", which meant
-            // cable edits, multipart changes and mapped external machines were silently ignored.
             if (mapNode == null) {
                 NetworkMapView.addEvent(arrayDeque,
                         new MapEvent(l, this.nodeDisplayName(mapNode2), EventType.ADDED));
@@ -1860,7 +1834,6 @@ final class NetworkMapView {
         CABLES,
         PARTS,
         ERRORS;
-
     }
 
     private record ProjectionContext(double cosYaw, double sinYaw,
@@ -1877,7 +1850,6 @@ final class NetworkMapView {
         CAMERA,
         DIAGNOSTIC,
         BOOKMARK;
-
     }
 
     private record MapEvent(long time, String name, EventType type) {
@@ -1891,7 +1863,6 @@ final class NetworkMapView {
         POWER_LOST,
         POWER_RESTORED,
         STATE_CHANGED;
-
     }
 
     private record NodeKey(long pos, String visualId, ProductionMonitorBlockEntity.MapRenderKind kind, int side) {
