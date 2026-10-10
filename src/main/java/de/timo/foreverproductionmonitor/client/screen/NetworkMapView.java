@@ -924,7 +924,8 @@ final class NetworkMapView {
 
         // The search widget owns the left side of the bar. The right side shows either the
         // truncation warning or, for complete maps, the two-row navigation help.
-        int textLeft = this.left + 216;
+        int searchRight = Math.min(this.left + 208, sceneRight - 8);
+        int textLeft = searchRight + 8;
         int textRight = sceneRight - 8;
         int available = textRight - textLeft;
         boolean truncated = this.snapshot != null && this.snapshot.truncated();
