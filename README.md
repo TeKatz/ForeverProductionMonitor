@@ -166,9 +166,9 @@ See [CHANGELOG.md](CHANGELOG.md) for the complete release history.
 
 ## Development and AI disclosure
 
-Forever Production Monitor is **designed, directed and tested by Timo**.
+Forever Production Monitor is **designed, directed and tested by TeKatz**.
 
-The implementation has been produced extensively with **generative AI (ChatGPT/OpenAI)** under human direction and review. Timo defines the product direction, feature requirements, UI/UX decisions, acceptance criteria, test scenarios, bug reproduction and release approval. Architecture, implementation, refactoring, debugging and documentation are developed iteratively with AI assistance.
+The implementation has been produced extensively with **generative AI (ChatGPT/OpenAI)** under human direction and review. TeKatz defines the product direction, feature requirements, UI/UX decisions, acceptance criteria, test scenarios, bug reproduction and release approval. Architecture, implementation, refactoring, debugging and documentation are developed iteratively with AI assistance.
 
 Every stable release is built from the source in this repository through GitHub Actions and is manually tested in-game before being accepted for release.
 
@@ -176,7 +176,7 @@ AI assistance is disclosed here intentionally so users and contributors can make
 
 ## Project history
 
-The source repository originated from a reconstruction of Timo's own stable **Forever Production Monitor 2.2.1** JAR after the original source was unavailable. It was **not** reconstructed from an unrelated third-party mod.
+The source repository originated from a reconstruction of TeKatz's own stable **Forever Production Monitor 2.2.1** JAR after the original source was unavailable. It was **not** reconstructed from an unrelated third-party mod.
 
 The historical baseline verification and the limits of that reconstruction are documented in [BASELINE.md](BASELINE.md).
 
