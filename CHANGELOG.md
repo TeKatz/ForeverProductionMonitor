@@ -2,6 +2,15 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## Unreleased
+
+### Network Map stability
+- Fixed GitHub issue **#35**, where opening the Network Topology View could crash the client with `IllegalStateException: Not building!` while rendering multipart geometry.
+- Separated `RenderType.debugQuads()` face rendering from `RenderType.lines()` outline rendering so each buffer is acquired, written and flushed in its own pass.
+- Moved the large-network truncation warning out of the filter row and into the bottom control bar.
+- Made the full truncation warning scale to the available control-bar width instead of overlapping nearby controls or being cut off at larger GUI scales.
+- Verified the fix in a fresh minimal test instance and in an ATM10TTS end-game world, including Network Map rendering, Heatmap, hover/selection, rotation and zoom.
+
 ## 5.0.0
 
 ### Crafting Diagnostics
