@@ -75,4 +75,4 @@ All notable public release changes for Forever Production Monitor are documented
 
 ## Development history before 4.0.0
 
-The repository began from a reconstruction of Timo's own stable 2.2.1 build. Subsequent internal versions introduced storage diagnostics, channel/device views, dashboard and alarms, themes and animations, the 3D Network Map, multidimensional navigation and ExtendedAE Wireless Connector support before being consolidated into the 4.0.0 public-release baseline.
+The repository began from a reconstruction of TeKatz's own stable 2.2.1 build. Subsequent internal versions introduced storage diagnostics, channel/device views, dashboard and alarms, themes and animations, the 3D Network Map, multidimensional navigation and ExtendedAE Wireless Connector support before being consolidated into the 4.0.0 public-release baseline.
