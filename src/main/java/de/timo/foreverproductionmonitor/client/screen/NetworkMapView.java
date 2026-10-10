@@ -933,13 +933,22 @@ final class NetworkMapView {
         if (truncated) {
             if (available >= 40) {
                 String warning = Component.translatable("screen.forever_production_monitor.map.truncated").getString();
-                int center = textLeft + available / 2;
+                int warningWidth = Math.max(1, this.font.width(warning));
+                int warningAvailable = Math.max(1, available - 8);
+                float textScale = Math.min(1.0f, (float)warningAvailable / (float)warningWidth);
+                float centerX = textLeft + available / 2.0f;
+                float centerY = barTop + (barBottom - barTop) / 2.0f;
+                PoseStack poseStack = guiGraphics.pose();
+                poseStack.pushPose();
+                poseStack.translate(centerX, centerY, 0.0f);
+                poseStack.scale(textScale, textScale, 1.0f);
                 guiGraphics.drawCenteredString(
                         this.font,
-                        this.ellipsize(warning, available),
-                        center,
-                        barTop + 10,
+                        warning,
+                        0,
+                        -this.font.lineHeight / 2,
                         -14740);
+                poseStack.popPose();
             }
         } else if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
             if (available >= 88) {
