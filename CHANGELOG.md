@@ -2,7 +2,7 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
-## Unreleased
+## 5.0.1
 
 ### Network Map stability
 - Fixed GitHub issue **#35**, where opening the Network Topology View could crash the client with `IllegalStateException: Not building!` while rendering multipart geometry.
