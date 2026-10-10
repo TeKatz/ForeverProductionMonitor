@@ -404,16 +404,23 @@ final class NetworkMapView {
 
         bufferSource.endBatch();
         VertexConsumer faceConsumer = bufferSource.getBuffer(RenderType.debugQuads());
-        VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
         for (int index : this.frameNodeIndices) {
             MonitorNetwork.MapNode node = nodes.get(index);
             if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART) {
                 this.renderPartGeometry(
-                        poseStack, faceConsumer, lineConsumer, node,
+                        poseStack, faceConsumer, node,
                         this.performanceCache.visiblePositions());
             }
         }
         bufferSource.endBatch(RenderType.debugQuads());
+
+        VertexConsumer partLines = bufferSource.getBuffer(RenderType.lines());
+        for (int index : this.frameNodeIndices) {
+            MonitorNetwork.MapNode node = nodes.get(index);
+            if (node.renderKind() == ProductionMonitorBlockEntity.MapRenderKind.PART) {
+                this.renderPartOutline(poseStack, partLines, node);
+            }
+        }
         bufferSource.endBatch(RenderType.lines());
 
         if (this.heatmap) {
@@ -564,7 +571,7 @@ final class NetworkMapView {
         poseStack.popPose();
     }
 
-    private void renderPartGeometry(PoseStack poseStack, VertexConsumer faceConsumer, VertexConsumer lineConsumer,
+    private void renderPartGeometry(PoseStack poseStack, VertexConsumer faceConsumer,
                                     MonitorNetwork.MapNode mapNode, Set<BlockPos> occupied) {
         String path = mapNode.visualId().getPath();
         int base = this.heatmap ? this.heatColorInt(mapNode) : NetworkMapView.partColor(path, mapNode.state());
@@ -573,8 +580,8 @@ final class NetworkMapView {
         float b = (float)(base & 0xFF) / 255.0f;
 
         if (!NetworkMapView.isCable(path)) {
-            NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
-                    NetworkMapView.partPlate(mapNode), r, g, b, true);
+            NetworkMapView.addBox(poseStack, faceConsumer,
+                    NetworkMapView.partPlate(mapNode), r, g, b);
             return;
         }
 
@@ -594,13 +601,28 @@ final class NetworkMapView {
         AABB core = new AABB(
                 (double)pos.getX() + 0.5 - radius, (double)pos.getY() + 0.5 - radius, (double)pos.getZ() + 0.5 - radius,
                 (double)pos.getX() + 0.5 + radius, (double)pos.getY() + 0.5 + radius, (double)pos.getZ() + 0.5 + radius);
-        NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer, core, r, g, b, false);
+        NetworkMapView.addBox(poseStack, faceConsumer, core, r, g, b);
         for (Direction direction : Direction.values()) {
             if (occupied.contains(pos.relative(direction))) {
-                NetworkMapView.addBox(poseStack, faceConsumer, lineConsumer,
-                        NetworkMapView.cableArm(pos, direction, radius), r, g, b, false);
+                NetworkMapView.addBox(poseStack, faceConsumer,
+                        NetworkMapView.cableArm(pos, direction, radius), r, g, b);
             }
         }
+    }
+
+    private void renderPartOutline(PoseStack poseStack, VertexConsumer lineConsumer,
+                                   MonitorNetwork.MapNode mapNode) {
+        String path = mapNode.visualId().getPath();
+        if (NetworkMapView.isCable(path)) {
+            return;
+        }
+        int base = this.heatmap ? this.heatColorInt(mapNode) : NetworkMapView.partColor(path, mapNode.state());
+        float r = (float)(base >> 16 & 0xFF) / 255.0f;
+        float g = (float)(base >> 8 & 0xFF) / 255.0f;
+        float b = (float)(base & 0xFF) / 255.0f;
+        LevelRenderer.renderLineBox(
+                poseStack, lineConsumer, NetworkMapView.partPlate(mapNode),
+                r * 0.32f, g * 0.32f, b * 0.32f, 0.82f);
     }
 
     private static boolean isCable(String string) {
@@ -651,16 +673,13 @@ final class NetworkMapView {
         return NetworkMapView.isCable(mapNode.visualId().getPath()) ? new AABB(mapNode.pos()).deflate(0.27) : NetworkMapView.partPlate(mapNode);
     }
 
-    private static void addBox(PoseStack poseStack, VertexConsumer vertexConsumer, VertexConsumer vertexConsumer2, AABB aABB, float f, float f2, float f3, boolean bl) {
+    private static void addBox(PoseStack poseStack, VertexConsumer vertexConsumer, AABB aABB, float f, float f2, float f3) {
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.DOWN, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)(f * 0.58f), (float)(f2 * 0.58f), (float)(f3 * 0.58f), (float)1.0f);
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.UP, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)Math.min(1.0f, f * 1.1f), (float)Math.min(1.0f, f2 * 1.1f), (float)Math.min(1.0f, f3 * 1.1f), (float)1.0f);
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.NORTH, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)(f * 0.72f), (float)(f2 * 0.72f), (float)(f3 * 0.72f), (float)1.0f);
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.SOUTH, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)(f * 0.9f), (float)(f2 * 0.9f), (float)(f3 * 0.9f), (float)1.0f);
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.WEST, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)(f * 0.66f), (float)(f2 * 0.66f), (float)(f3 * 0.66f), (float)1.0f);
         LevelRenderer.renderFace((PoseStack)poseStack, (VertexConsumer)vertexConsumer, (Direction)Direction.EAST, (float)((float)aABB.minX), (float)((float)aABB.minY), (float)((float)aABB.minZ), (float)((float)aABB.maxX), (float)((float)aABB.maxY), (float)((float)aABB.maxZ), (float)(f * 0.82f), (float)(f2 * 0.82f), (float)(f3 * 0.82f), (float)1.0f);
-        if (bl) {
-            LevelRenderer.renderLineBox((PoseStack)poseStack, (VertexConsumer)vertexConsumer2, (AABB)aABB, (float)(f * 0.32f), (float)(f2 * 0.32f), (float)(f3 * 0.32f), (float)0.82f);
-        }
     }
 
     private static int partColor(String string, ProductionMonitorBlockEntity.MapNodeState mapNodeState) {
@@ -903,12 +922,35 @@ final class NetworkMapView {
         guiGraphics.fill(this.left + 1, barTop, sceneRight - 1, barTop + 1,
                 NetworkMapView.withAlpha(palette.border(), 112));
 
-        if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
-            // The search widget owns the left side of the bar. The help gets two dedicated
-            // rows on the right; switch to compact labels rather than ever clipping text.
-            int textLeft = this.left + 216;
-            int textRight = sceneRight - 8;
-            int available = textRight - textLeft;
+        // The search widget owns the left side of the bar. The right side shows either the
+        // truncation warning or, for complete maps, the two-row navigation help.
+        int searchRight = Math.min(this.left + 208, sceneRight - 8);
+        int textLeft = searchRight + 8;
+        int textRight = sceneRight - 8;
+        int available = textRight - textLeft;
+        boolean truncated = this.snapshot != null && this.snapshot.truncated();
+
+        if (truncated) {
+            if (available >= 40) {
+                String warning = Component.translatable("screen.forever_production_monitor.map.truncated").getString();
+                int warningWidth = Math.max(1, this.font.width(warning));
+                int warningAvailable = Math.max(1, available - 8);
+                float textScale = Math.min(1.0f, (float)warningAvailable / (float)warningWidth);
+                float centerX = textLeft + available / 2.0f;
+                float centerY = barTop + (barBottom - barTop) / 2.0f;
+                PoseStack poseStack = guiGraphics.pose();
+                poseStack.pushPose();
+                poseStack.translate(centerX, centerY, 0.0f);
+                poseStack.scale(textScale, textScale, 1.0f);
+                guiGraphics.drawCenteredString(
+                        this.font,
+                        warning,
+                        0,
+                        -this.font.lineHeight / 2,
+                        -14740);
+                poseStack.popPose();
+            }
+        } else if (((Boolean)ClientConfig.VALUES.mapShowControls.get()).booleanValue()) {
             if (available >= 88) {
                 String navigation = Component.translatable("screen.forever_production_monitor.map.controls.navigation").getString();
                 String selection = Component.translatable("screen.forever_production_monitor.map.controls.selection").getString();
@@ -927,12 +969,6 @@ final class NetworkMapView {
                     guiGraphics.drawCenteredString(this.font, selection, center, barTop + 15, palette.muted());
                 }
             }
-        }
-
-        if (this.snapshot != null && this.snapshot.truncated()) {
-            guiGraphics.drawString(this.font,
-                    Component.translatable("screen.forever_production_monitor.map.truncated"),
-                    this.left + 7, this.top + 7, -14740, false);
         }
     }
 
