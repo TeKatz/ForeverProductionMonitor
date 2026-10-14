@@ -2,6 +2,17 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## 5.4.0-SNAPSHOT (development, not released)
+
+- Integrates the existing Deep Core Construction Planner, Multiblock Constructor and JEI Pattern Planner queue on the in-game-tested 5.2.0 baseline (`87c299b`).
+- Preserves the 5.0.1 Network Map crash and warning-layout hotfix; `NetworkMapView.java` is unchanged from that baseline.
+- Construction Planner requests complete Tier I-III build kits and subtracts matching player-inventory and ME-stock items before requesting missing components.
+- Multiblock Constructor supports Preview / Build / Dismantle, reuses existing matching blocks, consumes player inventory before ME stock, and preserves the previously implemented AE2 Drive orientation fix.
+- JEI Crafting/Smithing buttons support immediate import, Shift-click queue toggling and Ctrl-click upload to an ExtendedAE Assembler Matrix. Processing patterns remain blocked on both client and server.
+- Requires the paired DeepCore 0.8.1-SNAPSHOT construction API build for construction features. JEI and ExtendedAE remain optional for the rest of FPM.
+- The separate 5.3.0 Fleet Diagnostics work is not included. The higher snapshot version distinguishes this integration from both that branch and earlier 5.2.0 builds.
+- Runtime acceptance of this new combined build is pending. See [test instructions](docs/constructor-pattern-planner-5.4.0.md).
+
 ## 5.0.1
 
 ### Network Map stability

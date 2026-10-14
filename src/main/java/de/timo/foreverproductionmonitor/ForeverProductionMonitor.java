@@ -16,6 +16,7 @@ import com.mojang.logging.LogUtils;
 import de.timo.foreverproductionmonitor.ModContent;
 import de.timo.foreverproductionmonitor.client.ClientConfig;
 import de.timo.foreverproductionmonitor.network.MonitorNetwork;
+import de.timo.foreverproductionmonitor.network.PatternImportNetwork;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -35,7 +36,7 @@ public final class ForeverProductionMonitor {
         modBus.addListener(ModContent::registerCapabilities);
         modBus.addListener(ModContent::addCreativeTabContents);
         modBus.addListener(MonitorNetwork::register);
+        modBus.addListener(PatternImportNetwork::register);
         container.registerConfig(ModConfig.Type.CLIENT, (IConfigSpec)ClientConfig.SPEC);
     }
 }
-
