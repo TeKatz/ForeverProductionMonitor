@@ -16,7 +16,7 @@ final class ConstructionJobProgress {
 
     State observe(long available, boolean running, boolean done, boolean cancelled, long tick) {
         if (cancelled) return State.CANCELLED;
-        if (done || available >= required) return State.READY;
+        if (done || (!running && available >= required)) return State.READY;
         if (running || available > greatestAvailable) lastProgressTick = tick;
         greatestAvailable = Math.max(greatestAvailable, available);
         return tick - lastProgressTick >= MAX_UNOBSERVABLE_TICKS ? State.STALLED : State.WAITING;

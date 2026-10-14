@@ -50,6 +50,8 @@ public final class ConstructionBatchOrderTest {
         require(partial.observe(2, false, false, false, 12100)
                 == ConstructionJobProgress.State.STALLED, "Unobservable jobs must not wait forever");
         var nativeJob = new ConstructionJobProgress(1, 0, 0);
+        require(nativeJob.observe(1, true, false, false, 100)
+                == ConstructionJobProgress.State.WAITING, "Do not overlap an observable running job");
         require(nativeJob.observe(0, true, false, false, 20000)
                 == ConstructionJobProgress.State.WAITING, "Observed long jobs must not time out");
         require(nativeJob.observe(0, false, false, true, 20010)
