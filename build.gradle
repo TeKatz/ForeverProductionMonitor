@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'de.timo.foreverproductionmonitor'
-version = '5.4.0-SNAPSHOT'
+version = '5.4.1-SNAPSHOT'
 base.archivesName = 'ForeverProductionMonitor-1.21.1-NeoForge'
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
@@ -37,3 +37,11 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 21
 }
+
+tasks.register('verifyConstructionBatch', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'de.timo.foreverproductionmonitor.network.ConstructionBatchOrderTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+}
+tasks.named('check') { dependsOn tasks.named('verifyConstructionBatch') }

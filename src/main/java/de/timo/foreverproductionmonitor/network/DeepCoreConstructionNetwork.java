@@ -2,6 +2,12 @@ package de.timo.foreverproductionmonitor.network;
 
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.networking.crafting.CraftingSubmitErrorCode;
+import appeng.api.networking.crafting.UnsuitableCpus;
+import appeng.api.config.Actionable;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.me.helpers.PlayerSource;
@@ -11,10 +17,14 @@ import de.timo.foreverproductionmonitor.item.ProductionTabletItem;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,6 +37,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -41,6 +54,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class DeepCoreConstructionNetwork {
     private static final String DEEP_CORE_MOD_ID = "forever_deep_core";
     private static final String PLAN_API = "de.timo.foreverdeepcore.api.DeepCoreConstructionPlans";
+    private static final Map<UUID, BatchSession> BATCHES = new LinkedHashMap<>();
+    private static boolean tickRegistered;
 
     private DeepCoreConstructionNetwork() {}
 
@@ -49,6 +64,11 @@ public final class DeepCoreConstructionNetwork {
         registrar.playToClient(PlanResponse.TYPE, PlanResponse.CODEC, DeepCoreConstructionNetwork::handlePlanResponse);
         registrar.playToServer(BatchRequest.TYPE, BatchRequest.CODEC, DeepCoreConstructionNetwork::handleBatchRequest);
         registrar.playToClient(BatchResult.TYPE, BatchResult.CODEC, DeepCoreConstructionNetwork::handleBatchResult);
+        if (!tickRegistered) {
+            tickRegistered = true;
+            NeoForge.EVENT_BUS.addListener(DeepCoreConstructionNetwork::tickBatches);
+            NeoForge.EVENT_BUS.addListener(DeepCoreConstructionNetwork::serverStopped);
+        }
     }
 
     public static void requestPlan(ProductionTabletItem.MonitorLink link, int tier) {
@@ -121,6 +141,12 @@ public final class DeepCoreConstructionNetwork {
     private static void handleBatchRequest(BatchRequest request, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
+            BatchSession existing = BATCHES.get(player.getUUID());
+            if (existing != null) {
+                sendBatchResult(player, request, BatchStatus.ERROR,
+                        existing.started, existing.requirements.size(), "A build kit is already being crafted");
+                return;
+            }
             if (request.tier() < 1 || request.tier() > 3) {
                 sendBatchResult(player, request, BatchStatus.INVALID_TIER, 0, 0, "");
                 return;
@@ -129,7 +155,6 @@ public final class DeepCoreConstructionNetwork {
                 sendBatchResult(player, request, BatchStatus.MOD_MISSING, 0, 0, "");
                 return;
             }
-
             ProductionMonitorBlockEntity monitor =
                     MonitorNetwork.linkedMonitor(player, request.dimension(), request.pos());
             if (monitor == null) {
@@ -140,49 +165,34 @@ public final class DeepCoreConstructionNetwork {
                 sendBatchResult(player, request, BatchStatus.NETWORK_OFFLINE, 0, 0, "");
                 return;
             }
-
             try {
-                Map<ResourceLocation, Integer> counts = readPlan(request.tier());
-                var grid = monitor.getMainNode().getGrid();
-                Map<AEItemKey, Long> stored = storedItems(grid.getStorageService().getCachedInventory());
-                var crafting = grid.getCraftingService();
-                var source = new PlayerSource(player, monitor);
-                List<PendingCraft> pending = new ArrayList<>();
-
-                for (var entry : counts.entrySet()) {
+                Map<AEItemKey, Long> required = new LinkedHashMap<>();
+                for (var entry : readPlan(request.tier()).entrySet()) {
                     Item item = BuiltInRegistries.ITEM.getOptional(entry.getKey()).orElse(Items.AIR);
                     if (item == Items.AIR || entry.getValue() <= 0) {
-                        sendBatchResult(player, request, BatchStatus.ERROR, 0, 0, entry.getKey().toString());
-                        return;
+                        throw new IllegalStateException("Invalid construction component");
                     }
-
-                    AEItemKey key = AEItemKey.of(item);
-                    long available = saturatingAdd(
-                            Math.max(0L, stored.getOrDefault(key, 0L)),
-                            inventoryCount(player, item));
-                    long missing = Math.max(0L, (long) entry.getValue() - available);
-                    if (missing == 0L) continue;
-                    if (!crafting.isCraftable(key)) {
-                        sendBatchResult(player, request, BatchStatus.NOT_CRAFTABLE, 0, 0,
-                                entry.getKey().toString());
-                        return;
-                    }
-
-                    Future<ICraftingPlan> future = crafting.beginCraftingCalculation(
-                            player.level(),
-                            () -> source,
-                            key,
-                            missing,
-                            CalculationStrategy.REPORT_MISSING_ITEMS);
-                    pending.add(new PendingCraft(key, missing, future));
+                    required.put(AEItemKey.of(item), entry.getValue().longValue());
                 }
-
-                if (pending.isEmpty()) {
+                var crafting = monitor.getMainNode().getGrid().getCraftingService();
+                boolean missing = false;
+                for (var entry : required.entrySet()) {
+                    if (availableFor(player, monitor, entry.getKey(), entry.getValue()) >= entry.getValue()) continue;
+                    missing = true;
+                    if (!crafting.isCraftable(entry.getKey())) {
+                        sendBatchResult(player, request, BatchStatus.NOT_CRAFTABLE, 0, required.size(),
+                                entry.getKey().getDisplayName().getString());
+                        return;
+                    }
+                }
+                if (!missing) {
                     sendBatchResult(player, request, BatchStatus.NOTHING_TO_CRAFT, 0, 0, "");
                     return;
                 }
-
-                CompletableFuture.runAsync(() -> preflightAndSubmit(player, request, pending));
+                List<AEItemKey> order = ConstructionBatchOrder.consumerFirst(required.keySet(),
+                        key -> componentDependencies(crafting, key, required.keySet()));
+                BATCHES.put(player.getUUID(), new BatchSession(request, required, order));
+                sendBatchResult(player, request, BatchStatus.QUEUED, 0, required.size(), "");
             } catch (Throwable error) {
                 sendBatchResult(player, request, BatchStatus.ERROR, 0, 0,
                         error.getClass().getSimpleName());
@@ -190,61 +200,186 @@ public final class DeepCoreConstructionNetwork {
         });
     }
 
-    private static void preflightAndSubmit(ServerPlayer player, BatchRequest request,
-                                           List<PendingCraft> pending) {
-        try {
-            List<ReadyCraft> ready = new ArrayList<>(pending.size());
-            for (PendingCraft craft : pending) {
-                ICraftingPlan plan = craft.future().get();
-                if (plan.simulation()) {
-                    player.server.execute(() -> sendBatchResult(player, request,
-                            BatchStatus.MISSING_INGREDIENTS, 0, pending.size(),
-                            BuiltInRegistries.ITEM.getKey(craft.key().getItem()).toString()));
-                    return;
+    private static Set<AEItemKey> componentDependencies(
+            appeng.api.networking.crafting.ICraftingService crafting,
+            AEItemKey root, Set<AEItemKey> components) {
+        Set<AEItemKey> dependencies = new LinkedHashSet<>();
+        Set<AEKey> visited = new HashSet<>();
+        ArrayDeque<AEKey> pending = new ArrayDeque<>();
+        pending.add(root);
+        while (!pending.isEmpty() && visited.size() < 512) {
+            AEKey key = pending.removeFirst();
+            if (!visited.add(key)) continue;
+            int patterns = 0;
+            for (var pattern : crafting.getCraftingFor(key)) {
+                if (++patterns > 32) break;
+                for (var input : pattern.getInputs()) {
+                    for (var possible : input.getPossibleInputs()) {
+                        AEKey ingredient = possible.what();
+                        if (ingredient instanceof AEItemKey item && components.contains(item) && !item.equals(root)) {
+                            dependencies.add(item);
+                        }
+                        if (!visited.contains(ingredient) && pending.size() < 2048) pending.addLast(ingredient);
+                    }
                 }
-                ready.add(new ReadyCraft(craft.key(), craft.amount(), plan));
             }
+        }
+        return dependencies;
+    }
 
-            player.server.execute(() -> submitReady(player, request, ready));
-        } catch (Throwable error) {
-            player.server.execute(() -> sendBatchResult(player, request, BatchStatus.ERROR,
-                    0, pending.size(), error.getClass().getSimpleName()));
+    private static long availableFor(ServerPlayer player, ProductionMonitorBlockEntity monitor,
+                                     AEItemKey key, long required) {
+        long stored = monitor.getMainNode().getGrid().getStorageService().getInventory()
+                .extract(key, required, Actionable.SIMULATE, new PlayerSource(player, monitor));
+        return saturatingAdd(stored, inventoryCount(player, key.getItem()));
+    }
+
+    private static void tickBatches(ServerTickEvent.Post event) {
+        var server = event.getServer();
+        if (server.getTickCount() % 10 != 0) return;
+        var iterator = BATCHES.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            BatchSession batch = entry.getValue();
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            if (player == null || player.isRemoved()) {
+                batch.cancelCalculation();
+                iterator.remove();
+                continue;
+            }
+            ProductionMonitorBlockEntity monitor = MonitorNetwork.linkedMonitor(
+                    player, batch.request.dimension(), batch.request.pos());
+            if (monitor == null || !monitor.isMonitorOnline() || monitor.getMainNode().getGrid() == null) {
+                failBatch(player, batch, BatchStatus.NETWORK_OFFLINE, "");
+                iterator.remove();
+                continue;
+            }
+            try {
+                if (!advanceBatch(player, monitor, batch)) iterator.remove();
+            } catch (Exception error) {
+                failBatch(player, batch, BatchStatus.ERROR, error.getClass().getSimpleName());
+                iterator.remove();
+            }
         }
     }
 
-    private static void submitReady(ServerPlayer player, BatchRequest request, List<ReadyCraft> ready) {
-        ProductionMonitorBlockEntity current =
-                MonitorNetwork.linkedMonitor(player, request.dimension(), request.pos());
-        if (current == null) {
-            sendBatchResult(player, request, BatchStatus.INVALID_LINK, 0, ready.size(), "");
-            return;
+    /** Each plan is calculated only after the previous job has finished. */
+    private static boolean advanceBatch(ServerPlayer player, ProductionMonitorBlockEntity monitor,
+                                        BatchSession batch) throws Exception {
+        var crafting = monitor.getMainNode().getGrid().getCraftingService();
+        if (batch.activeJob != null) {
+            if (batch.activeJob.isCanceled()) {
+                failBatch(player, batch, BatchStatus.SUBMIT_FAILED, "Crafting job cancelled");
+                return false;
+            }
+            if (!batch.activeJob.isDone()) return true;
+            batch.activeJob = null;
+            batch.index++;
         }
-        if (!current.isMonitorOnline() || current.getMainNode().getGrid() == null) {
-            sendBatchResult(player, request, BatchStatus.NETWORK_OFFLINE, 0, ready.size(), "");
-            return;
+        if (batch.index >= batch.order.size()) {
+            boolean complete = batch.requirements.entrySet().stream().allMatch(entry ->
+                    availableFor(player, monitor, entry.getKey(), entry.getValue()) >= entry.getValue());
+            if (complete) {
+                sendBatchResult(player, batch.request, BatchStatus.COMPLETE,
+                        batch.started, batch.requirements.size(), "");
+                return false;
+            }
+            // Alternative recipe paths or external consumers can invalidate earlier stock.
+            // Reconcile the real complete kit, never declare success on stale initial counts.
+            if (++batch.reconciliations > 2) {
+                failBatch(player, batch, BatchStatus.SUBMIT_FAILED, "Component stock changed during crafting");
+                return false;
+            }
+            batch.index = 0;
+        }
+        AEItemKey key = batch.order.get(batch.index);
+        long required = batch.requirements.get(key);
+        long missing = Math.max(0L, required - availableFor(player, monitor, key, required));
+        if (missing == 0L) {
+            batch.cancelCalculation();
+            batch.index++;
+            return true;
+        }
+        if (!crafting.isCraftable(key)) {
+            failBatch(player, batch, BatchStatus.NOT_CRAFTABLE, key.getDisplayName().getString());
+            return false;
+        }
+        var source = new PlayerSource(player, monitor);
+        if (batch.calculation == null) {
+            batch.calculation = crafting.beginCraftingCalculation(player.level(), () -> source,
+                    key, missing, CalculationStrategy.REPORT_MISSING_ITEMS);
+            return true;
+        }
+        if (!batch.calculation.isDone()) return true;
+        ICraftingPlan plan = batch.calculation.get();
+        if (plan.simulation()) {
+            failBatch(player, batch, BatchStatus.MISSING_INGREDIENTS, key.getDisplayName().getString());
+            return false;
+        }
+        List<ICraftingCPU> idleBefore = crafting.getCpus().stream().filter(cpu -> !cpu.isBusy()).toList();
+        var submitted = crafting.submitJob(plan, null, null, true, source);
+        if (!submitted.successful()) {
+            if (submitted.errorCode() == CraftingSubmitErrorCode.NO_SUITABLE_CPU_FOUND
+                    && submitted.errorDetail() instanceof UnsuitableCpus cpus && cpus.busy() > 0
+                    && ++batch.cpuWaits <= 600) return true;
+            if (submitted.errorCode() == CraftingSubmitErrorCode.MISSING_INGREDIENT && ++batch.stockRetries <= 2) {
+                // Another request changed stock after this calculation. Recalculate, rather
+                // than retrying the same already-invalid plan against different ingredients.
+                batch.calculation = null;
+                return true;
+            }
+            failBatch(player, batch, BatchStatus.SUBMIT_FAILED,
+                    key.getDisplayName().getString() + " · " + submitted.errorCode());
+            return false;
+        }
+        batch.calculation = null;
+        batch.cpuWaits = 0;
+        batch.stockRetries = 0;
+        batch.started++;
+        for (ICraftingCPU cpu : idleBefore) {
+            if (cpu.isBusy() && cpu instanceof CraftingCPUCluster cluster) {
+                batch.activeJob = cluster.craftingLogic.getLastLink();
+                if (batch.activeJob != null) break;
+            }
+        }
+        if (batch.activeJob == null) {
+            failBatch(player, batch, BatchStatus.ERROR, "Cannot track submitted crafting CPU");
+            return false;
+        }
+        return true;
+    }
+
+    private static void failBatch(ServerPlayer player, BatchSession batch, BatchStatus status, String detail) {
+        batch.cancelCalculation();
+        sendBatchResult(player, batch.request, status, batch.started, batch.requirements.size(), detail);
+    }
+
+    private static void serverStopped(ServerStoppedEvent event) {
+        BATCHES.values().forEach(BatchSession::cancelCalculation);
+        BATCHES.clear();
+    }
+
+    private static final class BatchSession {
+        private final BatchRequest request;
+        private final Map<AEItemKey, Long> requirements;
+        private final List<AEItemKey> order;
+        private Future<ICraftingPlan> calculation;
+        private ICraftingLink activeJob;
+        private int index;
+        private int started;
+        private int reconciliations;
+        private int cpuWaits;
+        private int stockRetries;
+
+        private BatchSession(BatchRequest request, Map<AEItemKey, Long> requirements, List<AEItemKey> order) {
+            this.request = request;
+            this.requirements = requirements;
+            this.order = order;
         }
 
-        try {
-            var crafting = current.getMainNode().getGrid().getCraftingService();
-            var source = new PlayerSource(player, current);
-            int started = 0;
-            for (ReadyCraft craft : ready) {
-                var submit = crafting.submitJob(craft.plan(), null, null, true, source);
-                if (!submit.successful()) {
-                    String item = BuiltInRegistries.ITEM.getKey(craft.key().getItem()).toString();
-                    String code = submit.errorCode() == null ? "" : submit.errorCode().name();
-                    String detail = code.isEmpty() ? item : item + " · " + code;
-                    sendBatchResult(player, request,
-                            started == 0 ? BatchStatus.SUBMIT_FAILED : BatchStatus.PARTIAL,
-                            started, ready.size(), detail);
-                    return;
-                }
-                started++;
-            }
-            sendBatchResult(player, request, BatchStatus.STARTED, started, ready.size(), "");
-        } catch (Throwable error) {
-            sendBatchResult(player, request, BatchStatus.ERROR, 0, ready.size(),
-                    error.getClass().getSimpleName());
+        private void cancelCalculation() {
+            if (calculation != null) calculation.cancel(true);
+            calculation = null;
         }
     }
 
@@ -321,8 +456,6 @@ public final class DeepCoreConstructionNetwork {
         return itemKey;
     }
 
-    private record PendingCraft(AEItemKey key, long amount, Future<ICraftingPlan> future) {}
-    private record ReadyCraft(AEItemKey key, long amount, ICraftingPlan plan) {}
 
     public enum PlanStatus {
         READY,
@@ -438,7 +571,9 @@ public final class DeepCoreConstructionNetwork {
         MISSING_INGREDIENTS,
         SUBMIT_FAILED,
         PARTIAL,
-        ERROR
+        ERROR,
+        QUEUED,
+        COMPLETE
     }
 
     public record BatchResult(ResourceLocation dimension, BlockPos pos, int tier,

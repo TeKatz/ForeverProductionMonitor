@@ -90,6 +90,7 @@ public final class DeepCoreConstructionScreen extends Screen {
     }
 
     private void selectTier(int tier) {
+        if (batchPending) return;
         if (selectedTier == tier && snapshot != null) return;
         selectedTier = tier;
         snapshot = null;
@@ -102,6 +103,7 @@ public final class DeepCoreConstructionScreen extends Screen {
     }
 
     private void refresh() {
+        if (batchPending) return;
         snapshot = null;
         rowScroll = 0;
         batchLocked = false;
@@ -125,6 +127,7 @@ public final class DeepCoreConstructionScreen extends Screen {
 
     private void updateButtons() {
         for (int i = 0; i < tierButtons.size(); i++) {
+            tierButtons.get(i).active = !batchPending;
             tierButtons.get(i).setStyle(i + 1 == selectedTier
                     ? ForeverButton.Style.THEMED_ACTIVE
                     : ForeverButton.Style.THEMED);
@@ -166,6 +169,18 @@ public final class DeepCoreConstructionScreen extends Screen {
         batchPending = false;
         String detail = result.detail();
         status = switch (result.status()) {
+            case QUEUED -> {
+                batchPending = true;
+                batchLocked = true;
+                yield Component.translatable(
+                        "screen.forever_production_monitor.deepcore_build.batch_queued");
+            }
+            case COMPLETE -> {
+                batchLocked = true;
+                yield Component.translatable(
+                        "screen.forever_production_monitor.deepcore_build.batch_complete",
+                        result.startedJobs());
+            }
             case STARTED -> {
                 batchLocked = true;
                 yield Component.translatable(

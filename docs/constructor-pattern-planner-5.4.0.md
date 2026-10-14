@@ -1,5 +1,24 @@
 # Constructor and Pattern Planner integration test — 5.4.0-SNAPSHOT
 
+## 5.4.1 regression follow-up
+
+Use FPM 5.4.1-SNAPSHOT with DeepCore 0.8.2-SNAPSHOT for the follow-up to the
+first integration test. The sequential crafting queue supersedes the independent
+preflight/partial-submission limitation described below: components that consume
+other kit components are requested first, then every deficit is recalculated
+from the actual ME and player inventory after each completed job. Final success
+requires the complete kit to be present. The queue is session-only, revalidates
+the equipped tablet/network, and does not resume remaining jobs after logout.
+Already submitted AE2 jobs remain in AE2 and can complete normally.
+
+Regression tests: craft Tier III with only one CPU and with frames/casings in ME
+that are also consumed by other kit recipes; confirm final item counts rather
+than only job counts. Test an occupied CPU, a missing ingredient and cancellation.
+Test more than nine distinct crafting outputs with AE2's auto-pin enabled; the
+oldest pin should be replaced without the negative-subList exception. Test a
+fresh controller in an already surveyed chunk: first Survey must reuse the
+finite catalogue and select an eligible deposit without refilling its reserve.
+
 This development build starts from the user-tested FPM 5.2.0 main commit
 `87c299b26dd5f03048ddf79ea08dae45e1b8c216`. It integrates the existing constructor
 branch `631c6ef` and JEI queue branch `b778dc3`. It does not include Fleet

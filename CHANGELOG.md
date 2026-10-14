@@ -2,6 +2,16 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## 5.4.1-SNAPSHOT (development, not released)
+
+- Replaces independent simultaneous build-kit jobs with a server-side queue: consumer components are crafted first, each next calculation uses current stock after the previous job finishes, and completion checks the entire physical build kit again.
+- Accounts for kit components consumed as ingredients in other kit recipes; one crafting CPU can now process the complete batch. Busy CPUs are waited for within a bounded window; missing ingredients and cancelled jobs remain visible failures.
+- Prevents duplicate batches per player and clears pending queue calculations on disconnect/server stop. Already submitted AE2 jobs remain ordinary player jobs and are not deleted on disconnect.
+- Adds explicit queued/completed UI feedback and regression checks for shared-component ordering and cyclic alternatives.
+- Adds a narrow client mixin guard for AE2 19.2.x's negative pin-list range when a tenth distinct crafting result is pinned. The oldest pin is evicted before AE2's existing method runs; player/security action sources are unchanged.
+- Pair with DeepCore 0.8.2-SNAPSHOT for rebuilt-controller Survey catalogue reuse and removal of four unreferenced, corrupt legacy PNGs.
+- Network Map renderer and Pattern Planner import rules remain unchanged. Runtime verification is pending.
+
 ## 5.4.0-SNAPSHOT (development, not released)
 
 - Integrates the existing Deep Core Construction Planner, Multiblock Constructor and JEI Pattern Planner queue on the in-game-tested 5.2.0 baseline (`87c299b`).

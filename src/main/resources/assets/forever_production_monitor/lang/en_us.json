@@ -502,6 +502,8 @@
   ,"screen.forever_production_monitor.deepcore_build.offline": "The linked AE2 network is offline."
   ,"screen.forever_production_monitor.deepcore_build.plan_error": "Could not read the Deep Core construction plan."
   ,"screen.forever_production_monitor.deepcore_build.batch_started": "Started %s AE2 crafting jobs."
+  ,"screen.forever_production_monitor.deepcore_build.batch_queued": "Crafting build kit in sequence; waiting for each AE2 job to finish."
+  ,"screen.forever_production_monitor.deepcore_build.batch_complete": "Build kit complete after %s AE2 crafting jobs."
   ,"screen.forever_production_monitor.deepcore_build.batch_nothing": "No crafting needed; all components are already stored."
   ,"screen.forever_production_monitor.deepcore_build.batch_not_craftable": "Missing AE2 crafting pattern: %s"
   ,"screen.forever_production_monitor.deepcore_build.batch_missing": "AE2 reports missing ingredients for: %s"
