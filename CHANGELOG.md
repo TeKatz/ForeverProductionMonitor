@@ -2,6 +2,13 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## 5.4.2-SNAPSHOT (development, not released)
+
+- Fixes the construction batch aborting with `Cannot track submitted crafting CPU` immediately after the first successful job when no native AE2 CPU/link can be discovered.
+- Uses a returned link where provided, keeps optional native-link cancellation tracking, and otherwise observes addon public job status and the actual delivered component stock. Successful fast/addon jobs no longer require a native CPU object.
+- Preserves sequential dependency-aware planning and final complete-kit stock reconciliation. A job with no output or observable progress for ten minutes reports a bounded failure rather than waiting forever; observable running jobs are not timed out.
+- Adds regressions for opaque CPUs, immediate completion, partial delivery, stalls and known cancellation/completion. No DeepCore update is needed; keep 0.8.2-SNAPSHOT.
+
 ## 5.4.1-SNAPSHOT (development, not released)
 
 - Replaces independent simultaneous build-kit jobs with a server-side queue: consumer components are crafted first, each next calculation uses current stock after the previous job finishes, and completion checks the entire physical build kit again.

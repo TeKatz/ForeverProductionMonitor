@@ -1,5 +1,17 @@
 # Constructor and Pattern Planner integration test — 5.4.0-SNAPSHOT
 
+## 5.4.2 CPU tracking follow-up
+
+Use FPM 5.4.2-SNAPSHOT with the existing DeepCore 0.8.2-SNAPSHOT. A successful
+job submission no longer requires a discoverable native AE2 CPU/link. Returned
+links and public addon CPU job status are observed where available, with actual
+delivered component stock as the fallback. Test an addon/fast first job (such as
+the Energy Acceptor), then verify the queue continues through every component
+and checks the final full kit. Also test a native CPU, partial output and a
+known cancellation. With neither output nor an observable running job for ten
+minutes the queue reports a stalled job; an observed running job has no such
+timeout. Already submitted player jobs remain ordinary AE2 jobs.
+
 ## 5.4.1 regression follow-up
 
 Use FPM 5.4.1-SNAPSHOT with DeepCore 0.8.2-SNAPSHOT for the follow-up to the

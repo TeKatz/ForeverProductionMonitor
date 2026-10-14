@@ -267,13 +267,35 @@ public final class DeepCoreConstructionNetwork {
     private static boolean advanceBatch(ServerPlayer player, ProductionMonitorBlockEntity monitor,
                                         BatchSession batch) throws Exception {
         var crafting = monitor.getMainNode().getGrid().getCraftingService();
-        if (batch.activeJob != null) {
-            if (batch.activeJob.isCanceled()) {
+        if (batch.progress != null) {
+            long available = availableFor(player, monitor, batch.awaitingKey, batch.awaitingRequired);
+            boolean cancelled = batch.activeJob != null && batch.activeJob.isCanceled();
+            boolean done = batch.activeJob != null && batch.activeJob.isDone();
+            boolean running = batch.activeJob != null && !cancelled && !done;
+            if (!running && !done && !cancelled) {
+                // Addon CPUs need not be native CraftingCPUCluster objects. Use their
+                // public job status where available, then the actual delivered stock.
+                running = crafting.getCpus().stream().anyMatch(cpu -> {
+                    var status = cpu.getJobStatus();
+                    return cpu.isBusy() && status != null && status.crafting() != null
+                            && status.crafting().what().equals(batch.awaitingKey);
+                });
+            }
+            var state = batch.progress.observe(available, running, done, cancelled,
+                    player.server.overworld().getGameTime());
+            if (state == ConstructionJobProgress.State.CANCELLED) {
                 failBatch(player, batch, BatchStatus.SUBMIT_FAILED, "Crafting job cancelled");
                 return false;
             }
-            if (!batch.activeJob.isDone()) return true;
+            if (state == ConstructionJobProgress.State.STALLED) {
+                failBatch(player, batch, BatchStatus.SUBMIT_FAILED,
+                        "No crafted output or observable job progress for 10 minutes");
+                return false;
+            }
+            if (state == ConstructionJobProgress.State.WAITING) return true;
             batch.activeJob = null;
+            batch.progress = null;
+            batch.awaitingKey = null;
             batch.index++;
         }
         if (batch.index >= batch.order.size()) {
@@ -336,16 +358,22 @@ public final class DeepCoreConstructionNetwork {
         batch.cpuWaits = 0;
         batch.stockRetries = 0;
         batch.started++;
-        for (ICraftingCPU cpu : idleBefore) {
-            if (cpu.isBusy() && cpu instanceof CraftingCPUCluster cluster) {
-                batch.activeJob = cluster.craftingLogic.getLastLink();
-                if (batch.activeJob != null) break;
+        batch.activeJob = submitted.link();
+        if (batch.activeJob == null) {
+            for (ICraftingCPU cpu : idleBefore) {
+                if (cpu.isBusy() && cpu instanceof CraftingCPUCluster cluster) {
+                    batch.activeJob = cluster.craftingLogic.getLastLink();
+                    if (batch.activeJob != null) break;
+                }
             }
         }
-        if (batch.activeJob == null) {
-            failBatch(player, batch, BatchStatus.ERROR, "Cannot track submitted crafting CPU");
-            return false;
-        }
+        // A successful submission is valid even without a discoverable native CPU.
+        // Fast/addon jobs may already have delivered their output before this returns.
+        batch.awaitingKey = key;
+        batch.awaitingRequired = required;
+        batch.progress = new ConstructionJobProgress(required,
+                availableFor(player, monitor, key, required),
+                player.server.overworld().getGameTime());
         return true;
     }
 
@@ -365,6 +393,9 @@ public final class DeepCoreConstructionNetwork {
         private final List<AEItemKey> order;
         private Future<ICraftingPlan> calculation;
         private ICraftingLink activeJob;
+        private ConstructionJobProgress progress;
+        private AEItemKey awaitingKey;
+        private long awaitingRequired;
         private int index;
         private int started;
         private int reconciliations;
