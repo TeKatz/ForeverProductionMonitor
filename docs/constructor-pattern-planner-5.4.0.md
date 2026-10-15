@@ -1,8 +1,14 @@
 # Constructor and Pattern Planner integration test — 5.4.0-SNAPSHOT
 
+## Accepted pairing — 15 October 2026
+
+Use **FPM 5.4.2-SNAPSHOT + DeepCore 0.9.1-SNAPSHOT**. The project author confirmed the combined DeepCore setup and kit crafting work and explicitly authorized merging. Tested implementation commits are FPM `b8d4d84345d0a4322792b3122c793a86566b641e` and DeepCore `39726c38c4804ba3b63fdad32b0d9b615bded9ee`. Acceptance-documentation updates leave production code/resources unchanged.
+
+DeepCore 0.9.1 retains the new GUI and Facility Upgrades as well as constructor APIs and the rebuilt-controller Survey fix. Earlier 0.8.1/0.8.2 pairings below describe historical iterations. Retain the scenarios below for regression testing; the user's acceptance is not a claim that each scenario was separately logged.
+
 ## 5.4.2 CPU tracking follow-up
 
-Use FPM 5.4.2-SNAPSHOT with the existing DeepCore 0.8.2-SNAPSHOT. A successful
+Use FPM 5.4.2-SNAPSHOT with DeepCore 0.9.1-SNAPSHOT. A successful
 job submission no longer requires a discoverable native AE2 CPU/link. Returned
 links and public addon CPU job status are observed where available, with actual
 delivered component stock as the fallback. Test an addon/fast first job (such as
@@ -44,8 +50,8 @@ The Network Map renderer is unchanged from the tested baseline, including the
 - Minecraft 1.21.1 / NeoForge; the paired DeepCore build requires NeoForge
   21.1.252+ and AE2 19.2.18+. AE2 must remain below 20.
 - Curios 9.5.1+ and the linked Production Tablet equipped in its Curios slot.
-- Use the paired DeepCore 0.8.1-SNAPSHOT build for the construction API and
-  dismantling implementation. DeepCore main 0.8.0 does not expose these APIs.
+- Use the paired DeepCore 0.9.1-SNAPSHOT baseline for the construction API,
+  dismantling, new facility GUI/upgrades and rebuilt-controller Survey fix.
 - JEI with the recipe-side-button API (compiled against 19.44.0.406) and
   ExtendedAE with an active Assembler Matrix Pattern Core for Pattern Planner.
 - Replace older copies of these same mods; client and server use matching builds.
@@ -59,8 +65,10 @@ pattern availability. Available includes matching player-inventory items.
 Test sufficient stock, mixed inventory/ME stock, missing patterns and missing
 ingredients. Request missing components and verify AE2 jobs and output counts.
 The tier is cumulative; Tier III includes the complete lower-tier structure.
-The planner preflights separate component jobs but does not reserve all their
-ingredients or CPUs atomically. A later submission may report partial success.
+In 5.4.2 the planner submits component jobs sequentially, crafts consuming
+components first, recalculates deficits against live stock, and reconciles the
+final complete kit. The queue does not atomically reserve the entire kit;
+external consumers may still change stock, with bounded reconciliation.
 
 ## Multiblock Constructor
 
@@ -109,5 +117,6 @@ Failed entries are reported but are not automatically restored to the queue.
 
 Recheck Network Map opening/rotation/heatmap, Deep Core remote access and its
 multi-facility dropdown. Optional integrations must fail cleanly when absent.
-CI confirms compilation and packaged resources; in-game approval of this
-combined build is still required before merging or publishing.
+CI confirms compilation and packaged resources. The project author approved
+merging after the combined runtime test on 15 October 2026. Publication is a
+separate action and has not been requested.

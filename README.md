@@ -8,6 +8,12 @@ The current stable release is **5.0.1**. Version 5.0.0 introduced Crafting Diagn
 
 > Forever Production Monitor is an unofficial third-party addon for Applied Energistics 2. It is not affiliated with or endorsed by the Applied Energistics 2 development team.
 
+## Tested development baseline
+
+The current source baseline is **5.4.2-SNAPSHOT**, accepted in-game by the project author on 15 October 2026 with **Deep Core 0.9.1-SNAPSHOT**. It includes Deep Core map/remote/multi-facility support, the Construction Planner and Multiblock Constructor, the JEI Pattern Planner queue and the sequential kit-crafting/CPU-tracking fixes. The 5.0.1 map crash hotfix is retained. The separate 5.3.0 Fleet Diagnostics branch is not included.
+
+The public release remains **5.0.1**; merging a tested snapshot does not publish a new release. See the [integration and regression notes](docs/constructor-pattern-planner-5.4.0.md).
+
 ## Downloads
 
 Official release files are published through:
