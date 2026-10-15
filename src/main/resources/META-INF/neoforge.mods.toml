@@ -4,10 +4,13 @@ license="MIT"
 
 [[mods]]
 modId="forever_production_monitor"
-version="5.2.0-SNAPSHOT"
+version="5.4.2-SNAPSHOT"
 displayName="Forever Production Monitor"
 description='''AE2 monitoring and diagnostics with production and storage statistics, alarms, a Mini HUD, Missing Channel tools and an interactive 3D Network Map.'''
 authors="TeKatz"
+
+[[mixins]]
+config="forever_production_monitor.mixins.json"
 
 [[dependencies.forever_production_monitor]]
 modId="neoforge"

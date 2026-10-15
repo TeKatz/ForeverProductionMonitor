@@ -145,6 +145,11 @@ public final class CraftingDiagnosticsScreen extends Screen {
                 "screen.forever_production_monitor.crafting.back"),
                 button -> minecraft.setScreen(parent), ForeverButton.Style.THEMED,
                 listLeft + searchWidth + 84, top + 66, 72, 20));
+        addRenderableWidget(ForeverButton.create(Component.translatable(
+                "screen.forever_production_monitor.crafting.deepcore_build"),
+                button -> minecraft.setScreen(new DeepCoreConstructionScreen(this, link)),
+                ForeverButton.Style.THEMED_ACTIVE,
+                detailsLeft, top + 90, Math.max(132, widthPanel - (detailsLeft - left) - 18), 16));
         if (snapshot == null) CraftingDiagnosticsNetwork.request(link);
     }
 

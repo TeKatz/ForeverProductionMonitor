@@ -2,6 +2,36 @@
 
 All notable public release changes for Forever Production Monitor are documented here.
 
+## 5.4.2-SNAPSHOT (in-game accepted, not released)
+
+- Accepted by the project author on 15 October 2026 with DeepCore 0.9.1-SNAPSHOT; kit crafting was explicitly confirmed working and merge authorized. This remains an unpublished development snapshot.
+
+- Fixes the construction batch aborting with `Cannot track submitted crafting CPU` immediately after the first successful job when no native AE2 CPU/link can be discovered.
+- Uses a returned link where provided, keeps optional native-link cancellation tracking, and otherwise observes addon public job status and the actual delivered component stock. Successful fast/addon jobs no longer require a native CPU object.
+- Preserves sequential dependency-aware planning and final complete-kit stock reconciliation. A job with no output or observable progress for ten minutes reports a bounded failure rather than waiting forever; observable running jobs are not timed out.
+- Adds regressions for opaque CPUs, immediate completion, partial delivery, stalls and known cancellation/completion. The CPU-tracking fix itself requires no DeepCore API update; the current tested pairing is DeepCore 0.9.1-SNAPSHOT, including the newer facility GUI/upgrades and Survey fix.
+
+## 5.4.1-SNAPSHOT (development, not released)
+
+- Replaces independent simultaneous build-kit jobs with a server-side queue: consumer components are crafted first, each next calculation uses current stock after the previous job finishes, and completion checks the entire physical build kit again.
+- Accounts for kit components consumed as ingredients in other kit recipes; one crafting CPU can now process the complete batch. Busy CPUs are waited for within a bounded window; missing ingredients and cancelled jobs remain visible failures.
+- Prevents duplicate batches per player and clears pending queue calculations on disconnect/server stop. Already submitted AE2 jobs remain ordinary player jobs and are not deleted on disconnect.
+- Adds explicit queued/completed UI feedback and regression checks for shared-component ordering and cyclic alternatives.
+- Adds a narrow client mixin guard for AE2 19.2.x's negative pin-list range when a tenth distinct crafting result is pinned. The oldest pin is evicted before AE2's existing method runs; player/security action sources are unchanged.
+- Pair with DeepCore 0.8.2-SNAPSHOT for rebuilt-controller Survey catalogue reuse and removal of four unreferenced, corrupt legacy PNGs.
+- Network Map renderer and Pattern Planner import rules remain unchanged. The combined 5.4.2/DeepCore 0.9.1 setup was subsequently accepted in-game on 15 October 2026.
+
+## 5.4.0-SNAPSHOT (development, not released)
+
+- Integrates the existing Deep Core Construction Planner, Multiblock Constructor and JEI Pattern Planner queue on the in-game-tested 5.2.0 baseline (`87c299b`).
+- Preserves the 5.0.1 Network Map crash and warning-layout hotfix; `NetworkMapView.java` is unchanged from that baseline.
+- Construction Planner requests complete Tier I-III build kits and subtracts matching player-inventory and ME-stock items before requesting missing components.
+- Multiblock Constructor supports Preview / Build / Dismantle, reuses existing matching blocks, consumes player inventory before ME stock, and preserves the previously implemented AE2 Drive orientation fix.
+- JEI Crafting/Smithing buttons support immediate import, Shift-click queue toggling and Ctrl-click upload to an ExtendedAE Assembler Matrix. Processing patterns remain blocked on both client and server.
+- Requires the paired DeepCore 0.8.1-SNAPSHOT construction API build for construction features. JEI and ExtendedAE remain optional for the rest of FPM.
+- The separate 5.3.0 Fleet Diagnostics work is not included. The higher snapshot version distinguishes this integration from both that branch and earlier 5.2.0 builds.
+- The subsequent 5.4.2 combined build was accepted in-game on 15 October 2026. See [test instructions](docs/constructor-pattern-planner-5.4.0.md).
+
 ## 5.0.1
 
 ### Network Map stability
